@@ -57,7 +57,7 @@ describe('Model: schema() runtime behavior', () => {
       expect(result.data).not.toHaveProperty('passwordHash')
     })
 
-    it('rejects omitted fields in input', () => {
+    it('strips omitted fields in input', () => {
       const schema = User.schema({ omit: ['passwordHash'] })
       const result = schema.safeParse({
         id: '550e8400-e29b-41d4-a716-446655440000',

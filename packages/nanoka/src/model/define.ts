@@ -3,6 +3,15 @@ import type { Field } from '../field/types'
 import { applySchemaOptions, buildBaseObject } from './schema'
 import type { Apply, FieldsToZodShape, Model, SchemaOptions } from './types'
 
+const validationTargets = {
+  json: true,
+  query: true,
+  param: true,
+  header: true,
+  cookie: true,
+  form: true,
+} as const
+
 /**
  * Creates a Model instance from a fields definition.
  * The model supports deriving Zod schemas and Hono validators with pick/omit/partial transformations.
@@ -21,7 +30,7 @@ import type { Apply, FieldsToZodShape, Model, SchemaOptions } from './types'
  * })
  */
 // biome-ignore lint/suspicious/noExplicitAny: any is necessary for generic Field constraint
-export function defineModel<Fields extends Record<string, Field<any, any>>>(
+export function defineModel<Fields extends Record<string, Field<any, any, any>>>(
   fields: Fields,
 ): Model<Fields> {
   return {
@@ -32,17 +41,17 @@ export function defineModel<Fields extends Record<string, Field<any, any>>>(
     ): Apply<FieldsToZodShape<Fields>, Opts> {
       const baseSchema = buildBaseObject(fields)
       const schema = applySchemaOptions(baseSchema, opts)
-      // biome-ignore lint/suspicious/noExplicitAny: Apply type is asserted at call site, this is the boundary
+      // biome-ignore lint/suspicious/noExplicitAny: Zod .pick()/.omit() return type narrowing requires cast at boundary
       return schema as any
     },
 
     validator<
-      Target extends 'json' | 'query' | 'param' | 'header' | 'cookie' | 'form',
+      Target extends keyof typeof validationTargets,
       Opts extends SchemaOptions<keyof Fields & string> | undefined = undefined,
     >(target: Target, opts?: Opts) {
       const schema = this.schema(opts)
-      // biome-ignore lint/suspicious/noExplicitAny: zValidator accepts any ZodSchema
-      return zValidator(target as any, schema as any)
+      // biome-ignore lint/suspicious/noExplicitAny: zValidator requires casting for proper operation
+      return zValidator(target, schema as any)
     },
   }
 }

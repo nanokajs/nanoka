@@ -33,7 +33,7 @@ describe('Model: validator() Hono integration', () => {
       const response = await app.fetch(validRequest)
       expect(response.status).toBe(200)
 
-      const data = await response.json()
+      const data = (await response.json()) as Record<string, unknown>
       expect(data.received).toEqual({
         id: '550e8400-e29b-41d4-a716-446655440000',
         name: 'John Doe',
@@ -88,7 +88,7 @@ describe('Model: validator() Hono integration', () => {
       const response = await app.fetch(request)
       expect(response.status).toBe(200)
 
-      const data = await response.json()
+      const data = (await response.json()) as Record<string, unknown>
       expect(data.hasPasswordHash).toBe(false)
     })
 
@@ -118,7 +118,7 @@ describe('Model: validator() Hono integration', () => {
       const response = await app.fetch(partialRequest)
       expect(response.status).toBe(200)
 
-      const data = await response.json()
+      const data = (await response.json()) as Record<string, unknown>
       expect(data.received).toEqual({
         name: 'Jane Doe',
       })
@@ -148,7 +148,7 @@ describe('Model: validator() Hono integration', () => {
       const response = await app.fetch(emptyRequest)
       expect(response.status).toBe(200)
 
-      const data = await response.json()
+      const data = (await response.json()) as Record<string, unknown>
       expect(data.received).toEqual({})
     })
 
@@ -188,7 +188,7 @@ describe('Model: validator() Hono integration', () => {
       const response = await app.fetch(queryRequest)
       expect(response.status).toBe(200)
 
-      const data = await response.json()
+      const data = (await response.json()) as Record<string, unknown>
       expect(data.query).toEqual({
         name: 'John',
         email: 'john@example.com',

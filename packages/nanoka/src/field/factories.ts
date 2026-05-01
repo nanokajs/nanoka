@@ -1,19 +1,20 @@
 import type { SQLiteColumnBuilderBase } from 'drizzle-orm/sqlite-core'
 import { integer, real, text } from 'drizzle-orm/sqlite-core'
-import type { ZodTypeAny } from 'zod'
-import { z } from 'zod'
+import type { z } from 'zod'
+import { z as zLib } from 'zod'
 import { BaseFieldBuilder } from './builder'
 import type { FieldModifiers } from './types'
 
 // ==================== StringFieldBuilder ====================
 
-// biome-ignore lint/complexity/noBannedTypes: {} is used intentionally for the default empty modifiers
-class StringFieldBuilder<TS = string, Mods extends FieldModifiers = {}> extends BaseFieldBuilder<
-  TS,
-  Mods
-> {
-  get zodBase(): ZodTypeAny {
-    let schema = z.string() as ZodTypeAny
+class StringFieldBuilder<
+  TS = string,
+  // biome-ignore lint/complexity/noBannedTypes: {} is used intentionally for the default empty modifiers
+  Mods extends FieldModifiers = {},
+  ZB extends z.ZodType<TS, z.ZodTypeDef, TS> = z.ZodType<TS, z.ZodTypeDef, TS>,
+> extends BaseFieldBuilder<TS, Mods, ZB> {
+  get zodBase(): ZB {
+    let schema: z.ZodTypeAny = zLib.string()
 
     if (this.modifiers.min !== undefined) {
       // biome-ignore lint/suspicious/noExplicitAny: Chaining Zod methods
@@ -28,7 +29,8 @@ class StringFieldBuilder<TS = string, Mods extends FieldModifiers = {}> extends 
       schema = (schema as any).email()
     }
 
-    return this.applyModifiersToZod(schema)
+    // biome-ignore lint/suspicious/noExplicitAny: Return type cast for generic ZB parameter
+    return this.applyModifiersToZod(schema) as any
   }
 
   drizzleColumn(name: string): SQLiteColumnBuilderBase {
@@ -136,13 +138,14 @@ class StringFieldBuilder<TS = string, Mods extends FieldModifiers = {}> extends 
 
 // ==================== UuidFieldBuilder ====================
 
-// biome-ignore lint/complexity/noBannedTypes: {} is used intentionally for the default empty modifiers
-class UuidFieldBuilder<TS = string, Mods extends FieldModifiers = {}> extends BaseFieldBuilder<
-  TS,
-  Mods
-> {
-  get zodBase(): ZodTypeAny {
-    let schema = z.string().uuid() as ZodTypeAny
+class UuidFieldBuilder<
+  TS = string,
+  // biome-ignore lint/complexity/noBannedTypes: {} is used intentionally for the default empty modifiers
+  Mods extends FieldModifiers = {},
+  ZB extends z.ZodType<TS, z.ZodTypeDef, TS> = z.ZodType<TS, z.ZodTypeDef, TS>,
+> extends BaseFieldBuilder<TS, Mods, ZB> {
+  get zodBase(): ZB {
+    let schema: z.ZodTypeAny = zLib.string().uuid()
 
     if (this.modifiers.min !== undefined) {
       // biome-ignore lint/suspicious/noExplicitAny: Chaining Zod methods
@@ -153,7 +156,8 @@ class UuidFieldBuilder<TS = string, Mods extends FieldModifiers = {}> extends Ba
       schema = (schema as any).max(this.modifiers.max)
     }
 
-    return this.applyModifiersToZod(schema)
+    // biome-ignore lint/suspicious/noExplicitAny: Return type cast for generic ZB parameter
+    return this.applyModifiersToZod(schema) as any
   }
 
   drizzleColumn(name: string): SQLiteColumnBuilderBase {
@@ -247,13 +251,14 @@ class UuidFieldBuilder<TS = string, Mods extends FieldModifiers = {}> extends Ba
 
 // ==================== NumberFieldBuilder ====================
 
-// biome-ignore lint/complexity/noBannedTypes: {} is used intentionally for the default empty modifiers
-class NumberFieldBuilder<TS = number, Mods extends FieldModifiers = {}> extends BaseFieldBuilder<
-  TS,
-  Mods
-> {
-  get zodBase(): ZodTypeAny {
-    let schema = z.number() as ZodTypeAny
+class NumberFieldBuilder<
+  TS = number,
+  // biome-ignore lint/complexity/noBannedTypes: {} is used intentionally for the default empty modifiers
+  Mods extends FieldModifiers = {},
+  ZB extends z.ZodType<TS, z.ZodTypeDef, TS> = z.ZodType<TS, z.ZodTypeDef, TS>,
+> extends BaseFieldBuilder<TS, Mods, ZB> {
+  get zodBase(): ZB {
+    let schema: z.ZodTypeAny = zLib.number()
 
     if (this.modifiers.min !== undefined) {
       // biome-ignore lint/suspicious/noExplicitAny: Chaining Zod methods
@@ -264,7 +269,8 @@ class NumberFieldBuilder<TS = number, Mods extends FieldModifiers = {}> extends 
       schema = (schema as any).max(this.modifiers.max)
     }
 
-    return this.applyModifiersToZod(schema)
+    // biome-ignore lint/suspicious/noExplicitAny: Return type cast for generic ZB parameter
+    return this.applyModifiersToZod(schema) as any
   }
 
   drizzleColumn(name: string): SQLiteColumnBuilderBase {
@@ -364,13 +370,14 @@ class NumberFieldBuilder<TS = number, Mods extends FieldModifiers = {}> extends 
 
 // ==================== IntegerFieldBuilder ====================
 
-// biome-ignore lint/complexity/noBannedTypes: {} is used intentionally for the default empty modifiers
-class IntegerFieldBuilder<TS = number, Mods extends FieldModifiers = {}> extends BaseFieldBuilder<
-  TS,
-  Mods
-> {
-  get zodBase(): ZodTypeAny {
-    let schema = z.number().int() as ZodTypeAny
+class IntegerFieldBuilder<
+  TS = number,
+  // biome-ignore lint/complexity/noBannedTypes: {} is used intentionally for the default empty modifiers
+  Mods extends FieldModifiers = {},
+  ZB extends z.ZodType<TS, z.ZodTypeDef, TS> = z.ZodType<TS, z.ZodTypeDef, TS>,
+> extends BaseFieldBuilder<TS, Mods, ZB> {
+  get zodBase(): ZB {
+    let schema: z.ZodTypeAny = zLib.number().int()
 
     if (this.modifiers.min !== undefined) {
       // biome-ignore lint/suspicious/noExplicitAny: Chaining Zod methods
@@ -381,7 +388,8 @@ class IntegerFieldBuilder<TS = number, Mods extends FieldModifiers = {}> extends
       schema = (schema as any).max(this.modifiers.max)
     }
 
-    return this.applyModifiersToZod(schema)
+    // biome-ignore lint/suspicious/noExplicitAny: Return type cast for generic ZB parameter
+    return this.applyModifiersToZod(schema) as any
   }
 
   drizzleColumn(name: string): SQLiteColumnBuilderBase {
@@ -481,13 +489,14 @@ class IntegerFieldBuilder<TS = number, Mods extends FieldModifiers = {}> extends
 
 // ==================== BooleanFieldBuilder ====================
 
-// biome-ignore lint/complexity/noBannedTypes: {} is used intentionally for the default empty modifiers
-class BooleanFieldBuilder<TS = boolean, Mods extends FieldModifiers = {}> extends BaseFieldBuilder<
-  TS,
-  Mods
-> {
-  get zodBase(): ZodTypeAny {
-    return this.applyModifiersToZod(z.boolean())
+class BooleanFieldBuilder<
+  TS = boolean,
+  // biome-ignore lint/complexity/noBannedTypes: {} is used intentionally for the default empty modifiers
+  Mods extends FieldModifiers = {},
+  ZB extends z.ZodType<TS, z.ZodTypeDef, TS> = z.ZodType<TS, z.ZodTypeDef, TS>,
+> extends BaseFieldBuilder<TS, Mods, ZB> {
+  get zodBase(): ZB {
+    return this.applyModifiersToZod(zLib.boolean()) as ZB
   }
 
   drizzleColumn(name: string): SQLiteColumnBuilderBase {
@@ -565,13 +574,18 @@ class BooleanFieldBuilder<TS = boolean, Mods extends FieldModifiers = {}> extend
 
 // ==================== TimestampFieldBuilder ====================
 
-// biome-ignore lint/complexity/noBannedTypes: {} is used intentionally for the default empty modifiers
-class TimestampFieldBuilder<TS = Date, Mods extends FieldModifiers = {}> extends BaseFieldBuilder<
-  TS,
-  Mods
-> {
-  get zodBase(): ZodTypeAny {
-    return this.applyModifiersToZod(z.coerce.date())
+class TimestampFieldBuilder<
+  TS = Date,
+  // biome-ignore lint/complexity/noBannedTypes: {} is used intentionally for the default empty modifiers
+  Mods extends FieldModifiers = {},
+  ZB extends z.ZodType<TS, z.ZodTypeDef, Date | string | number> = z.ZodType<
+    TS,
+    z.ZodTypeDef,
+    Date | string | number
+  >,
+> extends BaseFieldBuilder<TS, Mods, ZB> {
+  get zodBase(): ZB {
+    return this.applyModifiersToZod(zLib.coerce.date()) as ZB
   }
 
   drizzleColumn(name: string): SQLiteColumnBuilderBase {
@@ -658,9 +672,10 @@ class JsonFieldBuilder<
   TS = T,
   // biome-ignore lint/complexity/noBannedTypes: {} is used intentionally for the default empty modifiers
   Mods extends FieldModifiers = {},
-> extends BaseFieldBuilder<TS, Mods> {
-  get zodBase(): ZodTypeAny {
-    return this.applyModifiersToZod(z.unknown())
+  ZB extends z.ZodType<TS, z.ZodTypeDef, TS> = z.ZodType<TS, z.ZodTypeDef, TS>,
+> extends BaseFieldBuilder<TS, Mods, ZB> {
+  get zodBase(): ZB {
+    return this.applyModifiersToZod(zLib.unknown()) as ZB
   }
 
   drizzleColumn(name: string): SQLiteColumnBuilderBase {

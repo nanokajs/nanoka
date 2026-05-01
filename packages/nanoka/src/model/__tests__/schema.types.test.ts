@@ -124,4 +124,37 @@ describe('Model: schema() type inference', () => {
       }
     })
   })
+
+  describe('schema() type validation', () => {
+    it('rejects typo in omit', () => {
+      // @ts-expect-error - 'passwordHashh' is not a valid field name
+      User.schema({ omit: ['passwordHashh'] })
+    })
+
+    it('rejects typo in pick', () => {
+      // @ts-expect-error - 'emial' is not a valid field name
+      User.schema({ pick: ['emial'] })
+    })
+
+    it('rejects typo in validator omit', () => {
+      // @ts-expect-error - 'passwordHashh' is not a valid field name
+      User.validator('json', { omit: ['passwordHashh'] })
+    })
+
+    it('omitted fields are absent from output type', () => {
+      const s = User.schema({ omit: ['passwordHash'] })
+      type Out = z.infer<typeof s>
+      // @ts-expect-error - passwordHash should be absent
+      const _check: Out = { id: '', name: '', email: '', passwordHash: '' }
+      void _check
+    })
+
+    it('picked-out fields are absent from output type', () => {
+      const s = User.schema({ pick: ['name', 'email'] })
+      type Out = z.infer<typeof s>
+      // @ts-expect-error - id should be absent
+      const _check: Out = { id: '', name: '', email: '' }
+      void _check
+    })
+  })
 })

@@ -1,5 +1,5 @@
 import type { SQLiteColumnBuilderBase } from 'drizzle-orm/sqlite-core'
-import type { ZodTypeAny } from 'zod'
+import type { z } from 'zod'
 
 export interface FieldModifiers {
   optional?: boolean
@@ -17,14 +17,19 @@ export interface FieldModifiers {
  *
  * @template TS - The TypeScript runtime type of the field (e.g. `string`, `number`, `Date`)
  * @template Mods - Modifiers applied to the field (optional, primary, unique, etc.)
+ * @template ZB - The Zod base schema type for this field
  *
  * The `tsType` property is a phantom type (its runtime value is always `undefined as unknown as TS`)
  * and serves purely for type narrowing. It is not intended for runtime access.
  *
  * @internal `tsType` is an internal phantom property; use type narrowing via `InferFieldType` instead.
  */
-// biome-ignore lint/complexity/noBannedTypes: {} is used intentionally for the default empty modifiers
-export interface Field<TS = unknown, Mods extends FieldModifiers = {}> {
+export interface Field<
+  TS = unknown,
+  // biome-ignore lint/complexity/noBannedTypes: {} is used intentionally for the default empty modifiers
+  Mods extends FieldModifiers = {},
+  ZB extends z.ZodTypeAny = z.ZodTypeAny,
+> {
   /**
    * Phantom type representing the TypeScript type of this field.
    *
@@ -36,7 +41,7 @@ export interface Field<TS = unknown, Mods extends FieldModifiers = {}> {
    * A Zod schema that validates values matching this field's configuration.
    * Includes all modifiers (format constraints, min/max, optional, default).
    */
-  readonly zodBase: ZodTypeAny
+  readonly zodBase: ZB
 
   /**
    * The modifiers currently applied to this field.
@@ -59,4 +64,4 @@ export interface Field<TS = unknown, Mods extends FieldModifiers = {}> {
  * type T1 = InferFieldType<typeof t.string()> // string
  * type T2 = InferFieldType<typeof t.string().optional()> // string | undefined
  */
-export type InferFieldType<F> = F extends Field<infer T, FieldModifiers> ? T : never
+export type InferFieldType<F> = F extends Field<infer T, FieldModifiers, z.ZodTypeAny> ? T : never

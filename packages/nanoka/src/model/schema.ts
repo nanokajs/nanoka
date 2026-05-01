@@ -7,7 +7,7 @@ import type { SchemaOptions } from './types'
  * Returns a ZodObject with all fields required and present.
  */
 // biome-ignore lint/suspicious/noExplicitAny: any is necessary for generic Field handling and Zod shape
-export function buildBaseObject(fields: Record<string, Field<any, any>>): z.ZodObject<any> {
+export function buildBaseObject(fields: Record<string, Field<any, any, any>>): z.ZodObject<any> {
   // biome-ignore lint/suspicious/noExplicitAny: Record key-value pairs have any type for shape
   const shape: Record<string, any> = {}
   for (const [key, field] of Object.entries(fields)) {

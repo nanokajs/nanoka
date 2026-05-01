@@ -111,6 +111,7 @@
 - [ ] `app.batch(...)` で D1 batch をそのまま公開（独自抽象を作らない、rule #7）
 - [ ] エラーは Hono の `HTTPException` のまま（rule #2、独自エラー型を作らない）
 - [ ] `app.fetch` が Workers handler としてそのまま使える
+- [ ] **M2 持ち越し**: `Model.validator()` の戻り型を `MiddlewareHandler<any, any, any>` から精緻型へ。`zValidator` の `MiddlewareHandler<E, P, { in: { [T in Target]: z.input<Apply<...>> }, out: { [T in Target]: z.output<Apply<...>> } }>` を透過させ、ハンドラ側の `c.req.valid(target)` の型が `Apply` 後の shape に揃うようにする。M2 では implementer が「Hono の generic 仕様が複雑で困難」と判断し据え置き。M5 でルーター本体を組む際に併せて解決する。
 
 完了基準: spec の `app.get('/users', ...)` 例コードが動く。
 

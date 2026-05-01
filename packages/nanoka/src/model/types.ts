@@ -8,7 +8,17 @@ export interface SchemaOptions<K extends string = string> {
   readonly partial?: boolean
 }
 
+const validationTargets = {
+  json: true,
+  query: true,
+  param: true,
+  header: true,
+  cookie: true,
+  form: true,
+} as const
+
 /**
+ * @internal
  * Extracts a Zod shape from fields for the Apply type.
  * Each field's zodBase becomes a property in the shape.
  */
@@ -16,19 +26,21 @@ export type FieldsToZodShape<
   Fields extends Record<
     string,
     // biome-ignore lint/suspicious/noExplicitAny: any is necessary for Field constraint
-    Field<any, any>
+    Field<any, any, any>
   >,
 > = {
   // biome-ignore lint/suspicious/noExplicitAny: any is necessary for Field type checking
-  [K in keyof Fields]: Fields[K] extends Field<any, any> ? Fields[K]['zodBase'] : never
+  [K in keyof Fields]: Fields[K] extends Field<any, any, any> ? Fields[K]['zodBase'] : never
 }
 
 /**
+ * @internal
  * Utility to narrow array literal types to union of strings.
  */
 type ArrayKeys<A> = A extends readonly (infer U)[] ? U : never
 
 /**
+ * @internal
  * Apply pick transformation to a shape.
  */
 type ApplyPickToShape<Shape extends z.ZodRawShape, PickKeys> = PickKeys extends readonly string[]
@@ -36,6 +48,7 @@ type ApplyPickToShape<Shape extends z.ZodRawShape, PickKeys> = PickKeys extends 
   : Shape
 
 /**
+ * @internal
  * Apply omit transformation to a shape.
  */
 type ApplyOmitToShape<Shape extends z.ZodRawShape, OmitKeys> = OmitKeys extends readonly string[]
@@ -43,6 +56,7 @@ type ApplyOmitToShape<Shape extends z.ZodRawShape, OmitKeys> = OmitKeys extends 
   : Shape
 
 /**
+ * @internal
  * Apply partial transformation to a shape.
  */
 type ApplyPartialToShape<Shape extends z.ZodRawShape> = {
@@ -50,6 +64,7 @@ type ApplyPartialToShape<Shape extends z.ZodRawShape> = {
 }
 
 /**
+ * @internal
  * Apply pick/omit/partial transformations to a Zod raw shape.
  * Order: pick → omit → partial
  */
@@ -75,6 +90,7 @@ type ApplyShape<
         : Shape
 
 /**
+ * @internal
  * Returns the correct Zod object type after applying pick/omit/partial transformations.
  */
 export type Apply<
@@ -86,7 +102,7 @@ export type Apply<
  * Represents a database model with type-safe schema derivation.
  */
 // biome-ignore lint/suspicious/noExplicitAny: any is necessary for the generic Field constraint
-export interface Model<Fields extends Record<string, Field<any, any>>> {
+export interface Model<Fields extends Record<string, Field<any, any, any>>> {
   readonly fields: Fields
 
   /**
@@ -111,7 +127,7 @@ export interface Model<Fields extends Record<string, Field<any, any>>> {
    * })
    */
   validator<
-    Target extends 'json' | 'query' | 'param' | 'header' | 'cookie' | 'form',
+    Target extends keyof typeof validationTargets,
     Opts extends SchemaOptions<keyof Fields & string> | undefined = undefined,
   >(
     target: Target,

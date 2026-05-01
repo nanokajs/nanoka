@@ -1,5 +1,5 @@
 import type { SQLiteColumnBuilderBase } from 'drizzle-orm/sqlite-core'
-import type { ZodTypeAny } from 'zod'
+import type { z } from 'zod'
 import type { Field, FieldModifiers } from './types'
 
 /**
@@ -7,16 +7,20 @@ import type { Field, FieldModifiers } from './types'
  * Provides shared implementation for Zod and Drizzle integration.
  *
  * Subclasses must implement:
- * - `zodBase: ZodTypeAny` getter
+ * - `zodBase: ZB` getter
  * - `drizzleColumn(name: string): SQLiteColumnBuilderBase` method
  * - Modifier chain methods (optional, primary, unique, default) that return the subclass type
  *
  * @template TS - The TypeScript type of the field
  * @template Mods - The type of modifiers currently applied
+ * @template ZB - The Zod base schema type for this field
  */
-// biome-ignore lint/complexity/noBannedTypes: {} is used intentionally for the default empty modifiers
-export abstract class BaseFieldBuilder<TS, Mods extends FieldModifiers = {}>
-  implements Field<TS, Mods>
+export abstract class BaseFieldBuilder<
+  TS,
+  // biome-ignore lint/complexity/noBannedTypes: {} is used intentionally for the default empty modifiers
+  Mods extends FieldModifiers = {},
+  ZB extends z.ZodTypeAny = z.ZodTypeAny,
+> implements Field<TS, Mods, ZB>
 {
   readonly tsType: TS = undefined as unknown as TS
   readonly modifiers: Readonly<Mods>
@@ -25,7 +29,7 @@ export abstract class BaseFieldBuilder<TS, Mods extends FieldModifiers = {}>
     this.modifiers = Object.freeze((modifiers ?? {}) as Mods)
   }
 
-  abstract get zodBase(): ZodTypeAny
+  abstract get zodBase(): ZB
   abstract drizzleColumn(name: string): SQLiteColumnBuilderBase
 
   /**
@@ -39,7 +43,7 @@ export abstract class BaseFieldBuilder<TS, Mods extends FieldModifiers = {}>
    * Returns the Zod schema with all modifiers applied.
    * Order: base schema → format/min/max constraints → optional → default
    */
-  protected applyModifiersToZod(baseSchema: ZodTypeAny): ZodTypeAny {
+  protected applyModifiersToZod(baseSchema: z.ZodTypeAny): z.ZodTypeAny {
     let schema = baseSchema
 
     // Apply optional
