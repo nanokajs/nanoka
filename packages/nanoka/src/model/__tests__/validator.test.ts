@@ -197,7 +197,19 @@ describe('Model: validator() Hono integration', () => {
   })
 
   describe('validator() type safety', () => {
-    it('typed context with omit', async () => {
+    // TODO:M5 Type safety validation for validator() return type
+    // Currently, the validator middleware returns MiddlewareHandler<any, any, any>,
+    // which means c.req.valid('json') has type `any`, so the type assignment check
+    // below does not catch type mismatches at compile time.
+    //
+    // In M5, when we refactor validator() to return a properly-typed MiddlewareHandler
+    // with zValidator's generic signature, the body type will be narrowed to exclude
+    // omitted fields (e.g., passwordHash). At that point, this test should be rewritten
+    // to use @ts-expect-error to verify that attempting to assign a shape containing
+    // passwordHash is rejected by TypeScript.
+    //
+    // See: docs/phase1-plan.md M5 section for details.
+    it('[TODO:M5] typed context with omit (currently tests runtime only — body is any)', async () => {
       const app = new Hono()
 
       app.post('/users', User.validator('json', { omit: ['passwordHash'] }), (c) => {

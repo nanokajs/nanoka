@@ -10,8 +10,9 @@
 
 - **M0: スキャフォールディング完了**
 - **M1: フィールド DSL（`t`）完了**
+- **M2: モデル派生（`schema` / `validator`）完了**
 - `pnpm install` / `pnpm -C packages/nanoka build` / `pnpm -C packages/nanoka test` がすべて通る
-- 次の着手対象は **M2: モデル派生（`schema` / `validator`）**
+- 次の着手対象は **M3: Adapter 層**
 
 ---
 
@@ -111,7 +112,11 @@
 - [ ] `app.batch(...)` で D1 batch をそのまま公開（独自抽象を作らない、rule #7）
 - [ ] エラーは Hono の `HTTPException` のまま（rule #2、独自エラー型を作らない）
 - [ ] `app.fetch` が Workers handler としてそのまま使える
-- [ ] **M2 持ち越し**: `Model.validator()` の戻り型を `MiddlewareHandler<any, any, any>` から精緻型へ。`zValidator` の `MiddlewareHandler<E, P, { in: { [T in Target]: z.input<Apply<...>> }, out: { [T in Target]: z.output<Apply<...>> } }>` を透過させ、ハンドラ側の `c.req.valid(target)` の型が `Apply` 後の shape に揃うようにする。M2 では implementer が「Hono の generic 仕様が複雑で困難」と判断し据え置き。M5 でルーター本体を組む際に併せて解決する。
+- [ ] **M2 持ち越し（型精緻化）**: 以下の 3 点を一括で解決する。
+  - [ ] `Model.validator()` の戻り型を `MiddlewareHandler<any, any, any>` から精緻型へ。`zValidator` の `MiddlewareHandler<E, P, { in: { [T in Target]: z.input<Apply<...>> }, out: { [T in Target]: z.output<Apply<...>> } }>` を透過させ、ハンドラ側の `c.req.valid(target)` の型が `Apply` 後の shape に揃うようにする。
+  - [ ] `FieldsToZodShape<Fields>` の型が `ZodTypeAny` に潰れる問題を解決する。`Fields[K] extends Field<any, any, any> ? Fields[K]['zodBase'] : never` の制約式が第 3 generic `ZB` を `any` に解消するため、`zodBase` から具体的な `z.ZodType<TS, ..., InputTS>` が取り出せていない可能性がある。`schema()` の戻り値の `z.infer` 型が `Record<string, unknown>` 相当になっていないか型レベルで再検証し、必要に応じて制約式を見直す。
+  - [ ] `validator.test.ts` の `[TODO:M5]` プレフィックス付きテストを `@ts-expect-error` で `passwordHash` の排除を検証する形に書き直す。
+  - 経緯: M2 では implementer が「Hono の generic 仕様が複雑で困難」と判断し据え置き。M5 でルーター本体を組む際に併せて解決する。
 
 完了基準: spec の `app.get('/users', ...)` 例コードが動く。
 
@@ -154,6 +159,7 @@
 - `User.where(f => ...)` 形式（フィールドアクセサ）→ Phase 2
 - OpenAPI 自動生成 → Phase 2
 - Turso / libSQL adapter → Phase 2
+- `t.json(zodSchema)` 形式の引数化（現状 `t.json()` は `z.unknown()` で runtime 検証なし。security review M-1） → Phase 2 で検討
 - `npx create-nanoka-app` → Phase 3
 - 認証 / フルスタック React / 複雑な query DSL → 全 Phase でスコープ外
 

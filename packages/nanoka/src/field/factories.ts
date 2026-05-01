@@ -667,6 +667,12 @@ class TimestampFieldBuilder<
 
 // ==================== JsonFieldBuilder ====================
 
+/**
+ * JSON フィールドビルダー。
+ *
+ * ⚠️ セキュリティ警告: zod ベースは `z.unknown()` のため、API に晒す際は
+ * `validator()` で除外するか、別途検証が必須。
+ */
 class JsonFieldBuilder<
   T = unknown,
   TS = T,
@@ -819,6 +825,20 @@ export const t = {
     return new TimestampFieldBuilder<Date, {}>()
   },
 
+  /**
+   * JSON フィールド。任意の JSON 値を受け入れる（Zod 内部表現は `z.unknown()`）。
+   *
+   * ⚠️ セキュリティ警告:
+   * このフィールドの zod ベースは `z.unknown()` のため、型パラメータ `T` で
+   * 指定した制約は **コンパイル時のみ** 適用され、validator() 経由でも
+   * runtime バリデーションは行われません。API 入力として晒す場合は:
+   *   - `model.validator(target, { omit: ['<json field name>'] })` で除外する、または
+   *   - ハンドラ側で別途 Zod スキーマを使って手動検証する、
+   * のいずれかを必ず実施してください。型パラメータが `unknown` 以外の値を
+   * runtime で保証することはありません。
+   *
+   * Phase 2 以降で `t.json(zodSchema)` 形式の引数追加を検討中。
+   */
   json<T = unknown>(): JsonFieldBuilder<
     T,
     T,
