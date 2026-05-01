@@ -1,0 +1,262 @@
+# Nanoka
+
+> 七日（なのか）— 週休7日制の楽園から生まれた、Hono/Drizzle薄ラッパー
+
+---
+
+## コンセプト
+
+**「ありえないほど怠惰に書けるWorkers APIレイヤー」**
+
+エンジニアが「Webアプリ書くのめんどくさい」と感じる時間の大半は、ルーティングではなくDB周りの儀式だ。スキーマ定義 → 型生成 → マイグレーション → クエリ → バリデーション、この5ステップを別々のツールで繋ぐ現状を、Nanokaはモデル定義を中心に据えて整理する。
+
+Nanokaは**薄いラッパーとして始める**。HonoとDrizzleを捨てるのではなく、その上に乗る。使われたらフレームワークに育てる——名乗るのは後でいい。
+
+名前の由来は「七日」。誰も悲しまない楽園のコンセプト——**週休7日制**——から。Honoが「炎」なら、Nanokaはその炎が消えた後の静けさ。
+
+---
+
+## ポジショニング
+
+| | Hono | Drizzle | Nanoka |
+|---|---|---|---|
+| ルーティング | ✅ | ❌ | ✅（Hono内包） |
+| ORM / クエリ | ❌ | ✅ | ✅（Drizzle内包） |
+| マイグレーション | ❌ | ✅ | ✅（生成・手動実行） |
+| バリデーション | △（Zod別途） | ❌ | ✅（モデルから派生） |
+| CF Workers対応 | ✅ | ✅ | ✅ |
+| 学習コスト | 低 | 中 | **低** |
+
+現在のベストプラクティスは `Hono + Drizzle + Zod` の3つを自分で繋ぐ構成。Nanokaはモデル定義をDBスキーマと型の中核に置き、そこからバリデーションを派生させることでこの儀式を削る。
+
+---
+
+## ターゲット
+
+- **プラットフォーム**: Cloudflare Workers + D1（SQLite）ファーストクラスサポート
+- **対象ユーザー**: TypeScriptでAPIを速く書きたい個人開発者・スモールチーム
+- **空白ポジション**: Cloudflare Workers + D1向けに、Hono互換・モデル駆動・API-firstをまとめた軽量レイヤーはまだ薄い
+
+### 近い競合との棲み分け
+
+| | Nanoka | RedwoodSDK | Prisma |
+|---|---|---|---|
+| 思想 | API-first / model-first | Full-stack React-first | ORM単体 |
+| ルーター | Hono互換 | RedwoodSDK独自 | なし |
+| DB escape hatch | 素のDrizzle | Kysely / 生SQL | Raw SQL |
+| 主な用途 | 小規模APIを即作る | フルスタックアプリを組む | DBアクセス層のみ |
+
+**Prismaについて**: Prisma 7.0でバンドルサイズ問題は解消されWorkers互換になった。NanokaはPrismaより軽いことを売りにしない。「Workers + D1 + Hono API構築体験を薄く統合する」用途が違う。
+
+> **なぜ今まで誰も統合しなかったか**
+> CF Workers + D1の組み合わせが成熟したのが2024〜2025年。プラットフォームの完成度が統合レイヤーを作る前提条件で、そのタイミングがちょうど今。
+
+---
+
+## コアバリュー：モデルをDBスキーマと型の中核に
+
+モデル定義からDBスキーマ・型・基本バリデーションを派生させる。ただし**「唯一の真実」はDB寄りに限定する**。APIの入出力はDBモデルとズレる場面が必ずある（`passwordHash`はDBにあるがレスポンスには出せない、など）。バリデーションはモデルからの派生だが、ルートごとの調整は明示的に書く。
+
+```ts
+import { nanoka, t } from 'nanoka'
+
+const app = nanoka()
+
+// モデル定義 → DBスキーマ・型・ベースバリデーションが派生する
+const User = app.model('users', {
+  id:           t.uuid().primary(),
+  name:         t.string(),
+  email:        t.string().email(),
+  passwordHash: t.string(),          // DBにはあるがAPIレスポンスには出さない
+})
+
+// GETはページネーション付きで安全に
+app.get('/users', async (c) => {
+  const users = await User.findMany({ limit: 20, offset: 0, orderBy: 'id' })
+  return c.json(users)
+})
+
+// POSTはschemaをHono validatorとして使う
+app.post('/users', User.validator('json', { omit: ['passwordHash'] }), async (c) => {
+  const body = c.req.valid('json')   // Hono標準に従う
+  const user = await User.create(body)
+  return c.json(user, 201)
+})
+
+// PATCHはpartialで派生させる
+app.patch('/users/:id', User.validator('json', { partial: true, pick: ['name', 'email'] }), async (c) => {
+  const body = c.req.valid('json')
+  const user = await User.update(c.req.param('id'), body)
+  return c.json(user)
+})
+```
+
+### バリデーションの責務分離
+
+`schema()` と `validator()` を分ける。将来バリデーターだけ差し替えたい場面に備える。
+
+```ts
+// schema() — Zodスキーマを返す。単体でも使える
+const CreateSchema = User.schema({ omit: ['passwordHash'] })
+const UpdateSchema = User.schema({ partial: true, pick: ['name', 'email'] })
+const ResponseSchema = User.schema({ omit: ['passwordHash'] })
+
+// validator() — Hono validatorとして使う。第1引数はHonoのtarget（'json' | 'query' | 'param'）
+User.validator('json', { omit: ['passwordHash'] })
+User.validator('json', { partial: true })
+```
+
+### 型安全なフィールドアクセス（Phase 2）
+
+`pick` / `omit` への文字列配列はタイポがコンパイルエラーにならない。Phase 2でフィールドアクセサAPIを導入し、**Proxyなし・ランタイムコストなし**でタイポを型エラーにする。
+
+```ts
+// Phase 2以降：フィールドアクセサ形式
+User.schema({ pick: (f) => [f.name, f.emial] })
+//                                   ^^^^^^ Type error: 'emial' does not exist
+
+// クエリも統一
+User.where({ email: 'foo@example.com' })           // MVP（オブジェクト形式）
+User.where(f => eq(f.email, 'foo@example.com'))    // Phase 2（アクセサ形式）
+```
+
+内部の `f` はProxyではなく `as const` オブジェクト。ランタイムコストはゼロ。
+
+```ts
+const f = { id: 'id', name: 'name', email: 'email' } as const
+```
+
+---
+
+## 設計方針
+
+### 1. モデルをDB寄りの中核に、派生で解決する
+モデル定義がDBスキーマと型の中核。APIバリデーションはそこから派生させるが、DB層とAPI層の責務は明確に分ける。「全部自動」ではなく「**80%自動、20%明示**」。
+
+### 2. マイグレーションはDrizzle Kit / Wranglerの流儀に乗る
+
+独自のdiffエンジンは書かない。NanokaはモデルDSLからDrizzleスキーマ定義を生成し、migration差分生成・適用はDrizzle KitとWranglerの既存フローに委ねる。
+
+```
+# Nanokaがやること
+nanoka generate        # モデル定義 → Drizzleスキーマファイルを生成
+
+# 既存ツールに委ねること
+drizzle-kit generate   # スキーマ差分からSQLを生成
+wrangler d1 migrations apply --local / --remote  # 適用
+```
+
+この分界により、migration基盤を自前で維持するコストをゼロにする。migration差分生成・SQL管理はDrizzle Kit / Wranglerの既存フローに寄せる。
+
+### 3. D1ファースト、adapter設計で逃げ道を用意
+D1をファーストクラスサポートしつつ、最初からadapter層を設計に含める。TursoやlibSQLへの移行パスを閉じない。
+
+### 4. Honoを内包する
+「共存」ではなく「内包」。NanokaのルーターはHono互換とし、サンプルコードも `c.req.valid('json')` などHono標準に従う。Honoのエコシステム（middleware・RPC・OpenAPI）をそのまま使える。
+
+### 5. escape hatchを常に開けておく
+抽象が邪魔になったら素のDrizzleに降りられる。フレームワークに閉じ込めない。
+
+```ts
+// いつでも素のDrizzleに降りられる
+const result = await app.db
+  .select()
+  .from(User.table)
+  .where(eq(User.table.email, 'foo@example.com'))
+  .limit(1)
+```
+
+---
+
+## Nanokaがやらないこと（MVP時点）
+
+- フルスタックReactフレームワークにはしない
+- 認証・認可をコアに含めない
+- 複雑なSQLをDSLですべて表現しない（素のDrizzleで書く）
+- マイグレーションを自動実行しない
+- D1以外のDBをMVP段階で完全サポートしない
+- relationをMVPに含めない（Phase 2以降、手書きDrizzleで対応）
+- フィールドアクセサAPIをMVPに含めない（Phase 2以降）
+
+> **成長戦略**: 薄いラッパーとして始め、使われたらフレームワークに育てる。スコープを広げるタイミングはユーザーの声が判断基準。名乗るのは後でいい。
+
+---
+
+## 実装ロードマップ
+
+### Phase 1 — MVP（薄いラッパーとして成立させる）
+
+**残すもの**
+- [ ] `app.model()` DSLの設計と実装
+- [ ] `nanoka generate`（モデル定義 → Drizzleスキーマ生成）
+- [ ] Drizzle Kit / Wrangler migration flowのテンプレート生成
+- [ ] READMEにmigration手順を明記
+- [ ] 基本CRUDクエリ（`findMany` / `findOne` / `create` / `update` / `delete`）
+- [ ] `User.schema()` / `User.validator()` の派生バリデーション（責務分離）
+- [ ] D1 adapter実装（adapter層を最初から分離）
+- [ ] Cloudflare Workers上での動作確認
+
+**最低限対応する設計上の問い**
+- pagination: `findMany({ limit, offset, orderBy })` をデフォルト安全に
+- エラーハンドリング: Honoの `HTTPException` に乗る。Nanokaは独自エラー型を持たない
+- transaction: D1のbatch APIをそのまま公開。独自抽象は持たない
+
+> **Phase 1時点のrelationについて**: `t.hasMany()` / `t.belongsTo()` はMVPに含めない。リレーションが必要な場合は素のDrizzleで書く。cascade・N+1・join型推論の設計負荷はPhase 2以降で向き合う。
+
+### Phase 2 — フレームワークへの育成
+- [ ] フィールドアクセサAPI（`User.schema({ pick: f => [f.name] })`）
+- [ ] 型安全なクエリビルダー（`User.where(f => eq(f.email, x)).limit(10)`）
+- [ ] リレーション定義（`t.hasMany()` / `t.belongsTo()`）※cascade/N+1/joinの型推論を含む重い作業
+- [ ] OpenAPIスキーマ自動生成（Hono RPC連携）
+- [ ] Turso / libSQL adapter
+
+### Phase 3 — エコシステム
+- [ ] CLIツール（`npx create-nanoka-app`）
+- [ ] VSCode拡張（モデル定義からの補完）
+- [ ] OSSコミュニティ整備
+
+---
+
+## 技術スタック（予定）
+
+| レイヤー | 採用技術 | 理由 |
+|---|---|---|
+| ランタイム | Cloudflare Workers | エッジ・低コスト・D1との統合 |
+| DB（ファースト） | Cloudflare D1（SQLite） | Workers前提の最適解 |
+| ORMコア | Drizzle ORM | 7.4kb・エッジ対応・escape hatchが容易 |
+| バリデーション | Zod（派生生成） | 実績・型推論・エコシステム |
+| ルーター | Hono内包 | エッジ対応・RPC・middleware互換 |
+
+---
+
+## 名前について
+
+**Nanoka（七日）**
+
+- 「七日」= 週休7日制の楽園という元コンセプトから直接導出
+- Honoが日本語由来（炎）であることとの世界観の統一
+- npmパッケージ名として現時点で未取得、確認済み
+- 5文字で打ちやすい（`npm install nanoka`）
+
+---
+
+## なぜ今か
+
+- Cloudflare Workersの普及が加速（2024年に開発者300万人、前年比50%増）
+- CF Workers + D1の組み合わせが成熟したのが2024〜2025年。統合レイヤーを作る前提条件がやっと揃った
+- `Hono + Drizzle + Zod` の組み合わせが「デファクト」になりつつあるが、それを束ねる薄い体験レイヤーの空白はまだ残っている
+
+---
+
+## 既知のリスクと対策
+
+| リスク | 対策 |
+|---|---|
+| DB層とAPI層の責務衝突 | 「唯一の真実」はDB寄りに限定。APIバリデーションは派生で明示的に調整 |
+| マイグレーション事故 | 独自diffエンジンを持たない。Drizzle Kit / Wranglerの流儀に完全委譲 |
+| D1ロックイン | adapter層を初期設計に含める |
+| 長期的な抽象の重さ | 素のDrizzleへのescape hatchを常に開けておく |
+| relation設計の複雑さ | MVPスコープから除外。必要なら手書きDrizzleで対応 |
+| `findMany`のデフォルト安全性 | limit必須・デフォルト20件。limitなしは型エラー |
+| スコープ肥大化 | 「やらないこと」リストを公開し、IssueよりもPRを優先する運営方針 |
+| 依存ライブラリのbreaking change | Drizzle・Hono・Zodのメジャーアップは即対応。薄いラッパーゆえ追従コストは低い |
