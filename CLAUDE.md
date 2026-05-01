@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository state
 
-This repo is **pre-implementation**. The only substantive content is `docs/nanoka.md`, the design specification. There is no `package.json`, build system, source tree, or tests yet. The first implementation work will need to scaffold the project (TypeScript, Cloudflare Workers tooling, Drizzle, Hono, Zod, Vitest) from scratch — read `docs/nanoka.md` end-to-end before generating any structure, since the design constrains many choices that look like free decisions.
+The M0 scaffold is in place: pnpm workspace with `packages/nanoka` (library) and `examples/basic` (example app), TypeScript / tsup / vitest-pool-workers / Biome configured. The library `src/` is still essentially empty — implementation begins at M1. Read `docs/nanoka.md` for the design and `docs/phase1-plan.md` for milestone progress before adding code; the design constrains many choices that look like free decisions.
 
 ## Phase 1 progress tracking
 
@@ -43,10 +43,17 @@ The design explicitly defers several features. If a task seems to require one of
 
 ## Commands
 
-None defined yet — there is no build, lint, or test setup. When scaffolding, the toolchain implied by the design is:
+Run from repo root unless otherwise noted.
 
-- Runtime/deploy: `wrangler` (Cloudflare Workers + D1)
-- Schema/migrations: `drizzle-kit generate` + `wrangler d1 migrations apply --local|--remote`
-- The Nanoka CLI command to add: `nanoka generate` (model DSL → Drizzle schema files)
+- `pnpm install` — install all workspace dependencies
+- `pnpm build` — build all packages (currently just `packages/nanoka`)
+- `pnpm -C packages/nanoka build` — build the library only (tsup, ESM + dts)
+- `pnpm -C packages/nanoka test` — run vitest under @cloudflare/vitest-pool-workers
+- `pnpm -C packages/nanoka typecheck` — `tsc --noEmit` against the library
+- `pnpm lint` — Biome check across the repo
+- `pnpm format` — Biome format-write across the repo
 
-Update this section once `package.json` exists.
+Cloudflare flow (used from M7 onward, not yet wired):
+- `pnpm -C examples/basic dev` — `wrangler dev` for the example app
+- `pnpm -C examples/basic exec drizzle-kit generate` — schema diff → SQL (after M6)
+- `pnpm -C examples/basic exec wrangler d1 migrations apply <DB> --local` — apply migrations

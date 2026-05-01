@@ -1,0 +1,23 @@
+{
+  "name": "nanoka-monorepo",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@9.15.9",
+  "scripts": {
+    "build": "pnpm -r --filter \"./packages/*\" build",
+    "test": "pnpm -r test",
+    "lint": "biome check .",
+    "format": "biome format --write ."
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.0.0",
+    "typescript": "^5.6.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "wrangler": ">=3.114.17 <4.0.0",
+      "devalue": ">=5.6.4",
+      "undici": ">=5.29.0 <6"
+    }
+  }
+}

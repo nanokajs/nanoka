@@ -1,0 +1,40 @@
+{
+  "name": "nanoka",
+  "version": "0.0.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "hono": "^4.0.0",
+    "drizzle-orm": "^0.45.2",
+    "zod": "^3.23.0"
+  },
+  "dependencies": {
+    "@hono/zod-validator": "^0.4.0"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.5.0",
+    "@cloudflare/workers-types": "^4.20240925.0",
+    "drizzle-orm": "^0.45.2",
+    "hono": "^4.0.0",
+    "tsup": "^8.3.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0",
+    "wrangler": "^3.80.0",
+    "zod": "^3.23.0"
+  }
+}

@@ -1,1 +1,10 @@
 .DS_Store
+node_modules/
+dist/
+.wrangler/
+.dev.vars
+.dev.vars.*
+coverage/
+*.log
+.turbo/
+*.tsbuildinfo

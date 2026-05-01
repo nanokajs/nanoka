@@ -8,8 +8,23 @@
 
 ## 現状
 
-- リポジトリは pre-implementation。`package.json` も無い。
-- 実装はまだ 0%。次の着手対象は **M0**。
+- **M0: スキャフォールディング完了**
+- `pnpm install` と `pnpm -C packages/nanoka build` が通る
+- 次の着手対象は **M1: フィールド DSL（`t`）**
+
+---
+
+## 既知の受容リスク
+
+### M0 時点 (2026-05-01)
+
+- **`undici@5.29.0` の High 2 件 (GHSA-vrm6-8vpv-qv8q / GHSA-v9p9-hfj2-hcw8)**
+  - 経路: `@cloudflare/vitest-pool-workers@0.5.x` → `miniflare@3.x` → `undici@5.29.0`
+  - 影響範囲: vitest 実行時の miniflare 内部のみ（dev / CI 環境限定）
+  - 本番 Cloudflare Workers ランタイムは独自 fetch 実装を使用し undici を含まないため影響なし
+  - `undici >=6.24.0` への引き上げは miniflare@3.x が `markAsUncloneable` 等の API 差異で起動不可
+  - **見直し条件**: `@cloudflare/vitest-pool-workers` か `miniflare` が undici@6 系に対応した時点で再評価。M3（adapter 層）/ M4（CRUD クエリ）で D1 binding テストを書くタイミングが自然なリビジット契機。
+  - その他の Major 指摘 (CVE-2026-39356 drizzle-orm SQLi / GHSA-36p8-mvp6-cv38 wrangler / devalue prototype pollution) は対応済み（drizzle-orm `^0.45.2` 引き上げ + `pnpm.overrides` で wrangler `>=3.114.17`, devalue `>=5.6.4`）
 
 ---
 
@@ -32,17 +47,17 @@
 
 ### M0: スキャフォールディング
 
-- [ ] `pnpm-workspace.yaml` と root `package.json` 作成
-- [ ] `packages/nanoka/` 配下に `package.json` / `tsconfig.json`
-- [ ] `examples/basic/` 配下に `package.json` / `wrangler.toml` の雛形
-- [ ] TypeScript 設定: strict / ES2022 / `moduleResolution: bundler`
-- [ ] `tsup` で ESM ビルド設定
-- [ ] `vitest` + `@cloudflare/vitest-pool-workers` を導入
-- [ ] Biome（lint + format）導入
-- [ ] peer dependencies: `hono` / `drizzle-orm` / `zod`
-- [ ] internal: `@hono/zod-validator`
-- [ ] `.gitignore` 整備（`node_modules` / `dist` / `.wrangler` / `.dev.vars` 等）
-- [ ] CLAUDE.md の `## Commands` セクションを実コマンドで更新
+- [x] `pnpm-workspace.yaml` と root `package.json` 作成
+- [x] `packages/nanoka/` 配下に `package.json` / `tsconfig.json`
+- [x] `examples/basic/` 配下に `package.json` / `wrangler.toml` の雛形
+- [x] TypeScript 設定: strict / ES2022 / `moduleResolution: bundler`
+- [x] `tsup` で ESM ビルド設定
+- [x] `vitest` + `@cloudflare/vitest-pool-workers` を導入
+- [x] Biome（lint + format）導入
+- [x] peer dependencies: `hono` / `drizzle-orm` / `zod`
+- [x] internal: `@hono/zod-validator`
+- [x] `.gitignore` 整備（`node_modules` / `dist` / `.wrangler` / `.dev.vars` 等）
+- [x] CLAUDE.md の `## Commands` セクションを実コマンドで更新
 
 完了基準: `pnpm install` と `pnpm -C packages/nanoka build` が通る。
 
