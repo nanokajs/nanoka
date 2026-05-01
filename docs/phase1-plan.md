@@ -9,8 +9,9 @@
 ## 現状
 
 - **M0: スキャフォールディング完了**
-- `pnpm install` と `pnpm -C packages/nanoka build` が通る
-- 次の着手対象は **M1: フィールド DSL（`t`）**
+- **M1: フィールド DSL（`t`）完了**
+- `pnpm install` / `pnpm -C packages/nanoka build` / `pnpm -C packages/nanoka test` がすべて通る
+- 次の着手対象は **M2: モデル派生（`schema` / `validator`）**
 
 ---
 
@@ -63,10 +64,10 @@
 
 ### M1: フィールド DSL（`t`）
 
-- [ ] フィールド型: `string` / `uuid` / `number` / `integer` / `boolean` / `timestamp` / `json`
-- [ ] 修飾子: `.primary()` / `.unique()` / `.optional()` / `.default(...)` / `.email()` / `.min()` / `.max()`
-- [ ] 内部統一インターフェース: 各フィールドが `{ drizzleColumn(name): Column, zodBase: ZodType, tsType }` を返す
-- [ ] 単体テスト: 型推論と Zod / Drizzle 出力の整合
+- [x] フィールド型: `string` / `uuid` / `number` / `integer` / `boolean` / `timestamp` / `json`
+- [x] 修飾子: `.primary()` / `.unique()` / `.optional()` / `.default(...)` / `.email()` / `.min()` / `.max()`
+- [x] 内部統一インターフェース: 各フィールドが `{ drizzleColumn(name): Column, zodBase: ZodType, tsType }` を返す
+- [x] 単体テスト: 型推論と Zod / Drizzle 出力の整合
 
 完了基準: `t.string().email().optional()` のような連結が型と runtime 両方で正しく振る舞う。
 
