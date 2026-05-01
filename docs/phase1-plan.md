@@ -73,11 +73,11 @@
 
 ### M2: モデル派生（`schema` / `validator`）
 
-- [ ] `model.schema({ pick?, omit?, partial? })` → Zod スキーマ
-- [ ] `model.validator(target, opts)` → Hono validator（`@hono/zod-validator` 経由）
-- [ ] **`schema` と `validator` を別メソッドとして保つ**（load-bearing rule #5）
-- [ ] `pick` / `omit` は文字列配列のみ（フィールドアクセサ形式は Phase 2）
-- [ ] 単体テスト: `omit: ['passwordHash']` / `partial: true` / `pick` 各パターン
+- [x] `model.schema({ pick?, omit?, partial? })` → Zod スキーマ
+- [x] `model.validator(target, opts)` → Hono validator（`@hono/zod-validator` 経由）
+- [x] **`schema` と `validator` を別メソッドとして保つ**（load-bearing rule #5）
+- [x] `pick` / `omit` は文字列配列のみ（フィールドアクセサ形式は Phase 2）
+- [x] 単体テスト: `omit: ['passwordHash']` / `partial: true` / `pick` 各パターン
 
 完了基準: spec 例（`User.validator('json', { omit: ['passwordHash'] })` など）がそのまま動く。
 
