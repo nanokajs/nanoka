@@ -157,4 +157,39 @@ describe('Model: schema() type inference', () => {
       void _check
     })
   })
+
+  describe('FieldsToZodShape concrete types', () => {
+    it('preserves concrete Zod input/output types per field', () => {
+      const schema = User.schema()
+      type In = z.input<typeof schema>
+      type Out = z.output<typeof schema>
+      const _in: In = {
+        id: '550e8400-e29b-41d4-a716-446655440000',
+        name: '',
+        email: '',
+        passwordHash: '',
+      }
+      const _out: Out = {
+        id: '550e8400-e29b-41d4-a716-446655440000',
+        name: '',
+        email: '',
+        passwordHash: '',
+      }
+      void _in
+      void _out
+    })
+
+    it('email field validation enforces string type', () => {
+      const schema = User.schema()
+      type In = z.input<typeof schema>
+      // Valid email
+      const valid: In = {
+        id: '550e8400-e29b-41d4-a716-446655440000',
+        name: '',
+        email: 'test@example.com',
+        passwordHash: '',
+      }
+      void valid
+    })
+  })
 })

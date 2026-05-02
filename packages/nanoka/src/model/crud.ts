@@ -123,9 +123,7 @@ export async function findManyImpl<Fields extends Record<string, Field<any, any,
 
   // Apply ordering
   if (options.orderBy !== undefined) {
-    const orderByList = Array.isArray(options.orderBy)
-      ? options.orderBy
-      : [options.orderBy]
+    const orderByList = Array.isArray(options.orderBy) ? options.orderBy : [options.orderBy]
 
     for (const orderByItem of orderByList) {
       let column: string
@@ -133,7 +131,11 @@ export async function findManyImpl<Fields extends Record<string, Field<any, any,
 
       if (typeof orderByItem === 'string') {
         column = orderByItem
-      } else if (typeof orderByItem === 'object' && orderByItem !== null && 'column' in orderByItem) {
+      } else if (
+        typeof orderByItem === 'object' &&
+        orderByItem !== null &&
+        'column' in orderByItem
+      ) {
         column = orderByItem.column
         if (orderByItem.direction) {
           direction = orderByItem.direction
@@ -200,7 +202,10 @@ export async function createImpl<Fields extends Record<string, Field<any, any, a
   data: CreateInput<Fields>,
 ): Promise<RowType<Fields>> {
   // biome-ignore lint/suspicious/noExplicitAny: drizzle query type
-  const rows = await (adapter.drizzle.insert(table).values(data as any).returning() as any)
+  const rows = await (adapter.drizzle
+    .insert(table)
+    .values(data as any)
+    .returning() as any)
   return rows[0]
 }
 
@@ -234,7 +239,11 @@ export async function updateImpl<Fields extends Record<string, Field<any, any, a
   }
 
   // biome-ignore lint/suspicious/noExplicitAny: drizzle query type
-  const rows = await (adapter.drizzle.update(table).set(data as any).where(whereClause).returning() as any)
+  const rows = await (adapter.drizzle
+    .update(table)
+    .set(data as any)
+    .where(whereClause)
+    .returning() as any)
   return rows.length > 0 ? rows[0] : null
 }
 

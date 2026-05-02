@@ -136,19 +136,23 @@ M5（`nanoka()` ルーター）でハンドラ実装の例コード / README を
 
 ### M5: `nanoka()` ルーター
 
-- [ ] `nanoka()` が Hono インスタンスを拡張して返す
-- [ ] `app.model(name, fields)` がモデル登録 + テーブル構築
-- [ ] `app.db` で素の Drizzle を露出（rule #4 の escape hatch）
-- [ ] `app.batch(...)` で D1 batch をそのまま公開（独自抽象を作らない、rule #7）
-- [ ] エラーは Hono の `HTTPException` のまま（rule #2、独自エラー型を作らない）
-- [ ] `app.fetch` が Workers handler としてそのまま使える
-- [ ] **M2 持ち越し（型精緻化）**: 以下の 3 点を一括で解決する。
-  - [ ] `Model.validator()` の戻り型を `MiddlewareHandler<any, any, any>` から精緻型へ。`zValidator` の `MiddlewareHandler<E, P, { in: { [T in Target]: z.input<Apply<...>> }, out: { [T in Target]: z.output<Apply<...>> } }>` を透過させ、ハンドラ側の `c.req.valid(target)` の型が `Apply` 後の shape に揃うようにする。
-  - [ ] `FieldsToZodShape<Fields>` の型が `ZodTypeAny` に潰れる問題を解決する。`Fields[K] extends Field<any, any, any> ? Fields[K]['zodBase'] : never` の制約式が第 3 generic `ZB` を `any` に解消するため、`zodBase` から具体的な `z.ZodType<TS, ..., InputTS>` が取り出せていない可能性がある。`schema()` の戻り値の `z.infer` 型が `Record<string, unknown>` 相当になっていないか型レベルで再検証し、必要に応じて制約式を見直す。
-  - [ ] `validator.test.ts` の `[TODO:M5]` プレフィックス付きテストを `@ts-expect-error` で `passwordHash` の排除を検証する形に書き直す。
+- [x] `nanoka()` が Hono インスタンスを拡張して返す
+- [x] `app.model(name, fields)` がモデル登録 + テーブル構築
+- [x] `app.db` で素の Drizzle を露出（rule #4 の escape hatch）
+- [x] `app.batch(...)` で D1 batch をそのまま公開（独自抽象を作らない、rule #7）
+- [x] エラーは Hono の `HTTPException` のまま（rule #2、独自エラー型を作らない）
+- [x] `app.fetch` が Workers handler としてそのまま使える
+- [x] **M2 持ち越し（型精緻化）**: 以下の 3 点を一括で解決する。
+  - [x] `Model.validator()` の戻り型を `MiddlewareHandler<any, any, any>` から精緻型へ。`zValidator` の `MiddlewareHandler<E, P, { in: { [T in Target]: z.input<Apply<...>> }, out: { [T in Target]: z.output<Apply<...>> } }>` を透過させ、ハンドラ側の `c.req.valid(target)` の型が `Apply` 後の shape に揃うようにする。
+  - [x] `FieldsToZodShape<Fields>` の型が `ZodTypeAny` に潰れる問題を解決する。`Fields[K] extends Field<any, any, any> ? Fields[K]['zodBase'] : never` の制約式が第 3 generic `ZB` を `any` に解消するため、`zodBase` から具体的な `z.ZodType<TS, ..., InputTS>` が取り出せていない可能性がある。`schema()` の戻り値の `z.infer` 型が `Record<string, unknown>` 相当になっていないか型レベルで再検証し、必要に応じて制約式を見直す。
+  - [x] `validator.test.ts` の `[TODO:M5]` プレフィックス付きテストを `@ts-expect-error` で `passwordHash` の排除を検証する形に書き直す。
   - 経緯: M2 では implementer が「Hono の generic 仕様が複雑で困難」と判断し据え置き。M5 でルーター本体を組む際に併せて解決する。
 
 完了基準: spec の `app.get('/users', ...)` 例コードが動く。
+
+### M5 完了時の持ち越し（M8 で対処）
+
+- **`docs/nanoka.md` の Quickstart 表記**: spec 例の `const app = nanoka()` は引数なし表記だが、Phase 1 実装は `nanoka(d1Adapter(env.DB))` 形（プラン採用案A）。M8 README 作業時に spec 表記との差を明示するか、`docs/nanoka.md` 本文を実装に合わせて更新する。
 
 ### M6: スキーマ生成器（`nanoka generate`）
 

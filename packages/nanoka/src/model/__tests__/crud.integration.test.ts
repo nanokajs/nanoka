@@ -163,7 +163,11 @@ describe('CRUD operations: vitest-pool-workers D1 integration', () => {
         email: 'update-test@example.com',
       })
 
-      const updated = await User.update(adapter, { email: 'update-test@example.com' }, { name: 'ViaEmail' })
+      const updated = await User.update(
+        adapter,
+        { email: 'update-test@example.com' },
+        { name: 'ViaEmail' },
+      )
 
       expect(updated).not.toBeNull()
       expect(updated?.name).toBe('ViaEmail')

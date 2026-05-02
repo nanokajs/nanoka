@@ -1,4 +1,4 @@
-import type { MiddlewareHandler } from 'hono'
+import type { MiddlewareHandler, ValidationTargets } from 'hono'
 import type { SQLiteTable } from 'drizzle-orm/sqlite-core'
 import type { z } from 'zod'
 import type { Field, InferFieldType } from '../field/types'
@@ -49,10 +49,7 @@ export type Where<
 export type IdOrWhere<
   // biome-ignore lint/suspicious/noExplicitAny: any is necessary for Field constraint
   Fields extends Record<string, Field<any, any, any>>,
-> =
-  | string
-  | number
-  | Where<Fields>
+> = string | number | Where<Fields>
 
 /**
  * Row type: full record type from fields.
@@ -67,7 +64,7 @@ export type RowType<
 
 /**
  * Create input: partial row (most fields optional for insert).
- * M4 placeholder; will be refined in M5 with Zod shape integration.
+ * Phase 1 では `Partial<RowType>` のままとし、必須/任意フィールドの型区別は Phase 2 で扱う。
  */
 export type CreateInput<
   // biome-ignore lint/suspicious/noExplicitAny: any is necessary for Field constraint
@@ -93,6 +90,7 @@ const validationTargets = {
  * @internal
  * Extracts a Zod shape from fields for the Apply type.
  * Each field's zodBase becomes a property in the shape.
+ * Indexed access ensures concrete Zod types are preserved (not `any`).
  */
 export type FieldsToZodShape<
   Fields extends Record<
@@ -102,7 +100,7 @@ export type FieldsToZodShape<
   >,
 > = {
   // biome-ignore lint/suspicious/noExplicitAny: any is necessary for Field type checking
-  [K in keyof Fields]: Fields[K] extends Field<any, any, any> ? Fields[K]['zodBase'] : never
+  [K in keyof Fields]: Fields[K]['zodBase']
 }
 
 /**
@@ -171,6 +169,50 @@ export type Apply<
 > = z.ZodObject<ApplyShape<Shape, Opts>>
 
 /**
+ * @internal
+ * Mirrors @hono/zod-validator's middleware Input type.
+ * Aligned with @hono/zod-validator@0.4.x; revisit on version bump.
+ */
+type HasUndefined<T> = undefined extends T ? true : false
+
+export type ValidatorInput<
+  Target extends keyof ValidationTargets,
+  Schema extends z.ZodType<any, z.ZodTypeDef, any>,
+  In = z.input<Schema>,
+  Out = z.output<Schema>,
+> = {
+  in: HasUndefined<In> extends true
+    ? {
+        [K in Target]?:
+          | (In extends ValidationTargets[K]
+              ? In
+              : { [K2 in keyof In]?: ValidationTargets[K][K2] | undefined })
+          | undefined
+      }
+    : {
+        [K in Target]: In extends ValidationTargets[K]
+          ? In
+          : { [K2 in keyof In]: ValidationTargets[K][K2] }
+      }
+  out: { [K in Target]: Out }
+}
+
+/**
+ * @internal
+ * Type-safe Hono middleware handler return for Model.validator().
+ * Provides proper type narrowing for c.req.valid(target).
+ */
+export type ModelValidatorReturn<
+  Fields extends Record<string, Field<any, any, any>>,
+  Target extends keyof ValidationTargets,
+  Opts extends SchemaOptions<keyof Fields & string> | undefined,
+> = MiddlewareHandler<
+  any,
+  string,
+  ValidatorInput<Target, Apply<FieldsToZodShape<Fields>, Opts>>
+>
+
+/**
  * Represents a database model with type-safe schema derivation and CRUD operations.
  */
 // biome-ignore lint/suspicious/noExplicitAny: any is necessary for the generic Field constraint
@@ -201,13 +243,9 @@ export interface Model<Fields extends Record<string, Field<any, any, any>>> {
    * })
    */
   validator<
-    Target extends keyof typeof validationTargets,
+    Target extends keyof ValidationTargets,
     Opts extends SchemaOptions<keyof Fields & string> | undefined = undefined,
-  >(
-    target: Target,
-    opts?: Opts,
-    // biome-ignore lint/suspicious/noExplicitAny: Hono context types are not available at this scope
-  ): MiddlewareHandler<any, any, any>
+  >(target: Target, opts?: Opts): ModelValidatorReturn<Fields, Target, Opts>
 
   /**
    * Fetches multiple rows with pagination and optional ordering.
@@ -219,10 +257,7 @@ export interface Model<Fields extends Record<string, Field<any, any, any>>> {
    * const page2 = await User.findMany(adapter, { limit: 20, offset: 20 })
    * const sorted = await User.findMany(adapter, { limit: 10, orderBy: 'name' })
    */
-  findMany(
-    adapter: Adapter,
-    options: FindManyOptions<Fields>,
-  ): Promise<RowType<Fields>[]>
+  findMany(adapter: Adapter, options: FindManyOptions<Fields>): Promise<RowType<Fields>[]>
 
   /**
    * Fetches a single row by primary key or where clause.
@@ -232,10 +267,7 @@ export interface Model<Fields extends Record<string, Field<any, any, any>>> {
    * const user = await User.findOne(adapter, id)
    * const byEmail = await User.findOne(adapter, { email: 'john@example.com' })
    */
-  findOne(
-    adapter: Adapter,
-    idOrWhere: IdOrWhere<Fields>,
-  ): Promise<RowType<Fields> | null>
+  findOne(adapter: Adapter, idOrWhere: IdOrWhere<Fields>): Promise<RowType<Fields> | null>
 
   /**
    * Creates a new row and returns the created record.
@@ -243,10 +275,7 @@ export interface Model<Fields extends Record<string, Field<any, any, any>>> {
    * @example
    * const user = await User.create(adapter, { name: 'John', email: 'john@example.com' })
    */
-  create(
-    adapter: Adapter,
-    data: CreateInput<Fields>,
-  ): Promise<RowType<Fields>>
+  create(adapter: Adapter, data: CreateInput<Fields>): Promise<RowType<Fields>>
 
   /**
    * Updates rows matching the given id or where clause.
@@ -270,8 +299,5 @@ export interface Model<Fields extends Record<string, Field<any, any, any>>> {
    * const result = await User.delete(adapter, id)
    * console.log(result.deleted) // number
    */
-  delete(
-    adapter: Adapter,
-    idOrWhere: IdOrWhere<Fields>,
-  ): Promise<{ readonly deleted: number }>
+  delete(adapter: Adapter, idOrWhere: IdOrWhere<Fields>): Promise<{ readonly deleted: number }>
 }

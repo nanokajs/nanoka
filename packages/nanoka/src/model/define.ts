@@ -1,19 +1,21 @@
+import type { ValidationTargets } from 'hono'
 import { zValidator } from '@hono/zod-validator'
 import type { Field } from '../field/types'
 import type { Adapter } from '../adapter/types'
 import { applySchemaOptions, buildBaseObject } from './schema'
 import { buildTable } from './table'
 import { findManyImpl, findOneImpl, createImpl, updateImpl, deleteImpl } from './crud'
-import type { Apply, FieldsToZodShape, Model, SchemaOptions, FindManyOptions, IdOrWhere, RowType, CreateInput } from './types'
-
-const validationTargets = {
-  json: true,
-  query: true,
-  param: true,
-  header: true,
-  cookie: true,
-  form: true,
-} as const
+import type {
+  Apply,
+  FieldsToZodShape,
+  Model,
+  SchemaOptions,
+  FindManyOptions,
+  IdOrWhere,
+  RowType,
+  CreateInput,
+  ModelValidatorReturn,
+} from './types'
 
 /**
  * Creates a Model instance from a tableName and fields definition.
@@ -52,12 +54,12 @@ export function defineModel<Fields extends Record<string, Field<any, any, any>>>
     },
 
     validator<
-      Target extends keyof typeof validationTargets,
+      Target extends keyof ValidationTargets,
       Opts extends SchemaOptions<keyof Fields & string> | undefined = undefined,
-    >(target: Target, opts?: Opts) {
+    >(target: Target, opts?: Opts): ModelValidatorReturn<Fields, Target, Opts> {
       const schema = this.schema(opts)
       // biome-ignore lint/suspicious/noExplicitAny: zValidator requires casting for proper operation
-      return zValidator(target, schema as any)
+      return zValidator(target, schema as any) as any
     },
 
     findMany(adapter: Adapter, options: FindManyOptions<Fields>): Promise<RowType<Fields>[]> {

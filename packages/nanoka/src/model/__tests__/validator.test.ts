@@ -197,30 +197,25 @@ describe('Model: validator() Hono integration', () => {
   })
 
   describe('validator() type safety', () => {
-    // TODO:M5 Type safety validation for validator() return type
-    // Currently, the validator middleware returns MiddlewareHandler<any, any, any>,
-    // which means c.req.valid('json') has type `any`, so the type assignment check
-    // below does not catch type mismatches at compile time.
-    //
-    // In M5, when we refactor validator() to return a properly-typed MiddlewareHandler
-    // with zValidator's generic signature, the body type will be narrowed to exclude
-    // omitted fields (e.g., passwordHash). At that point, this test should be rewritten
-    // to use @ts-expect-error to verify that attempting to assign a shape containing
-    // passwordHash is rejected by TypeScript.
-    //
-    // See: docs/phase1-plan.md M5 section for details.
-    it('[TODO:M5] typed context with omit (currently tests runtime only — body is any)', async () => {
+    it('typed context narrows body to exclude omitted fields', async () => {
       const app = new Hono()
 
       app.post('/users', User.validator('json', { omit: ['passwordHash'] }), (c) => {
         const body = c.req.valid('json')
-        // body should not have passwordHash
-        type BodyType = typeof body
-        const _check: BodyType = {
+        const _ok: typeof body = {
           id: '550e8400-e29b-41d4-a716-446655440000',
           name: 'John',
           email: 'john@example.com',
         }
+        void _ok
+        const _bad: typeof body = {
+          id: '550e8400-e29b-41d4-a716-446655440000',
+          name: 'John',
+          email: 'john@example.com',
+          // @ts-expect-error - passwordHash should not be assignable to validated body type
+          passwordHash: 'leaked',
+        }
+        void _bad
         return c.json({ ok: true })
       })
 
@@ -236,6 +231,32 @@ describe('Model: validator() Hono integration', () => {
 
       const response = await app.fetch(request)
       expect(response.status).toBe(200)
+    })
+
+    it('strips omitted fields at runtime', async () => {
+      const app = new Hono()
+
+      app.post('/users', User.validator('json', { omit: ['passwordHash'] }), (c) => {
+        const body = c.req.valid('json')
+        return c.json({ received: body })
+      })
+
+      const request = new Request('http://localhost/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: '550e8400-e29b-41d4-a716-446655440000',
+          name: 'John',
+          email: 'john@example.com',
+          passwordHash: 'should-be-ignored',
+        }),
+      })
+
+      const response = await app.fetch(request)
+      expect(response.status).toBe(200)
+      const data = (await response.json()) as Record<string, unknown>
+      const received = data.received as Record<string, unknown>
+      expect(received).not.toHaveProperty('passwordHash')
     })
   })
 })
