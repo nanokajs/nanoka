@@ -32,6 +32,30 @@ Peer dependencies: `hono ^4.0.0`, `drizzle-orm ^0.45.0`, `zod ^3.23.0`, `@cloudf
 
 `drizzle-kit` is required at install time (not a peer dep) because `npx drizzle-kit generate` is the supported migration step — see Quickstart step 3.
 
+### Starting from `pnpm create hono@latest`
+
+If you scaffolded the project with `pnpm create hono@latest` (Cloudflare Workers template), the scaffold ships only `wrangler` as a devDependency — **TypeScript itself, `@cloudflare/workers-types` ambient setup, and `drizzle-kit` are not included**. From a fresh `create hono` directory, run:
+
+```bash
+pnpm add @nanokajs/core drizzle-orm zod@^3.23.0
+pnpm add -D typescript drizzle-kit @cloudflare/workers-types
+```
+
+Then add a `types` entry to `tsconfig.json` so `D1Database`, `Request`, `ExecutionContext`, and `crypto` resolve as ambient globals (no per-file imports needed):
+
+```jsonc
+{
+  "compilerOptions": {
+    // ... existing options ...
+    "types": ["@cloudflare/workers-types"]
+  }
+}
+```
+
+Without `types`, you would have to `import { D1Database, Request, ... } from '@cloudflare/workers-types'` in every file — which works for types but is misleading because the package has no runtime exports, and importing `Request` shadows the global `Request` constructor.
+
+After this, the [Minimal example](#minimal-example-model--1-route) below works as written.
+
 ## Quickstart
 
 ### 3 commands to a working API
