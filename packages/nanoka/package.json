@@ -13,7 +13,15 @@
   "bugs": {
     "url": "https://github.com/nanokajs/nanoka/issues"
   },
-  "keywords": ["hono", "drizzle", "zod", "cloudflare-workers", "d1", "orm", "validation"],
+  "keywords": [
+    "hono",
+    "drizzle",
+    "zod",
+    "cloudflare-workers",
+    "d1",
+    "orm",
+    "validation"
+  ],
   "engines": {
     "node": ">=20"
   },

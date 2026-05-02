@@ -1,6 +1,5 @@
 import { Hono } from 'hono'
 import { describe, expect, it, vi } from 'vitest'
-import { d1Adapter } from '../../adapter'
 import { t } from '../../field'
 import { nanoka } from '../nanoka'
 
@@ -137,7 +136,7 @@ describe('nanoka(adapter)', () => {
 
       let middlewareExecuted = false
 
-      app.use('*', (c, next) => {
+      app.use('*', (_c, next) => {
         middlewareExecuted = true
         return next()
       })

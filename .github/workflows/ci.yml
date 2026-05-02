@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Verify LICENSE files are in sync
+        run: |
+          if ! diff -q LICENSE packages/nanoka/LICENSE >/dev/null; then
+            echo "::error::LICENSE files at repository root and packages/nanoka/ are out of sync."
+            echo "Both files must be byte-identical. Run: cp LICENSE packages/nanoka/LICENSE"
+            diff LICENSE packages/nanoka/LICENSE || true
+            exit 1
+          fi
+
+      - run: pnpm -C packages/nanoka build
+
+      - run: pnpm -C packages/nanoka test
+
+      - run: pnpm -C packages/nanoka typecheck
+
+      - run: pnpm -C examples/basic typecheck
+
+      - run: pnpm -C examples/basic test
+
+      - run: pnpm lint

@@ -169,3 +169,21 @@ relation / Turso・libSQL adapter / route-level OpenAPI / `create-nanoka-app` / 
   4. `tsc --noEmit` が通ること、`drizzle-kit generate` が成功することを assert
 - **効果**: 今回検出した 4 件すべて、これがあれば PR 段階で落ちる。今後 README に書かれた手順が崩れた瞬間に CI が赤くなる契約になる。
 - **優先度**: 中（次の publish 前に入れたい）。
+
+### 4.8 `crud.ts` の `biome-ignore` 一貫性
+
+- **概要**: `packages/nanoka/src/model/crud.ts` の `findOneImpl` には drizzle query cast 用の `// biome-ignore lint/suspicious/noExplicitAny: drizzle query type` が付与されているが、`createImpl` / `updateImpl` の同種 `as any` cast には付与されていない。biome は `suppressions/unused` を 0 件として通すため lint は green だが、同種 cast の suppress 有無が不統一。
+- **状態**: 実害なし、Phase 1.5 / M3 implementation-review (Minor) で記録。
+- **対応方針**: `createImpl` / `updateImpl` にも biome-ignore を追加して揃えるか、`findOneImpl` の biome-ignore を削除して揃えるかを M4 着手前の任意タスクとして検討。
+- **優先度**: 低。
+
+### 4.9 `pnpm/action-setup@v4` SHA pinning
+
+- **概要**: `.github/workflows/ci.yml` の `pnpm/action-setup` はメジャータグ `@v4` 固定。GitHub 公式ではない third-party action のため、M5 (publish 自動化) で `NPM_TOKEN` / OIDC を扱う前に commit SHA pinning に切り替えるのが望ましい。
+- **状態**: Phase 1.5 / M3 security-review (Minor) で記録。M3 段階では許容。
+- **対応方針**:
+  1. `pnpm/action-setup@<40-char-sha> # v4.x.y` 形式に書き換え
+  2. `.github/dependabot.yml` を追加し `package-ecosystem: github-actions`（weekly）で SHA を自動更新
+  3. M5 publish workflow も同時に SHA pinning 化（`actions/checkout` / `actions/setup-node` も含めて）
+  4. `--provenance` フラグ付き publish で npm provenance 有効化
+- **優先度**: 中（M5 着手と同時）。

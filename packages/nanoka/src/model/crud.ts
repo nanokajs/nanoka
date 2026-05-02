@@ -2,7 +2,7 @@ import { and, asc, desc, eq } from 'drizzle-orm'
 import type { SQLiteTable } from 'drizzle-orm/sqlite-core'
 import { HTTPException } from 'hono/http-exception'
 import type { Adapter } from '../adapter/types'
-import type { Field, InferFieldType } from '../field/types'
+import type { Field } from '../field/types'
 import type { CreateInput, IdOrWhere, RowType, Where } from './types'
 
 const MAX_LIMIT = 100
@@ -108,7 +108,7 @@ function buildWhereClause(
 export async function findManyImpl<Fields extends Record<string, Field<any, any, any>>>(
   adapter: Adapter,
   table: SQLiteTable,
-  fields: Fields,
+  _fields: Fields,
   options: {
     limit: unknown
     offset?: unknown
@@ -201,7 +201,6 @@ export async function createImpl<Fields extends Record<string, Field<any, any, a
   table: SQLiteTable,
   data: CreateInput<Fields>,
 ): Promise<RowType<Fields>> {
-  // biome-ignore lint/suspicious/noExplicitAny: drizzle query type
   const rows = await (adapter.drizzle
     .insert(table)
     .values(data as any)
@@ -238,7 +237,6 @@ export async function updateImpl<Fields extends Record<string, Field<any, any, a
     throw new HTTPException(400, { message: 'where clause must not be empty' })
   }
 
-  // biome-ignore lint/suspicious/noExplicitAny: drizzle query type
   const rows = await (adapter.drizzle
     .update(table)
     .set(data as any)

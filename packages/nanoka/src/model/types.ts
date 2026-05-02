@@ -1,5 +1,5 @@
-import type { SQLiteTable } from 'drizzle-orm/sqlite-core'
 import type { Hook } from '@hono/zod-validator'
+import type { SQLiteTable } from 'drizzle-orm/sqlite-core'
 import type { Env, MiddlewareHandler, ValidationTargets } from 'hono'
 import type { z } from 'zod'
 import type { Adapter } from '../adapter/types'
@@ -59,7 +59,6 @@ export type RowType<
   // biome-ignore lint/suspicious/noExplicitAny: any is necessary for Field constraint
   Fields extends Record<string, Field<any, any, any>>,
 > = {
-  // biome-ignore lint/suspicious/noExplicitAny: any is necessary for Field constraint
   [K in keyof Fields]: InferFieldType<Fields[K]>
 }
 
@@ -78,15 +77,6 @@ export interface SchemaOptions<K extends string = string> {
   readonly partial?: boolean
 }
 
-const validationTargets = {
-  json: true,
-  query: true,
-  param: true,
-  header: true,
-  cookie: true,
-  form: true,
-} as const
-
 /**
  * @internal
  * Extracts a Zod shape from fields for the Apply type.
@@ -100,7 +90,6 @@ export type FieldsToZodShape<
     Field<any, any, any>
   >,
 > = {
-  // biome-ignore lint/suspicious/noExplicitAny: any is necessary for Field type checking
   [K in keyof Fields]: Fields[K]['zodBase']
 }
 

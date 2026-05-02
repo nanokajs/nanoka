@@ -76,7 +76,7 @@ pnpm -C examples/basic test
 pnpm lint
 ```
 
-(Note: As of Phase 1.5, automated CI/CD is under development. In the future, these checks will run automatically on every PR.)
+These checks also run automatically on every pull request and on pushes to `main` via GitHub Actions (`.github/workflows/ci.yml`). PRs cannot be merged until CI is green.
 
 ## Release process (manual)
 
