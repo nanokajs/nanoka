@@ -11,8 +11,13 @@
 - **M0: スキャフォールディング完了**
 - **M1: フィールド DSL（`t`）完了**
 - **M2: モデル派生（`schema` / `validator`）完了**
-- `pnpm install` / `pnpm -C packages/nanoka build` / `pnpm -C packages/nanoka test` がすべて通る
-- 次の着手対象は **M3: Adapter 層**
+- **M3: Adapter 層完了**
+- **M4: CRUD クエリ完了**
+- **M5: `nanoka()` ルーター完了**
+- **M6: スキーマ生成器（`nanoka generate`）完了**
+- **M7: 動作確認（`examples/basic`）完了**
+- `pnpm install` / `pnpm -C packages/nanoka build` / `pnpm -C packages/nanoka test` / `pnpm -C examples/basic typecheck` / `pnpm -C examples/basic test` がすべて通る
+- 次の着手対象は **M8: README / migration ガイド**
 
 ---
 
@@ -166,13 +171,19 @@ M5（`nanoka()` ルーター）でハンドラ実装の例コード / README を
 
 ### M7: 動作確認（`examples/basic`）
 
-- [ ] User モデルの最小 CRUD API
-- [ ] `wrangler.toml` の D1 binding 設定
-- [ ] フロー手動検証: `nanoka generate` → `drizzle-kit generate` → `wrangler d1 migrations apply --local` → `wrangler dev`
-- [ ] vitest-pool-workers での E2E 結合テスト
-- [ ] フロー全体を README にコマンド付きで記録
+- [x] User モデルの最小 CRUD API
+- [x] `wrangler.toml` の D1 binding 設定
+- [x] フロー手動検証: `nanoka generate` → `drizzle-kit generate` → `wrangler d1 migrations apply --local` → `wrangler dev`
+- [x] vitest-pool-workers での E2E 結合テスト
+- [x] フロー全体を README にコマンド付きで記録
 
 完了基準: `pnpm -C examples/basic dev` で起動し、curl で CRUD 全部が通る。
+
+### M7 完了時の持ち越し
+
+- **`nanoka()` の Bindings generic 対応（小タスク・M8 直前 or 直後で実施）**: 現状 `Nanoka extends Hono`（generic なし）のため、ハンドラ内で `c.env` の型が解決できず `examples/basic/src/index.ts:22` の `(c.env as Env)` キャストが必要になっている。`Nanoka<E extends Env = BlankEnv> extends Hono<E>` / `nanoka<E extends Env = BlankEnv>(adapter): Nanoka<E>` に変更すれば、利用側で `nanoka<{ Bindings: Env }>(...)` と書けて `c.env` が型推論される。実装は `packages/nanoka/src/router/types.ts` と `packages/nanoka/src/router/nanoka.ts` の 2 ファイルで完結し、後方互換（既存呼び出し `nanoka(adapter)` は `BlankEnv` にデフォルト解決）。M5 で精緻化したチェイン型推論との回帰確認を併せて行う。
+- **`examples/basic/test/e2e.test.ts` の seed データ投入を `User.create` 経由に**: 現状は生 SQL `INSERT INTO users` で列順依存。テーブル変更に脆い。implementation review M7 再レビューの Minor #2。優先度低い。
+- **`User.validator()` のエラーハンドリング例（M8 で対処）**: M7 セキュリティレビュー Minor #3。Hono の `@hono/zod-validator` がデフォルトで Zod の `issues` 配列をそのまま 400 で返す挙動により、API スキーマの内部構造（フィールド名・型・omit 後の shape）が attacker reconnaissance に利用可能。M8 README で `User.validator(target, opts, hook)` を使い `issues` を握りつぶした 400 を返す利用例を示す。または `app.onError` で ZodError を捕まえて固定文言に置き換えるパターンを併記する。Phase 1 ライブラリ本体には変更を入れない。
 
 ### M8: README / migration ガイド
 

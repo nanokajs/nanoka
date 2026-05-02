@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { t } from '../../field'
 import { generateDrizzleSchema } from '../generate'
 import type { ModelDef } from '../types'

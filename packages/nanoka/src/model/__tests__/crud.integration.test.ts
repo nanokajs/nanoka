@@ -1,7 +1,7 @@
 import type { D1Database } from '@cloudflare/workers-types'
 import { sql } from 'drizzle-orm'
-import { describe, it, expect, beforeEach } from 'vitest'
 import { HTTPException } from 'hono/http-exception'
+import { beforeEach, describe, expect, it } from 'vitest'
 import { d1Adapter } from '../../adapter/d1'
 import { t } from '../../field'
 import { defineModel } from '../define'

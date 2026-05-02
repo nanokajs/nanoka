@@ -1,4 +1,4 @@
-import { sqliteTable, type SQLiteTable } from 'drizzle-orm/sqlite-core'
+import { type SQLiteTable, sqliteTable } from 'drizzle-orm/sqlite-core'
 import type { Field } from '../field/types'
 
 /**

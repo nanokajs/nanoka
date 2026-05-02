@@ -31,7 +31,8 @@ export function nanoka(adapter: Adapter): Nanoka {
     enumerable: true,
   })
 
-  app.batch = ((queries: Parameters<Adapter['batch']>[0]) => adapter.batch(queries)) as unknown as Adapter['batch']
+  app.batch = ((queries: Parameters<Adapter['batch']>[0]) =>
+    adapter.batch(queries)) as unknown as Adapter['batch']
 
   // biome-ignore lint/suspicious/noExplicitAny: any is necessary for Field generic constraint
   app.model = function model<Fields extends Record<string, Field<any, any, any>>>(

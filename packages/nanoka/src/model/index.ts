@@ -1,11 +1,11 @@
 export { defineModel } from './define'
 export type {
-  Model,
-  SchemaOptions,
-  FindManyOptions,
-  OrderBy,
-  Where,
-  IdOrWhere,
-  RowType,
   CreateInput,
+  FindManyOptions,
+  IdOrWhere,
+  Model,
+  OrderBy,
+  RowType,
+  SchemaOptions,
+  Where,
 } from './types'

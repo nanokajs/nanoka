@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
 import { describe, expect, it, vi } from 'vitest'
-import { t } from '../../field'
 import { d1Adapter } from '../../adapter'
+import { t } from '../../field'
 import { nanoka } from '../nanoka'
 
 describe('nanoka(adapter)', () => {

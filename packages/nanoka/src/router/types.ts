@@ -75,7 +75,6 @@ export interface NanokaModel<Fields extends Record<string, Field<any, any, any>>
   delete(idOrWhere: IdOrWhere<Fields>): Promise<{ readonly deleted: number }>
 }
 
-
 /**
  * Nanoka application: a Hono instance extended with model registration,
  * adapter binding, and escape hatches for raw Drizzle and batch operations.

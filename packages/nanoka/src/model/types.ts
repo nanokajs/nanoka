@@ -1,8 +1,8 @@
-import type { MiddlewareHandler, ValidationTargets } from 'hono'
 import type { SQLiteTable } from 'drizzle-orm/sqlite-core'
+import type { MiddlewareHandler, ValidationTargets } from 'hono'
 import type { z } from 'zod'
-import type { Field, InferFieldType } from '../field/types'
 import type { Adapter } from '../adapter/types'
+import type { Field, InferFieldType } from '../field/types'
 
 /**
  * Options for findMany query.
@@ -206,11 +206,7 @@ export type ModelValidatorReturn<
   Fields extends Record<string, Field<any, any, any>>,
   Target extends keyof ValidationTargets,
   Opts extends SchemaOptions<keyof Fields & string> | undefined,
-> = MiddlewareHandler<
-  any,
-  string,
-  ValidatorInput<Target, Apply<FieldsToZodShape<Fields>, Opts>>
->
+> = MiddlewareHandler<any, string, ValidatorInput<Target, Apply<FieldsToZodShape<Fields>, Opts>>>
 
 /**
  * Represents a database model with type-safe schema derivation and CRUD operations.

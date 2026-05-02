@@ -21,7 +21,7 @@ async function main(args: string[]): Promise<number> {
     }
 
     let configPath: string = './nanoka.config.ts'
-    let outPath: string | undefined = undefined
+    let outPath: string | undefined
 
     let i = 1
     while (i < args.length) {

@@ -3,11 +3,7 @@ import { defineWorkersConfig } from '@cloudflare/vitest-pool-workers/config'
 export default defineWorkersConfig({
   test: {
     include: ['src/**/__tests__/**/*.test.ts'],
-    exclude: [
-      '**/node_modules/**',
-      'src/codegen/__tests__/**',
-      'src/cli/__tests__/**',
-    ],
+    exclude: ['**/node_modules/**', 'src/codegen/__tests__/**', 'src/cli/__tests__/**'],
     poolOptions: {
       workers: {
         miniflare: {
