@@ -120,9 +120,8 @@ relation / Turso・libSQL adapter / route-level OpenAPI / `create-nanoka-app` / 
 
 ### 4.1 CI/CD セットアップ
 
-- **現状**: 手動 publish。
-- **方針案**: GitHub Actions で `main` への push 時に build/test/typecheck を回す + tag push (`v*`) で `pnpm publish` 自動化。`prepublishOnly` が ローカルで実行されるのは保険として残す。
-- **要検討**: npm 2FA 有効時の自動化方法（`NPM_TOKEN` での publish or trusted publisher / OIDC）。
+- **現状**: 実装済み（Phase 1.5 M5 で消化）。
+- **内容**: GitHub Actions で `main` への push 時に build/test/typecheck/lint を回す CI（4.1a）、tag push (`v*`) で npm Trusted Publisher (OIDC) 経由の自動 publish（4.1b）。`prepublishOnly` はローカル保険として継続。`NPM_TOKEN` 不使用。
 
 ### 4.2 `nanokajs/nanoka` リポジトリ整備
 
@@ -180,10 +179,16 @@ relation / Turso・libSQL adapter / route-level OpenAPI / `create-nanoka-app` / 
 ### 4.9 `pnpm/action-setup@v4` SHA pinning
 
 - **概要**: `.github/workflows/ci.yml` の `pnpm/action-setup` はメジャータグ `@v4` 固定。GitHub 公式ではない third-party action のため、M5 (publish 自動化) で `NPM_TOKEN` / OIDC を扱う前に commit SHA pinning に切り替えるのが望ましい。
-- **状態**: Phase 1.5 / M3 security-review (Minor) で記録。M3 段階では許容。
-- **対応方針**:
-  1. `pnpm/action-setup@<40-char-sha> # v4.x.y` 形式に書き換え
+- **状態**: 実装済み（Phase 1.5 M5 で消化、`publish.yml` / `publish-dry-run.yml` / `ci.yml` / `onboarding.yml` をすべて SHA pinning + dependabot 導入）。
+- **対応内容**:
+  1. `actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1` 形式に書き換え済み
   2. `.github/dependabot.yml` を追加し `package-ecosystem: github-actions`（weekly）で SHA を自動更新
-  3. M5 publish workflow も同時に SHA pinning 化（`actions/checkout` / `actions/setup-node` も含めて）
-  4. `--provenance` フラグ付き publish で npm provenance 有効化
-- **優先度**: 中（M5 着手と同時）。
+  3. `publish.yml` / `publish-dry-run.yml` も同時に SHA pinning 化（`actions/checkout` / `pnpm/action-setup` / `actions/setup-node` を含む）
+  4. npm Trusted Publisher (OIDC) で provenance 自動付与（`--provenance` フラグ不要）
+
+### 4.10 将来の publish 拡張候補（Phase 2 以降）
+
+- 自動 changelog 生成 / release notes 自動投稿（conventional-commits / semantic-release 系）
+- canary / beta dist-tag publish
+- 複数パッケージ同時 publish（現状 `nanoka` のみ）
+- GitHub Environments 保護ルール（approval flow）
