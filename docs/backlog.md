@@ -61,6 +61,10 @@
 - **OpenAPI 自動生成**
 - **Turso / libSQL adapter**
 - **`t.json(zodSchema)` の引数化**: 現状 `t.json()` は `z.unknown()` で runtime 検証なし（M-1 review 指摘）
+- **Zod 4 サポート**: 現状 `peerDependencies.zod: ^3.23.0`。v4 は `ZodType<Output, Def, Input>` → `ZodType<Output, Input, Internals>` に generic 順序が変わり、`packages/nanoka/src/field/factories.ts` 各 builder の `ZB extends z.ZodType<TS, z.ZodTypeDef, TS>` 制約が壊れる。結果として `Field<TS, Mods, ZB>` 由来の `InferFieldType` 条件型分岐が `never` に潰れ、`User.create({...})` で「string は undefined に代入できない」型エラーが発生する（2026-05 ユーザー報告）。対応方針:
+  1. `peerDependencies.zod` を `^3.23.0 || ^4.0.0` に広げ、両対応する型シグネチャに書き換える
+  2. または v4 に切り替えて v3 を切る（破壊的変更）
+  - 着手時に判断。あわせて CI に「公開後パッケージを空プロジェクトに `pnpm add` して `tsc --noEmit`」する peer-dep 整合 E2E を追加（workspace 内テストでは見えない種類の不整合だった）
 - **`npx create-nanoka-app`**（Phase 3）
 
 ### 全 Phase でスコープ外

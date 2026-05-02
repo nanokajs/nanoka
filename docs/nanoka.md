@@ -209,6 +209,7 @@ const result = await app.db
 - [ ] リレーション定義（`t.hasMany()` / `t.belongsTo()`）※cascade/N+1/joinの型推論を含む重い作業
 - [ ] OpenAPIスキーマ自動生成（Hono RPC連携）
 - [ ] Turso / libSQL adapter
+- [ ] **Zod 4 サポート**（Phase 1 は `zod@^3.23.0` のみ。v4 は `ZodType<Output, Def, Input>` → `ZodType<Output, Input, Internals>` の generic 順序変更により、現行の `Field<TS, Mods, ZB>` 由来型推論が `never` に潰れる。`peerDependencies.zod` を `^3.23.0 || ^4.0.0` に広げるか、v4 に切り替えて v3 を切るかを着手時に判断する）
 
 ### Phase 3 — エコシステム
 - [ ] CLIツール（`npx create-nanoka-app`）

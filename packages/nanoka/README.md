@@ -22,10 +22,15 @@ Phase 1 (MVP). Experimental. Expect breaking changes until v1.0.
 ## Install
 
 ```bash
-pnpm add @nanokajs/core hono drizzle-orm zod
+pnpm add @nanokajs/core hono drizzle-orm zod@^3.23.0
+pnpm add -D drizzle-kit @cloudflare/workers-types
 ```
 
 Peer dependencies: `hono ^4.0.0`, `drizzle-orm ^0.45.0`, `zod ^3.23.0`, `@cloudflare/workers-types ^4.20240925.0` (for Workers).
+
+> **Zod 4 is not yet supported.** Zod 4 reorders the `ZodType` generics, which collapses Nanoka's field type inference (`RowType`, `CreateInput`) to `never`. Pin `zod@^3.23.0` until Phase 2 ships Zod 4 support. Without the pin, `pnpm add zod` will install the latest 4.x and `User.create({...})` will fail to type-check.
+
+`drizzle-kit` is required at install time (not a peer dep) because `npx drizzle-kit generate` is the supported migration step — see Quickstart step 3.
 
 ## Quickstart
 
@@ -69,8 +74,21 @@ Peer dependencies: `hono ^4.0.0`, `drizzle-orm ^0.45.0`, `zod ^3.23.0`, `@cloudf
 
    ✓ Creates `drizzle/schema.ts` from your models.
 
-3. **Apply migrations and deploy**
+3. **Generate SQL migrations and apply them**
 
+   Create `drizzle.config.ts` in your project root (this is read by `drizzle-kit`, not by Nanoka):
+   ```ts
+   import { defineConfig } from 'drizzle-kit'
+
+   export default defineConfig({
+     schema: './drizzle/schema.ts',
+     out: './drizzle/migrations',
+     dialect: 'sqlite',
+     driver: 'd1-http',
+   })
+   ```
+
+   Then:
    ```bash
    npx drizzle-kit generate
    npx wrangler d1 migrations apply <DATABASE> --local
@@ -78,12 +96,14 @@ Peer dependencies: `hono ^4.0.0`, `drizzle-orm ^0.45.0`, `zod ^3.23.0`, `@cloudf
 
    ✓ SQL migrations generated from Drizzle schema. Ready to deploy.
 
+   The `nanoka.config.ts` (step 2) and `drizzle.config.ts` (step 3) are deliberately separate: Nanoka generates Drizzle schema code, then `drizzle-kit` diffs and emits SQL. Nanoka does not generate SQL or apply migrations — see [How it fits with drizzle-kit and wrangler](#how-it-fits-with-drizzle-kit-and-wrangler) below.
+
 ### Minimal example (model + 1 route)
 
 `src/index.ts`:
 ```ts
 import { d1Adapter, nanoka } from '@nanokajs/core'
-import { userFields, userTableName } from './src/models/user'
+import { userFields, userTableName } from './models/user'
 
 export interface Env {
   DB: D1Database
@@ -335,6 +355,7 @@ Nanoka Phase 1 is intentionally minimal. These features are Phase 2 or later:
 
 - **Relations** (`hasMany()`, `belongsTo()`, lazy loading) — Phase 2. Use raw Drizzle for joins.
 - **Field accessor API** (`User.schema({ pick: f => [f.name, f.email] })`, `User.where(f => eq(f.email, x))`) — Phase 2. Phase 1 uses string arrays and object-form `where`. When Phase 2 lands, the `f` object will be `as const`, with zero runtime cost.
+- **Zod 4 support** — Phase 2. Zod 4 changed `ZodType<Output, Def, Input>` (v3) to `ZodType<Output, Input, Internals>` (v4); Nanoka's field type derivation depends on the v3 generic order, so installing Zod 4 collapses `InferFieldType` to `never`. Pin `zod@^3.23.0` for now.
 - **OpenAPI generation** — Phase 2 or 3.
 - **Turso / libSQL adapters** — Phase 2. Nanoka is designed adapter-first; additional adapters will follow.
 - **CLI scaffolder** (`create-nanoka-app`) — Phase 3.

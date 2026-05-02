@@ -212,6 +212,7 @@ By default, `app.onError` returns `{ error: "Internal Server Error" }` for unhan
 This example does not include:
 - **Relations** (hasMany, belongsTo, foreign keys) → Phase 2
 - **Field accessor API** (`User.where(f => eq(f.email, 'x'))`) → Phase 2
+- **Zod 4** (Nanoka requires `zod@^3.23.0`; v4 changes `ZodType` generics and breaks field type inference) → Phase 2
 - **OpenAPI / Swagger generation** → Phase 2
 - **Authentication** (JWT, OAuth, etc.) → Out of scope
 - **Turso / libSQL adapters** → Phase 2
