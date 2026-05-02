@@ -64,7 +64,7 @@
 - **Zod 4 サポート**: 現状 `peerDependencies.zod: ^3.23.0`。v4 は `ZodType<Output, Def, Input>` → `ZodType<Output, Input, Internals>` に generic 順序が変わり、`packages/nanoka/src/field/factories.ts` 各 builder の `ZB extends z.ZodType<TS, z.ZodTypeDef, TS>` 制約が壊れる。結果として `Field<TS, Mods, ZB>` 由来の `InferFieldType` 条件型分岐が `never` に潰れ、`User.create({...})` で「string は undefined に代入できない」型エラーが発生する（2026-05 ユーザー報告）。対応方針:
   1. `peerDependencies.zod` を `^3.23.0 || ^4.0.0` に広げ、両対応する型シグネチャに書き換える
   2. または v4 に切り替えて v3 を切る（破壊的変更）
-  - 着手時に判断。あわせて CI に「公開後パッケージを空プロジェクトに `pnpm add` して `tsc --noEmit`」する peer-dep 整合 E2E を追加（workspace 内テストでは見えない種類の不整合だった）
+  - 着手時に判断。検出は §4.7 の onboarding parity E2E で担保する。
 - **`npx create-nanoka-app`**（Phase 3）
 
 ### 全 Phase でスコープ外
@@ -110,3 +110,19 @@
 - 現状の Phase 1 完了履歴 + 持ち越し情報 + 受容リスクが混在している。
 - 持ち越し・受容リスクは本ファイル（`docs/backlog.md`）に移管済みなので、`docs/phase1-plan.md` は履歴アーカイブとして固定し、本ファイルへ誘導する形に整理しても良い。
 - 優先度: 低。
+
+### 4.7 README onboarding parity の CI 化
+
+- **背景**: 2026-05 にユーザーが `pnpm create hono@latest` から始めて Nanoka を入れた際、README どおりに進めても以下が次々に surface した:
+  1. `zod ^4.4.2` を入れると `User.create({...})` の型推論が `never` に潰れる（peer dep `zod ^3.23.0` の警告は出るが止まらない）
+  2. `drizzle-kit` が devDep に居なくて `npx drizzle-kit generate` が落ちる、`drizzle.config.ts` も無い
+  3. `tsconfig.json` の `types: ["@cloudflare/workers-types"]` が無く `D1Database` / `Request` / `crypto` などの ambient 解決が壊れる
+  4. `create hono` scaffold が TypeScript 自体を入れない（VS Code の bundled TS 任せ）
+- **共通点**: いずれも workspace 内 (`pnpm -C packages/nanoka test` / `pnpm -C examples/basic typecheck`) では検出不可能。`workspace:*` で nanoka を参照しているため、公開済み tarball の peer-dep / scaffold parity を見ていない。
+- **方針**: CI に「**公開済み (または `pnpm pack` 産出物の) tarball を空ディレクトリに `pnpm add` し、README の Quickstart どおりに最小プロジェクトを組んで `tsc --noEmit` と `wrangler dev --dry-run` を回す**」E2E を追加する。具体的には:
+  1. `pnpm -C packages/nanoka pack` で tarball 生成
+  2. CI のスクラッチ dir で `pnpm create hono@latest` 風の最小 scaffold を作成（または静的に同梱）
+  3. tarball から `pnpm add` し、README に書かれた追加コマンド（`drizzle-kit` / `typescript` / `@cloudflare/workers-types` / `zod@^3.23.0`）も同様に流す
+  4. `tsc --noEmit` が通ること、`drizzle-kit generate` が成功することを assert
+- **効果**: 今回検出した 4 件すべて、これがあれば PR 段階で落ちる。今後 README に書かれた手順が崩れた瞬間に CI が赤くなる契約になる。
+- **優先度**: 中（次の publish 前に入れたい）。

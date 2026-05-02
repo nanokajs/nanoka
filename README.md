@@ -6,6 +6,8 @@
 
 A thin wrapper over Hono + Drizzle + Zod for Cloudflare Workers + D1.
 
+> **Phase 1 (MVP) — experimental.** Currently requires `zod@^3.23.0` (Zod 4 support is deferred to Phase 2; v4 reorders the `ZodType` generics and breaks Nanoka's field type inference). Expect breaking changes until v1.0.
+
 ## What is this
 
 Nanoka solves the repetitive wiring of Hono routing, Drizzle ORM, and Zod validation in Cloudflare Workers projects. Define a model once, and nanoka derives the DB schema, TypeScript types, and request validators from it. The remaining 20% — what your API exposes versus what the DB stores — stays explicit in each route handler.
@@ -27,7 +29,8 @@ docs/                     # Design documents and implementation plan
 
 - [Library README](packages/nanoka/README.md) — install, quickstart, full API reference
 - [Design document](docs/nanoka.md) — architecture decisions and design rationale
-- [Phase 1 plan](docs/phase1-plan.md) — milestone progress (M0–M8)
+- [Backlog](docs/backlog.md) — current follow-ups, accepted risks, and Phase 2 candidates
+- [Phase 1 plan](docs/phase1-plan.md) — Phase 1 completion history (M0–M8, all done)
 - [Example app](examples/basic/README.md) — complete CRUD example with deployment steps
 
 ## Development
