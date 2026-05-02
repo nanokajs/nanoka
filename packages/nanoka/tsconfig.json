@@ -1,6 +1,8 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
+    // "node" is required for CLI and codegen (src/cli, src/codegen) which use node:fs etc.
+    // Do NOT use Node.js APIs in runtime code (src/router, src/model, src/adapter, src/field).
     "types": ["node", "@cloudflare/workers-types", "@cloudflare/vitest-pool-workers"]
   },
   "include": ["src/**/*"]

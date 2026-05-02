@@ -1,7 +1,7 @@
 export { t } from './field'
-export { defineModel } from './model'
+import type { NanokaConfig } from './codegen/types'
 export type { NanokaConfig } from './codegen/types'
 
-export function defineConfig<T extends any>(config: T): T {
+export function defineConfig(config: NanokaConfig): NanokaConfig {
   return config
 }

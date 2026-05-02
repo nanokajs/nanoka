@@ -7,7 +7,9 @@ async function prependShebang() {
 
   try {
     const content = await fs.readFile(cliPath, 'utf-8')
-    const withShebang = `#!/usr/bin/env node\n${content}`
+    const withShebang = content.startsWith('#!/')
+      ? content
+      : `#!/usr/bin/env node\n${content}`
     await fs.writeFile(cliPath, withShebang, 'utf-8')
     chmodSync(cliPath, 0o755)
     console.log(`✓ Added shebang to ${cliPath}`)
