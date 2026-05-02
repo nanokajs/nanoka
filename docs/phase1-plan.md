@@ -112,16 +112,27 @@ M4（CRUD クエリ）実装時、最初に以下を設計に組み込むこと:
 
 ### M4: CRUD クエリ
 
-- [ ] `findMany({ limit, offset?, orderBy? })`（limit 型必須）
-- [ ] `findOne(idOrWhere)`
-- [ ] `create(data)`
-- [ ] `update(idOrWhere, data)`
-- [ ] `delete(idOrWhere)`
-- [ ] `where` はオブジェクト形式（アクセサ形式は Phase 2）
-- [ ] すべて adapter 経由で素の Drizzle を呼ぶ薄さに留める
-- [ ] 結合テスト: vitest-pool-workers の D1 で各メソッド
+- [x] `findMany({ limit, offset?, orderBy? })`（limit 型必須）
+- [x] `findOne(idOrWhere)`
+- [x] `create(data)`
+- [x] `update(idOrWhere, data)`
+- [x] `delete(idOrWhere)`
+- [x] `where` はオブジェクト形式（アクセサ形式は Phase 2）
+- [x] すべて adapter 経由で素の Drizzle を呼ぶ薄さに留める
+- [x] 結合テスト: vitest-pool-workers の D1 で各メソッド
+- [x] **M4 再 review（2026-05-02）**: Minor 2 修正完了（エラーメッセージのフィールド名露出を固定文言に統一）
+- [x] **M4 セキュリティレビュー修正（2026-05-02）**: Major 1 件修正（`in` 演算子を `Object.hasOwn()` に置換）・テスト追加（prototype pollution ケース 2 件）
 
 完了基準: `findMany()`（引数なし）が型エラーになり、`findMany({ limit: 20 })` が動く。
+
+### M4 セキュリティレビューより M5 着手時に注意すべき観点（2026-05-02）
+
+M5（`nanoka()` ルーター）でハンドラ実装の例コード / README を書く際、以下を必ず守る・推奨パターンとして明示する:
+
+- **`c.req.json()` を `User.create` / `User.update` に直渡し禁止**: 必ず `validator('json', { omit: [...] })` を通して `c.req.valid('json')` を使う。生 body を渡すと mass assignment（攻撃者が DB スキーマの全列を埋められる）と prototype pollution の経路が開く。
+- **`c.req.query()` / `c.req.param()` を where に直渡し禁止**: クエリ文字列はオブジェクト形状を持たないが、Hono が prototype-chain key を own property として解釈する経路がないか個別に検証する。整数 PK は必ず `Number()` + Zod 検証。
+- **レスポンスの機密フィールド除外**: `c.json(user)` ではなく `c.json(User.schema({ omit: ['passwordHash'] }).parse(user))` のような明示的フィルタを推奨パターンとして示す。`passwordHash` 等のレスポンス漏洩はライブラリ側では守らない（"80% automatic, 20% explicit" 思想）。
+- **`app.onError` の実装**: production 環境で `HTTPException(500)` のスタックトレースを body に出さない。
 
 ### M5: `nanoka()` ルーター
 

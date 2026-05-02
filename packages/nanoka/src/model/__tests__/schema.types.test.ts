@@ -4,7 +4,7 @@ import { t } from '../../field'
 import { defineModel } from '../define'
 
 describe('Model: schema() type inference', () => {
-  const User = defineModel({
+  const User = defineModel('users', {
     id: t.uuid().primary(),
     name: t.string(),
     email: t.string().email(),
