@@ -17,7 +17,7 @@ Nanoka targets Cloudflare Workers + D1 (SQLite) as first-class. It wraps Hono, s
 ## Repository structure
 
 ```
-packages/nanoka/          # The library (published to npm as "nanoka")
+packages/nanoka/          # The library (published to npm as "@nanokajs/core")
 examples/basic/           # Example Cloudflare Workers app demonstrating end-to-end usage
 assets/                   # Repository assets (logo, etc.)
 docs/                     # Design documents and implementation plan

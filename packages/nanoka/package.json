@@ -1,5 +1,5 @@
 {
-  "name": "nanoka",
+  "name": "@nanokajs/core",
   "version": "0.1.0",
   "type": "module",
   "description": "Thin wrapper over Hono + Drizzle + Zod for Cloudflare Workers + D1. 80% automatic, 20% explicit.",
@@ -36,6 +36,9 @@
   ],
   "bin": {
     "nanoka": "./dist/cli.js"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "scripts": {
     "build": "tsup && node ./scripts/prepend-shebang.mjs",

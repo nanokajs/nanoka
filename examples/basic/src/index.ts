@@ -1,5 +1,5 @@
 import { HTTPException } from 'hono/http-exception'
-import { d1Adapter, nanoka } from 'nanoka'
+import { d1Adapter, nanoka } from '@nanokajs/core'
 import { z } from 'zod'
 import { userFields, userTableName } from './models/user'
 

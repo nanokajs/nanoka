@@ -1,4 +1,4 @@
-import { t } from 'nanoka'
+import { t } from '@nanokajs/core'
 
 export const userTableName = 'users'
 

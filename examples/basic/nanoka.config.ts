@@ -1,4 +1,4 @@
-import { defineConfig } from 'nanoka/config'
+import { defineConfig } from '@nanokajs/core/config'
 import { userFields, userTableName } from './src/models/user'
 
 export default defineConfig({

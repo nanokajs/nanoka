@@ -22,7 +22,7 @@ Phase 1 (MVP). Experimental. Expect breaking changes until v1.0.
 ## Install
 
 ```bash
-pnpm add nanoka hono drizzle-orm zod
+pnpm add @nanokajs/core hono drizzle-orm zod
 ```
 
 Peer dependencies: `hono ^4.0.0`, `drizzle-orm ^0.45.0`, `zod ^3.23.0`, `@cloudflare/workers-types ^4.20240925.0` (for Workers).
@@ -35,7 +35,7 @@ Peer dependencies: `hono ^4.0.0`, `drizzle-orm ^0.45.0`, `zod ^3.23.0`, `@cloudf
 
    `src/models/user.ts`:
    ```ts
-   import { t } from 'nanoka'
+   import { t } from '@nanokajs/core'
 
    export const userTableName = 'users'
    export const userFields = {
@@ -51,7 +51,7 @@ Peer dependencies: `hono ^4.0.0`, `drizzle-orm ^0.45.0`, `zod ^3.23.0`, `@cloudf
 
    Create `nanoka.config.ts` in your project root:
    ```ts
-   import { defineConfig } from 'nanoka/config'
+   import { defineConfig } from '@nanokajs/core/config'
    import { userTableName, userFields } from './src/models/user'
 
    export default defineConfig({
@@ -82,7 +82,7 @@ Peer dependencies: `hono ^4.0.0`, `drizzle-orm ^0.45.0`, `zod ^3.23.0`, `@cloudf
 
 `src/index.ts`:
 ```ts
-import { d1Adapter, nanoka } from 'nanoka'
+import { d1Adapter, nanoka } from '@nanokajs/core'
 import { userFields, userTableName } from './src/models/user'
 
 export interface Env {
@@ -164,7 +164,7 @@ This design keeps Nanoka thin and lets the stable Drizzle ecosystem handle migra
 Fields are built with the `t` builder:
 
 ```ts
-import { t } from 'nanoka'
+import { t } from '@nanokajs/core'
 
 const fields = {
   id: t.uuid().primary(),
@@ -392,11 +392,11 @@ Before running `pnpm publish`:
 
    Note: `../../examples/basic` is a relative link in this README. It resolves correctly on GitHub but not on the npm registry. The link is kept for GitHub usability.
 
-2. **Verify package name is available**
+2. **Verify publish access**
    ```bash
-   npm view nanoka 2>&1 | grep E404
+   npm view @nanokajs/core 2>&1 | grep E404
    ```
-   If E404 (not found), the name is available. If package exists, consider `@scope/nanoka`.
+   Confirm E404 (not yet published). Confirm that the `nanokajs` npm org has been created and you have publish rights to `@nanokajs/core`.
 
 3. **Publish** (prepublishOnly hook will run build + test + typecheck again)
    ```bash
