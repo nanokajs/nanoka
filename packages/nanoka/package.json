@@ -7,11 +7,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/A-1ro/nanoka.git"
+    "url": "git+https://github.com/nanokajs/nanoka.git"
   },
-  "homepage": "https://github.com/A-1ro/nanoka#readme",
+  "homepage": "https://github.com/nanokajs/nanoka#readme",
   "bugs": {
-    "url": "https://github.com/A-1ro/nanoka/issues"
+    "url": "https://github.com/nanokajs/nanoka/issues"
   },
   "keywords": ["hono", "drizzle", "zod", "cloudflare-workers", "d1", "orm", "validation"],
   "engines": {

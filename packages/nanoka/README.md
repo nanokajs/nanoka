@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/A-1ro/nanoka/main/assets/images/nanoka-logo.png" alt="nanoka" width="200" />
+  <img src="https://raw.githubusercontent.com/nanokajs/nanoka/main/assets/images/nanoka-logo.png" alt="nanoka" width="200" />
 </p>
 
 # nanoka
