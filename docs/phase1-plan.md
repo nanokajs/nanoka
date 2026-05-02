@@ -28,6 +28,22 @@
   - **見直し条件**: `@cloudflare/vitest-pool-workers` か `miniflare` が undici@6 系に対応した時点で再評価。M3（adapter 層）/ M4（CRUD クエリ）で D1 binding テストを書くタイミングが自然なリビジット契機。
   - その他の Major 指摘 (CVE-2026-39356 drizzle-orm SQLi / GHSA-36p8-mvp6-cv38 wrangler / devalue prototype pollution) は対応済み（drizzle-orm `^0.45.2` 引き上げ + `pnpm.overrides` で wrangler `>=3.114.17`, devalue `>=5.6.4`）
 
+### M3 リビジット時点 (2026-05-02)
+
+- **undici@5.29.0**: 状況変化なし。`@cloudflare/vitest-pool-workers@0.5.41` / `miniflare@3.20241230.0` も依然 undici@5.29.0 に固定。本番 Workers ランタイムは undici を含まないため影響なし継続。次回リビジット契機は M4（CRUD クエリの結合テスト追加時）。
+- **devDep transitive の moderate**: `esbuild@0.17.19` / `vite@5.4.21` の moderate 警告あり。tsup 経由のビルド成果物（ESM）には乗らないため本番影響なし。受容。
+- **`tsconfig.json` の `__tests__` 包含**: `declare module 'cloudflare:test'` がライブラリ実装側 typecheck にも適用されるが、`dist/index.d.ts` への漏洩はなし（tsup の entry-only 解析で剥がれる）。M5/M6 で `tsconfig.build.json` 分離を再検討。
+
+## M4 着手時に再確認すべきセキュリティ観点（M3 review より）
+
+M4（CRUD クエリ）実装時、最初に以下を設計に組み込むこと:
+
+- **識別子インジェクション**: `orderBy` でカラム名を文字列受けする場合、許可リスト or 型レベル絞り込みが必須。drizzle のパラメタライズドは値のみで、識別子は守らない。
+- **`sql.raw()` の警告**: `app.db` escape hatch で raw Drizzle を使う際、`sql\`${value}\``（安全 = parametrized binding）と `sql.raw(${userInput})`（危険 = 文字列補間）の境界を README / JSDoc で明示。
+- **`limit` / `offset` の現実的範囲**: number 型強制だけでは不十分。NaN/Infinity 対策と上限 cap（例 `z.number().int().min(0).max(100)`）を Zod 側で required に。
+- **`batch` の不変条件**: `BatchItem<'sqlite'>` = `RunnableQuery<any, 'sqlite'>` で生 SQL 文字列が型として受理されない設計を維持。`BatchItem` の型を弱めない。
+- **drizzle-orm/d1 の binding 保持**: `drizzle(d1)` は `db.$client` に D1 binding を保持するため、複数 binding を扱う場合 `d1Adapter(d1)` を都度呼ぶ（戻り値を永続キャッシュしない）。
+
 ---
 
 ## 確定済み設計判断
@@ -42,6 +58,9 @@
 
 3. **pnpm workspace 構成**
    `packages/nanoka`（本体ライブラリ + CLI bin）と `examples/basic`（動作確認用ミニアプリ）の 2 ワークスペース。CI もこの 2 つを対象にする。
+
+4. **`d1Adapter` の引数型は `D1Database` を直接受け取る（rule #3 の対象外）**
+   load-bearing rule #3「`D1Database` 型を core の query path に漏らさない」は **モデル / クエリ / ルーター** の core path を対象とする制約であり、**adapter ファクトリ自体は D1 を知ってよい**。`d1Adapter(d1: D1Database)` の引数型として `dist/index.d.ts` に `D1Database` が現れるが、これは設計上やむを得ない（structural type に弱めると型安全性が失われ、Workers 利用者にも追加負担になる）。利用者の型解決は `peerDependencies: @cloudflare/workers-types` で担保する。Phase 2 で Turso adapter を追加した際も同様の方針（`tursoAdapter(client: Client)` のように専用型を引数に取る）でよい。
 
 ---
 
@@ -84,10 +103,10 @@
 
 ### M3: Adapter 層
 
-- [ ] `Adapter` interface 定義: `{ drizzle: DrizzleDatabase, batch(...): Promise<...> }`
-- [ ] `d1Adapter(env.DB)` 実装
-- [ ] core の query path は `Adapter` のみ参照する（`D1Database` 型を core に出さない、rule #3）
-- [ ] adapter のモック / インメモリ実装でテスト可能にする
+- [x] `Adapter` interface 定義: `{ drizzle: DrizzleDatabase, batch(...): Promise<...> }`
+- [x] `d1Adapter(env.DB)` 実装
+- [x] core の query path は `Adapter` のみ参照する（`D1Database` 型を core に出さない、rule #3）
+- [x] adapter のモック / インメモリ実装でテスト可能にする
 
 完了基準: D1 binding を直接触る箇所が `d1Adapter` 内に閉じている。
 

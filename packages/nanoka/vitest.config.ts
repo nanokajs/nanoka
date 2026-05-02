@@ -7,6 +7,7 @@ export default defineWorkersConfig({
         miniflare: {
           compatibilityDate: '2025-04-01',
           compatibilityFlags: ['nodejs_compat'],
+          d1Databases: ['DB'],
         },
       },
     },
