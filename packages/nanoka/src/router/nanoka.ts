@@ -1,4 +1,5 @@
 import { Hono } from 'hono'
+import type { BlankEnv, Env } from 'hono/types'
 import type { Adapter } from '../adapter/types'
 import type { Field } from '../field/types'
 import { defineModel } from '../model/define'
@@ -23,8 +24,8 @@ import type { Nanoka, NanokaModel } from './types'
  *   }
  * }
  */
-export function nanoka(adapter: Adapter): Nanoka {
-  const app = new Hono() as Nanoka
+export function nanoka<E extends Env = BlankEnv>(adapter: Adapter): Nanoka<E> {
+  const app = new Hono<E>() as Nanoka<E>
 
   Object.defineProperty(app, 'db', {
     get: () => adapter.drizzle,

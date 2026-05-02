@@ -1,5 +1,7 @@
 import { applyD1Migrations, env, SELF } from 'cloudflare:test'
+import { d1Adapter, defineModel } from '@nanokajs/core'
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest'
+import { userFields, userTableName } from '../src/models/user'
 
 declare module 'cloudflare:test' {
   interface ProvidedEnv {
@@ -10,6 +12,15 @@ declare module 'cloudflare:test' {
 }
 
 describe('E2E: User CRUD API', () => {
+  const User = defineModel(userTableName, userFields)
+  const seedUser = (row: {
+    id: string
+    name: string
+    email: string
+    passwordHash: string
+    createdAt: Date
+  }) => User.create(d1Adapter(env.DB), row)
+
   beforeAll(async () => {
     await applyD1Migrations(env.DB, env.TEST_MIGRATIONS)
   })
@@ -58,23 +69,21 @@ describe('E2E: User CRUD API', () => {
   })
 
   it('3. GET /users returns array without passwordHash', async () => {
-    await env.DB.prepare(
-      'INSERT INTO users (id, name, email, passwordHash, createdAt) VALUES (?1, ?2, ?3, ?4, ?5)',
-    )
-      .bind(
-        '550e8400-e29b-41d4-a716-446655440001',
-        'Alice',
-        'alice@example.com',
-        'hash1',
-        Date.now(),
-      )
-      .run()
+    await seedUser({
+      id: '550e8400-e29b-41d4-a716-446655440001',
+      name: 'Alice',
+      email: 'alice@example.com',
+      passwordHash: 'hash1',
+      createdAt: new Date(),
+    })
 
-    await env.DB.prepare(
-      'INSERT INTO users (id, name, email, passwordHash, createdAt) VALUES (?1, ?2, ?3, ?4, ?5)',
-    )
-      .bind('550e8400-e29b-41d4-a716-446655440002', 'Bob', 'bob@example.com', 'hash2', Date.now())
-      .run()
+    await seedUser({
+      id: '550e8400-e29b-41d4-a716-446655440002',
+      name: 'Bob',
+      email: 'bob@example.com',
+      passwordHash: 'hash2',
+      createdAt: new Date(),
+    })
 
     const response = await SELF.fetch('http://example.com/users?limit=10')
     expect(response.status).toBe(200)
@@ -93,11 +102,13 @@ describe('E2E: User CRUD API', () => {
 
   it('5. GET /users/:id returns 200 or 404', async () => {
     const userId = '550e8400-e29b-41d4-a716-446655440005'
-    await env.DB.prepare(
-      'INSERT INTO users (id, name, email, passwordHash, createdAt) VALUES (?1, ?2, ?3, ?4, ?5)',
-    )
-      .bind(userId, 'Charlie', 'charlie@example.com', 'hash3', Date.now())
-      .run()
+    await seedUser({
+      id: userId,
+      name: 'Charlie',
+      email: 'charlie@example.com',
+      passwordHash: 'hash3',
+      createdAt: new Date(),
+    })
 
     const existResponse = await SELF.fetch(`http://example.com/users/${userId}`)
     expect(existResponse.status).toBe(200)
@@ -113,11 +124,13 @@ describe('E2E: User CRUD API', () => {
 
   it('6. PATCH /users/:id updates fields without exposing passwordHash', async () => {
     const userId = '550e8400-e29b-41d4-a716-446655440006'
-    await env.DB.prepare(
-      'INSERT INTO users (id, name, email, passwordHash, createdAt) VALUES (?1, ?2, ?3, ?4, ?5)',
-    )
-      .bind(userId, 'Diana', 'diana@example.com', 'hash4', Date.now())
-      .run()
+    await seedUser({
+      id: userId,
+      name: 'Diana',
+      email: 'diana@example.com',
+      passwordHash: 'hash4',
+      createdAt: new Date(),
+    })
 
     const response = await SELF.fetch(`http://example.com/users/${userId}`, {
       method: 'PATCH',
@@ -133,11 +146,13 @@ describe('E2E: User CRUD API', () => {
 
   it('7. DELETE /users/:id returns 204 and removes user', async () => {
     const userId = '550e8400-e29b-41d4-a716-446655440007'
-    await env.DB.prepare(
-      'INSERT INTO users (id, name, email, passwordHash, createdAt) VALUES (?1, ?2, ?3, ?4, ?5)',
-    )
-      .bind(userId, 'Eve', 'eve@example.com', 'hash5', Date.now())
-      .run()
+    await seedUser({
+      id: userId,
+      name: 'Eve',
+      email: 'eve@example.com',
+      passwordHash: 'hash5',
+      createdAt: new Date(),
+    })
 
     const deleteResponse = await SELF.fetch(`http://example.com/users/${userId}`, {
       method: 'DELETE',

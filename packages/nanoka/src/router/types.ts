@@ -1,6 +1,7 @@
 import type { Hook } from '@hono/zod-validator'
 import type { SQLiteTable } from 'drizzle-orm/sqlite-core'
-import type { Env, Hono } from 'hono'
+import type { Hono } from 'hono'
+import type { BlankEnv, Env } from 'hono/types'
 import type { z } from 'zod'
 import type { Adapter } from '../adapter/types'
 import type { Field } from '../field/types'
@@ -88,7 +89,7 @@ export interface NanokaModel<Fields extends Record<string, Field<any, any, any>>
  * Nanoka application: a Hono instance extended with model registration,
  * adapter binding, and escape hatches for raw Drizzle and batch operations.
  */
-export interface Nanoka extends Hono {
+export interface Nanoka<E extends Env = BlankEnv> extends Hono<E> {
   /**
    * Raw Drizzle database instance (escape hatch per rule #4).
    * Exposes the full Drizzle API for advanced queries.

@@ -1,5 +1,5 @@
-import { HTTPException } from 'hono/http-exception'
 import { d1Adapter, nanoka } from '@nanokajs/core'
+import { HTTPException } from 'hono/http-exception'
 import { z } from 'zod'
 import { userFields, userTableName } from './models/user'
 
@@ -11,7 +11,7 @@ export interface Env {
 
 export default {
   async fetch(req: Request, env: Env, ctx: ExecutionContext) {
-    const app = nanoka(d1Adapter(env.DB))
+    const app = nanoka<{ Bindings: Env }>(d1Adapter(env.DB))
     const User = app.model(userTableName, userFields)
 
     // Error handler
@@ -22,7 +22,7 @@ export default {
       const status = 500
       // Fail-closed: stack traces only when DEBUG is explicitly enabled.
       // Defaults to safe behavior even if ENVIRONMENT is misconfigured at deploy time.
-      const debugEnabled = (c.env as Env).DEBUG === '1'
+      const debugEnabled = c.env.DEBUG === '1'
       const body = debugEnabled
         ? { error: err.message, stack: err.stack }
         : { error: 'Internal Server Error' }
