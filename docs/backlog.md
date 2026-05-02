@@ -58,6 +58,10 @@
 - **Relations** (`t.hasMany()` / `t.belongsTo()`)
 - **フィールドアクセサ API** (`{ pick: f => [f.name] }` / `User.where(f => eq(f.email, x))`)
   - 制約: `f` は `as const` の固定オブジェクトとし、Proxy にしない（runtime コスト ゼロ要件）
+- **モデル定義側での `omit` 既定化**: 現状 `passwordHash` のような「常にAPI入力から外す」フィールドも、ルート毎に `User.validator('json', { omit: ['passwordHash'] })` と書き写す必要がある。フィールドレベルのマーカー（例: `t.string().writeOnly()` や `.serverOnly()`）を導入し、`User.schema()` / `User.validator()` のデフォルトで除外する案。検討時の論点:
+  - スコープは**入力バリデーション側のみ**に限定する（`findMany` の戻り値や `app.db.select()` には触らない）。`docs/nanoka.md` の "80% automatic, 20% explicit" は出力側で残す方針と整合させる。
+  - フィールドアクセサ API（上記）と同じく `Field<TS, Mods, ZB>` の Mods 経由で型に伝播させる必要があり、設計が連動する。Phase 2 で同時に着手するのが筋。
+  - 既存の `{ omit: [...] }` / `{ pick: [...] }` 明示指定は引き続き効く（モデル既定をオーバーライド可能）。
 - **OpenAPI 自動生成**
 - **Turso / libSQL adapter**
 - **`t.json(zodSchema)` の引数化**: 現状 `t.json()` は `z.unknown()` で runtime 検証なし（M-1 review 指摘）

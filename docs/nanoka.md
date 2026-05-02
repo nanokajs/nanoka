@@ -214,6 +214,7 @@ const result = await app.db
 ### Phase 3 — エコシステム
 - [ ] CLIツール（`npx create-nanoka-app`）
 - [ ] VSCode拡張（モデル定義からの補完）
+- [ ] Claude Codeプラグイン（モデル定義・ルート生成・migration手順の補助）
 - [ ] OSSコミュニティ整備
 
 ---
