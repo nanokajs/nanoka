@@ -21,20 +21,7 @@ Phase 1 (MVP). Experimental. Expect breaking changes until v1.0.
 
 ## Install
 
-```bash
-pnpm add @nanokajs/core hono drizzle-orm zod@^3.23.0
-pnpm add -D drizzle-kit @cloudflare/workers-types
-```
-
-Peer dependencies: `hono ^4.0.0`, `drizzle-orm ^0.45.0`, `zod ^3.23.0`, `@cloudflare/workers-types ^4.20240925.0` (for Workers).
-
-> **Zod 4 is not yet supported.** Zod 4 reorders the `ZodType` generics, which collapses Nanoka's field type inference (`RowType`, `CreateInput`) to `never`. Pin `zod@^3.23.0` until Phase 2 ships Zod 4 support. Without the pin, `pnpm add zod` will install the latest 4.x and `User.create({...})` will fail to type-check.
-
-`drizzle-kit` is required at install time (not a peer dep) because `npx drizzle-kit generate` is the supported migration step — see Quickstart step 3.
-
-### Starting from `pnpm create hono@latest`
-
-If you scaffolded the project with `pnpm create hono@latest` (Cloudflare Workers template), the scaffold ships only `wrangler` as a devDependency — **TypeScript itself, `@cloudflare/workers-types` ambient setup, and `drizzle-kit` are not included**. From a fresh `create hono` directory, run:
+Nanoka assumes a Hono + Cloudflare Workers project. The standard starting point is `pnpm create hono@latest` (Cloudflare Workers template), which scaffolds `wrangler` and `hono` but **not** TypeScript, `@cloudflare/workers-types`, or `drizzle-kit`. From a fresh scaffold, add Nanoka and the missing pieces:
 
 ```bash
 pnpm add @nanokajs/core drizzle-orm zod@^3.23.0
@@ -46,7 +33,7 @@ Then add a `types` entry to `tsconfig.json` so `D1Database`, `Request`, `Executi
 ```jsonc
 {
   "compilerOptions": {
-    // ... existing options ...
+    // ... existing options from create-hono ...
     "types": ["@cloudflare/workers-types"]
   }
 }
@@ -55,6 +42,23 @@ Then add a `types` entry to `tsconfig.json` so `D1Database`, `Request`, `Executi
 Without `types`, you would have to `import { D1Database, Request, ... } from '@cloudflare/workers-types'` in every file — which works for types but is misleading because the package has no runtime exports, and importing `Request` shadows the global `Request` constructor.
 
 After this, the [Minimal example](#minimal-example-model--1-route) below works as written.
+
+> **Zod 4 is not yet supported.** Zod 4 reorders the `ZodType` generics, which collapses Nanoka's field type inference (`RowType`, `CreateInput`) to `never`. Pin `zod@^3.23.0` until Phase 2 ships Zod 4 support. Without the pin, `pnpm add zod` will install the latest 4.x and `User.create({...})` will fail to type-check.
+
+`drizzle-kit` is required at install time (not a peer dep) because `npx drizzle-kit generate` is the supported migration step — see Quickstart step 3.
+
+### Adding to a project that wasn't scaffolded by create-hono
+
+If you're integrating into an existing TypeScript project (no `create hono`), `hono` itself is also a peer dep — add it to the runtime install:
+
+```bash
+pnpm add @nanokajs/core hono drizzle-orm zod@^3.23.0
+pnpm add -D typescript drizzle-kit @cloudflare/workers-types
+```
+
+The tsconfig `types` entry above still applies if you're targeting Cloudflare Workers.
+
+Peer dependency ranges: `hono ^4.0.0`, `drizzle-orm ^0.45.0`, `zod ^3.23.0`, `@cloudflare/workers-types ^4.20240925.0`.
 
 ## Quickstart
 
