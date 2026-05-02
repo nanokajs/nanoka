@@ -106,18 +106,18 @@ User.validator('json', { omit: ['passwordHash'] })
 User.validator('json', { partial: true })
 ```
 
-### 型安全なフィールドアクセス（Phase 2）
+### 型安全なフィールドアクセス（Phase 2以降）
 
-`pick` / `omit` への文字列配列はタイポがコンパイルエラーにならない。Phase 2でフィールドアクセサAPIを導入し、**Proxyなし・ランタイムコストなし**でタイポを型エラーにする。
+`pick` / `omit` への文字列配列はタイポがコンパイルエラーにならない。Phase 2ではまずschema/validator用途のフィールドアクセサAPIを導入し、**Proxyなし・ランタイムコストなし**でタイポを型エラーにする。
 
 ```ts
-// Phase 2以降：フィールドアクセサ形式
+// Phase 2：schema / validator のフィールドアクセサ形式
 User.schema({ pick: (f) => [f.name, f.emial] })
 //                                   ^^^^^^ Type error: 'emial' does not exist
 
-// クエリも統一
+// Phase 2後半以降の候補：クエリ側アクセサ
 User.where({ email: 'foo@example.com' })           // MVP（オブジェクト形式）
-User.where(f => eq(f.email, 'foo@example.com'))    // Phase 2（アクセサ形式）
+User.where(f => eq(f.email, 'foo@example.com'))    // 候補（Drizzle再発明に寄りやすいため後回し）
 ```
 
 内部の `f` はProxyではなく `as const` オブジェクト。ランタイムコストはゼロ。
@@ -203,18 +203,59 @@ const result = await app.db
 
 > **Phase 1時点のrelationについて**: `t.hasMany()` / `t.belongsTo()` はMVPに含めない。リレーションが必要な場合は素のDrizzleで書く。cascade・N+1・join型推論の設計負荷はPhase 2以降で向き合う。
 
-### Phase 2 — フレームワークへの育成
-- [ ] フィールドアクセサAPI（`User.schema({ pick: f => [f.name] })`）
-- [ ] 型安全なクエリビルダー（`User.where(f => eq(f.email, x)).limit(10)`）
-- [ ] リレーション定義（`t.hasMany()` / `t.belongsTo()`）※cascade/N+1/joinの型推論を含む重い作業
-- [ ] OpenAPIスキーマ自動生成（Hono RPC連携）
-- [ ] Turso / libSQL adapter
+### Phase 1.5 — 公開運用基盤
+- [ ] README onboarding parity CI（公開 tarball / 最小 scaffold で `tsc --noEmit` と `drizzle-kit generate` を検証）
+- [ ] GitHub Actions の PR ゲート（build / test / typecheck / lint）
+- [ ] tag push による publish 自動化
+- [ ] CONTRIBUTING / Issue・PR template / CODEOWNERS
+- [ ] Phase 1 の型持ち越し解消（`Nanoka<E extends Env>` など）
+
+### Phase 2 — API境界をNanokaのコア価値にする
+
+DrizzleのクエリDSLを再発明するのではなく、DBモデルとAPI入力/出力の境界を安全に速く書ける方向へ伸ばす。
+
+#### Phase 2A — API境界
+- [ ] フィールドポリシー（例: `serverOnly()` / `writeOnly()` / `readOnly()`）
+- [ ] 用途別スキーマ（例: `User.inputSchema('create')` / `User.inputSchema('update')` / `User.outputSchema()`）
+- [ ] validator preset（例: `User.validator('json', 'create')`）
+- [ ] 明示的なレスポンス整形（例: `User.outputSchema().parse(row)` または `User.toResponse(row)`）
+- [ ] `t.json(zodSchema)` による JSON フィールドの実行時検証
+
+#### Phase 2B — 型と互換性
+- [ ] フィールドアクセサAPI（まず `pick` / `omit` / validator 用途から: `User.schema({ pick: f => [f.name] })`）
 - [ ] **Zod 4 サポート**（Phase 1 は `zod@^3.23.0` のみ。v4 は `ZodType<Output, Def, Input>` → `ZodType<Output, Input, Internals>` の generic 順序変更により、現行の `Field<TS, Mods, ZB>` 由来型推論が `never` に潰れる。`peerDependencies.zod` を `^3.23.0 || ^4.0.0` に広げるか、v4 に切り替えて v3 を切るかを着手時に判断する）
+- [ ] create / update input の必須・任意フィールド精緻化
+
+#### Phase 2C — OpenAPI seed
+- [ ] モデル単位の JSON Schema / OpenAPI component 生成
+- [ ] `inputSchema()` / `outputSchema()` / フィールドポリシーが OpenAPI の source of truth として成立するか検証
+- [ ] Hono ルート全体の自動収集や Swagger UI は Phase 3 に送る
+
+#### 1.0.0 リリース判断基準
+
+`1.0.0` は Phase 3 の完了ではなく、Nanoka の中心 API を長期維持できると判断できた時点で切る。具体的には Phase 2A / 2B と最小 OpenAPI seed を完了し、DBモデルとAPI入力/出力の境界設計を破壊的変更なしに保てる状態を条件にする。
+
+- [ ] `serverOnly()` / `writeOnly()` / `readOnly()` の意味論が確定している
+- [ ] `inputSchema('create' | 'update')` / `outputSchema()` の公開 API が安定している
+- [ ] `User.validator(...)` の用途別 preset が安定している
+- [ ] `t.json(zodSchema)` と Zod 4 対応が完了している
+- [ ] create / update input 型が実用上十分に精緻化されている
+- [ ] OpenAPI component 生成で schema 設計が破綻しないことを確認済み
+- [ ] onboarding parity CI により README 通りの導入が継続検証されている
+- [ ] 既知の破壊的変更候補が backlog 上で整理または解消されている
+
+relation / Turso・libSQL adapter / route-level OpenAPI / `create-nanoka-app` / VSCode拡張は `1.0.0` の必須条件にしない。これらは中心 API の上に載る拡張として、1.x 系で追加してよい。
+
+#### Phase 2 後半または Phase 3 候補
+- [ ] Turso / libSQL adapter
+- [ ] リレーション定義（`t.hasMany()` / `t.belongsTo()`）※cascade/N+1/joinの型推論を含む重い作業
+- [ ] 型安全なクエリビルダー（`User.where(f => eq(f.email, x)).limit(10)`）※Drizzle再発明に寄りやすいため優先度を下げる
 
 ### Phase 3 — エコシステム
 - [ ] CLIツール（`npx create-nanoka-app`）
+- [ ] route-level OpenAPI / Hono ルート自動収集 / Swagger UI
 - [ ] VSCode拡張（モデル定義からの補完）
-- [ ] Claude Codeプラグイン（モデル定義・ルート生成・migration手順の補助）
+- [ ] Claude Code / Codex プラグイン（モデル定義・ルート生成・migration手順の補助）
 - [ ] OSSコミュニティ整備
 
 ---

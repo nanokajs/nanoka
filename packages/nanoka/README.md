@@ -19,6 +19,8 @@ Targets **Cloudflare Workers + D1 (SQLite)** as first-class. Hono-compatible rou
 
 Phase 1 (MVP). Experimental. Expect breaking changes until v1.0.
 
+The v1.0 line will be cut when Nanoka's core API-boundary model is stable: field policies (`serverOnly` / `writeOnly` / `readOnly`), purpose-specific schemas (`inputSchema` / `outputSchema`), validator presets, typed JSON fields, Zod 4 support, and OpenAPI component generation. Relations, route-level OpenAPI, scaffolding, and editor tooling are not v1.0 blockers.
+
 ## Install
 
 Nanoka assumes a Hono + Cloudflare Workers project. The standard starting point is `pnpm create hono@latest` (Cloudflare Workers template), which scaffolds `wrangler` and `hono` but **not** TypeScript, `@cloudflare/workers-types`, or `drizzle-kit`. From a fresh scaffold, add Nanoka and the missing pieces:
@@ -381,11 +383,14 @@ Note: this handler will not be called for validation failures originating from `
 
 Nanoka Phase 1 is intentionally minimal. These features are Phase 2 or later:
 
-- **Relations** (`hasMany()`, `belongsTo()`, lazy loading) — Phase 2. Use raw Drizzle for joins.
-- **Field accessor API** (`User.schema({ pick: f => [f.name, f.email] })`, `User.where(f => eq(f.email, x))`) — Phase 2. Phase 1 uses string arrays and object-form `where`. When Phase 2 lands, the `f` object will be `as const`, with zero runtime cost.
+- **Field policies** (`serverOnly()`, `writeOnly()`, `readOnly()`) — Phase 2. These will reduce repeated `omit` boilerplate for API input/output boundaries while keeping response shaping explicit.
+- **Purpose-specific schemas** (`inputSchema('create')`, `inputSchema('update')`, `outputSchema()`) — Phase 2. Phase 1 uses `schema({ pick, omit, partial })` directly.
+- **Typed JSON fields** (`t.json(zodSchema)`) — Phase 2. Phase 1 `t.json()` uses `z.unknown()`.
+- **Field accessor API** (`User.schema({ pick: f => [f.name, f.email] })`) — Phase 2. Phase 1 uses string arrays. When Phase 2 lands, the `f` object will be `as const`, with zero runtime cost.
 - **Zod 4 support** — Phase 2. Zod 4 changed `ZodType<Output, Def, Input>` (v3) to `ZodType<Output, Input, Internals>` (v4); Nanoka's field type derivation depends on the v3 generic order, so installing Zod 4 collapses `InferFieldType` to `never`. Pin `zod@^3.23.0` for now.
-- **OpenAPI generation** — Phase 2 or 3.
-- **Turso / libSQL adapters** — Phase 2. Nanoka is designed adapter-first; additional adapters will follow.
+- **OpenAPI component generation** — Phase 2 seed. Route-level OpenAPI, route auto-discovery, and Swagger UI are Phase 3.
+- **Relations** (`hasMany()`, `belongsTo()`, lazy loading) — Phase 2 later or Phase 3. Use raw Drizzle for joins.
+- **Turso / libSQL adapters** — Phase 2 later or Phase 3. Nanoka is designed adapter-first; additional adapters will follow.
 - **CLI scaffolder** (`create-nanoka-app`) — Phase 3.
 - **Auth, full-stack React, complex query DSL** — explicitly out of scope at every phase.
 

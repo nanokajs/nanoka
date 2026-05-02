@@ -57,25 +57,62 @@
 
 `docs/nanoka.md` で Phase 2 として明示的に切り出している機能。Phase 2 着手時は本セクションを `docs/phase2-plan.md` に展開する。
 
-- **Relations** (`t.hasMany()` / `t.belongsTo()`)
-- **フィールドアクセサ API** (`{ pick: f => [f.name] }` / `User.where(f => eq(f.email, x))`)
-  - 制約: `f` は `as const` の固定オブジェクトとし、Proxy にしない（runtime コスト ゼロ要件）
-- **モデル定義側での `omit` 既定化**: 現状 `passwordHash` のような「常にAPI入力から外す」フィールドも、ルート毎に `User.validator('json', { omit: ['passwordHash'] })` と書き写す必要がある。フィールドレベルのマーカー（例: `t.string().writeOnly()` や `.serverOnly()`）を導入し、`User.schema()` / `User.validator()` のデフォルトで除外する案。検討時の論点:
-  - スコープは**入力バリデーション側のみ**に限定する（`findMany` の戻り値や `app.db.select()` には触らない）。`docs/nanoka.md` の "80% automatic, 20% explicit" は出力側で残す方針と整合させる。
-  - フィールドアクセサ API（上記）と同じく `Field<TS, Mods, ZB>` の Mods 経由で型に伝播させる必要があり、設計が連動する。Phase 2 で同時に着手するのが筋。
-  - 既存の `{ omit: [...] }` / `{ pick: [...] }` 明示指定は引き続き効く（モデル既定をオーバーライド可能）。
-- **OpenAPI 自動生成**
-- **Turso / libSQL adapter**
-- **`t.json(zodSchema)` の引数化**: 現状 `t.json()` は `z.unknown()` で runtime 検証なし（M-1 review 指摘）
+Phase 2 の軸は「Drizzle クエリDSLの再発明」ではなく、**DBモデルとAPI入力/出力の境界を安全に速く書けること**に置く。CRUD / where / relation の抽象化は後回しにし、まず `passwordHash` のような DB-only フィールドやレスポンス整形を扱う。
+
+### 3.1 Phase 2A: API境界
+
+- **フィールドポリシー**: `t.string().serverOnly()` / `.writeOnly()` / `.readOnly()` のようなマーカーを導入する。検討時の論点:
+  - `serverOnly`: API input / output の両方から既定で除外する候補。例: `passwordHash`。
+  - `writeOnly`: input には入るが output から除外する候補。例: `password` を受け取り、handler で `passwordHash` に変換する設計を許す場合。
+  - `readOnly`: output には入るが create / update input から既定で除外する候補。例: `id`, `createdAt`。
+  - スコープは API 派生 schema / validator / response helper に限定する。`findMany` の戻り値や `app.db.select()` を自動で変換しない。
+  - 既存の `{ omit: [...] }` / `{ pick: [...] }` 明示指定は引き続き効く。
+- **用途別スキーマ**: `User.inputSchema('create')` / `User.inputSchema('update')` / `User.outputSchema()` を導入する。内部は既存 `schema()` の派生でよいが、API入力・API出力・DB row の違いを明示する。
+- **validator preset**: `User.validator('json', 'create')` / `User.validator('json', 'update')` のように、用途別スキーマを Hono validator に渡せるようにする。
+- **明示的なレスポンス整形**: `User.outputSchema().parse(row)` または `User.toResponse(row)` を検討する。自動変換は避け、"80% automatic, 20% explicit" を維持する。
+- **`t.json(zodSchema)` の引数化**: 現状 `t.json()` は `z.unknown()` で runtime 検証なし（M-1 review 指摘）。API境界をコア価値にするなら早めに対応する。
+
+### 3.2 Phase 2B: 型と互換性
+
+- **フィールドアクセサ API**: まず `{ pick: f => [f.name] }` / `{ omit: f => [f.passwordHash] }` の schema / validator 用途から導入する。`User.where(f => eq(f.email, x))` は後回し。
+  - 制約: `f` は `as const` の固定オブジェクトとし、Proxy にしない（runtime コスト ゼロ要件）。
 - **Zod 4 サポート**: 現状 `peerDependencies.zod: ^3.23.0`。v4 は `ZodType<Output, Def, Input>` → `ZodType<Output, Input, Internals>` に generic 順序が変わり、`packages/nanoka/src/field/factories.ts` 各 builder の `ZB extends z.ZodType<TS, z.ZodTypeDef, TS>` 制約が壊れる。結果として `Field<TS, Mods, ZB>` 由来の `InferFieldType` 条件型分岐が `never` に潰れ、`User.create({...})` で「string は undefined に代入できない」型エラーが発生する（2026-05 ユーザー報告）。対応方針:
   1. `peerDependencies.zod` を `^3.23.0 || ^4.0.0` に広げ、両対応する型シグネチャに書き換える
   2. または v4 に切り替えて v3 を切る（破壊的変更）
   - 着手時に判断。検出は §4.7 の onboarding parity E2E で担保する。
+- **create / update input の必須・任意フィールド精緻化**: Phase 1 は `CreateInput = Partial<RowType>` で受容した。`readOnly` / default / optional / primary の情報を使って入力型を精緻化する。
+
+### 3.3 Phase 2C: OpenAPI seed
+
+- **モデル単位の JSON Schema / OpenAPI component 生成**: `inputSchema()` / `outputSchema()` / フィールドポリシーが OpenAPI の source of truth として成立するかを検証する。
+- **Phase 2 では最小に留める**: Hono ルート全体の自動収集、Swagger UI、route-level OpenAPI は Phase 3 に送る。
+
+### 3.4 1.0.0 リリース判断基準
+
+`1.0.0` は Phase 3 の完了ではなく、Nanoka の中心 API を長期維持できると判断できた時点で切る。具体的には Phase 2A / 2B と最小 OpenAPI seed を完了し、DBモデルとAPI入力/出力の境界設計を破壊的変更なしに保てる状態を条件にする。
+
+- `serverOnly()` / `writeOnly()` / `readOnly()` の意味論が確定している
+- `inputSchema('create' | 'update')` / `outputSchema()` の公開 API が安定している
+- `User.validator(...)` の用途別 preset が安定している
+- `t.json(zodSchema)` と Zod 4 対応が完了している
+- create / update input 型が実用上十分に精緻化されている
+- OpenAPI component 生成で schema 設計が破綻しないことを確認済み
+- onboarding parity CI により README 通りの導入が継続検証されている
+- 既知の破壊的変更候補が backlog 上で整理または解消されている
+
+relation / Turso・libSQL adapter / route-level OpenAPI / `create-nanoka-app` / VSCode拡張は `1.0.0` の必須条件にしない。これらは中心 API の上に載る拡張として、1.x 系で追加してよい。
+
+### 3.5 Phase 2 後半または Phase 3 候補
+
+- **Turso / libSQL adapter**
+- **Relations** (`t.hasMany()` / `t.belongsTo()`)
+- **型安全なクエリビルダー** (`User.where(f => eq(f.email, x)).limit(10)`)
+  - Drizzle 再発明に寄りやすいため優先度を下げる。
 - **`npx create-nanoka-app`**（Phase 3）
 
 ### 全 Phase でスコープ外
 
-- 認証 / フルスタック React / 複雑な query DSL
+- 認証 / フルスタック React / Drizzleを置き換える複雑な query DSL
 
 ---
 
