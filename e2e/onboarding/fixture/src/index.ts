@@ -1,5 +1,5 @@
-import { z } from 'zod'
 import { d1Adapter, nanoka } from '@nanokajs/core'
+import { z } from 'zod'
 import { userFields, userTableName } from './models/user'
 
 export interface Env {
