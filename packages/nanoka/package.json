@@ -1,7 +1,15 @@
 {
   "name": "nanoka",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "type": "module",
+  "description": "Thin wrapper over Hono + Drizzle + Zod for Cloudflare Workers + D1. 80% automatic, 20% explicit.",
+  "author": "Eiichiro Iriguchi <eiichiro_iriguchi@a-1ro.dev>",
+  "license": "MIT",
+  "keywords": ["hono", "drizzle", "zod", "cloudflare-workers", "d1", "orm", "validation"],
+  "engines": {
+    "node": ">=20"
+  },
+  "sideEffects": false,
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -15,7 +23,8 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "LICENSE"
   ],
   "bin": {
     "nanoka": "./dist/cli.js"
@@ -25,7 +34,8 @@
     "test": "vitest run -c vitest.config.ts && vitest run -c vitest.node.config.ts",
     "test:workers": "vitest run -c vitest.config.ts",
     "test:node": "vitest run -c vitest.node.config.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "pnpm build && pnpm test && pnpm typecheck"
   },
   "peerDependencies": {
     "@cloudflare/workers-types": "^4.20240925.0",

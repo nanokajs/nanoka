@@ -1,0 +1,423 @@
+# nanoka
+
+> Thin wrapper over Hono + Drizzle + Zod for Cloudflare Workers + D1.
+> 80% automatic, 20% explicit.
+
+## What is this
+
+Nanoka is a lightweight framework that bridges model definition with DB schema, TypeScript types, and validation. It places the model at the center and derives schema, types, and base validation from it—but keeps API validation as an intentional, explicit adaptation layer, because DB shape and API shape diverge (e.g., `passwordHash` exists in the DB but must not appear in responses).
+
+The core idea: stop gluing together Hono + Drizzle + Zod manually. Define a model once, get DB schema, types, and validators automatically. Then customize API behavior explicitly for each route.
+
+Targets **Cloudflare Workers + D1 (SQLite)** as first-class. Hono-compatible routing, escape hatch to raw Drizzle, zero magic.
+
+## Status
+
+Phase 1 (MVP). Experimental. Expect breaking changes until v1.0.
+
+## Install
+
+```bash
+pnpm add nanoka hono drizzle-orm zod
+```
+
+Peer dependencies: `hono ^4.0.0`, `drizzle-orm ^0.45.0`, `zod ^3.23.0`, `@cloudflare/workers-types ^4.20240925.0` (for Workers).
+
+## Quickstart
+
+### 3 commands to a working API
+
+1. **Define your model**
+
+   `src/models/user.ts`:
+   ```ts
+   import { t } from 'nanoka'
+
+   export const userTableName = 'users'
+   export const userFields = {
+     id: t.uuid().primary(),
+     name: t.string(),
+     email: t.string().email(),
+     passwordHash: t.string(),
+     createdAt: t.timestamp().default(() => new Date()),
+   }
+   ```
+
+2. **Generate Drizzle schema**
+
+   Create `nanoka.config.ts` in your project root:
+   ```ts
+   import { defineConfig } from 'nanoka/config'
+   import { userTableName, userFields } from './src/models/user'
+
+   export default defineConfig({
+     models: [
+       { name: userTableName, fields: userFields },
+     ],
+     output: './drizzle/schema.ts',
+   })
+   ```
+
+   Then:
+   ```bash
+   npx nanoka generate
+   ```
+
+   ✓ Creates `drizzle/schema.ts` from your models.
+
+3. **Apply migrations and deploy**
+
+   ```bash
+   npx drizzle-kit generate
+   npx wrangler d1 migrations apply <DATABASE> --local
+   ```
+
+   ✓ SQL migrations generated from Drizzle schema. Ready to deploy.
+
+### Minimal example (model + 1 route)
+
+`src/index.ts`:
+```ts
+import { d1Adapter, nanoka } from 'nanoka'
+import { userFields, userTableName } from './src/models/user'
+
+export interface Env {
+  DB: D1Database
+}
+
+export default {
+  async fetch(req: Request, env: Env, ctx: ExecutionContext) {
+    const app = nanoka(d1Adapter(env.DB))
+    const User = app.model(userTableName, userFields)
+
+    app.get('/users/:id', async (c) => {
+      const id = c.req.param('id')
+      const user = await User.findOne(id)
+      if (!user) return c.notFound()
+      return c.json(user)
+    })
+
+    app.post(
+      '/users',
+      User.validator('json', { omit: ['id', 'passwordHash', 'createdAt'] }),
+      async (c) => {
+        const body = c.req.valid('json')
+        const user = await User.create({
+          ...body,
+          id: crypto.randomUUID(),
+          passwordHash: 'hashed_value_here', // use bcrypt, argon2, etc. in production
+          createdAt: new Date(),
+        })
+        return c.json(user, 201)
+      }
+    )
+
+    return app.fetch(req, { Bindings: env })
+  },
+}
+```
+
+### Full working example
+
+Complete CRUD with curl tests, deployment steps, and troubleshooting:
+[examples/basic/README.md](../../examples/basic/README.md)
+
+## How it fits with drizzle-kit and wrangler
+
+### Migration flow
+
+```
+User model definition
+ (userFields + userTableName)
+        |
+        v
+   nanoka generate
+        |
+        v
+drizzle/schema.ts (Drizzle schema code)
+        |
+        v
+drizzle-kit generate
+        |
+        v
+drizzle/migrations/*.sql (SQL migrations)
+        |
+        v
+wrangler d1 migrations apply
+        |
+        v
+    D1 Database
+```
+
+**Nanoka generates Drizzle schema code only.** Nanoka does NOT generate SQL, does not compute diffs, does not apply migrations. That responsibility stays with `drizzle-kit` (diff + SQL) and `wrangler` (apply).
+
+This design keeps Nanoka thin and lets the stable Drizzle ecosystem handle migration machinery. You own the SQL files; migrations are human-reviewable and version-controlled.
+
+## Core API
+
+### Model definition with `t`
+
+Fields are built with the `t` builder:
+
+```ts
+import { t } from 'nanoka'
+
+const fields = {
+  id: t.uuid().primary(),
+  name: t.string(),
+  email: t.string().email(),
+  passwordHash: t.string(),
+  active: t.boolean().default(() => true),
+  age: t.integer().min(0).max(150),
+  metadata: t.json(), // { key: string, value: unknown }[]
+  createdAt: t.timestamp().default(() => new Date()),
+  updatedAt: t.timestamp().default(() => new Date()),
+}
+```
+
+Supported field types:
+- `t.string()` / `t.email()` / `t.uuid()`
+- `t.integer()` / `t.number()`
+- `t.boolean()`
+- `t.timestamp()`
+- `t.json()`
+
+Modifiers:
+- `.primary()` — primary key (required, one per model)
+- `.unique()` — unique constraint
+- `.optional()` — nullable
+- `.default(fn)` — default value (function or constant)
+- `.min(n)` / `.max(n)` — numeric / string length bounds
+- `.email()` — email validation
+
+### `schema()` vs `validator()` (two methods, not one)
+
+This intentional separation keeps validation library swappable for Phase 2.
+
+**`schema(opts)` — pure Zod schema, standalone**
+
+```ts
+const CreateSchema = User.schema({ omit: ['id', 'passwordHash', 'createdAt'] })
+const parsed = CreateSchema.parse(data)  // use anywhere Zod is needed
+```
+
+**`validator(target, opts, hook?)` — Hono validator**
+
+```ts
+app.post('/users', User.validator('json', { omit: ['id', 'passwordHash'] }), handler)
+// or with error hook:
+app.post('/users', User.validator('json', opts, (result, c) => {
+  if (!result.success) return c.json({ error: 'Invalid request' }, 400)
+}), handler)
+```
+
+The `hook` parameter is optional. If you omit it, `@hono/zod-validator` returns issues in the response (see Error handling section for hardening).
+
+Options apply to both:
+- `pick: ['name', 'email']` — include only these fields
+- `omit: ['passwordHash']` — exclude these fields
+- `partial: true` — all fields optional (good for PATCH)
+
+### `findMany` requires `limit` (type-safe pagination)
+
+`limit` is a required parameter—omitting it is a **compile error**:
+
+```ts
+// @ts-expect-error Missing required property 'limit'
+const users = await User.findMany()
+
+// OK
+const users = await User.findMany({ limit: 20 })
+const users = await User.findMany({ limit: 20, offset: 10 })
+const users = await User.findMany({ limit: 20, orderBy: 'id' })
+```
+
+This prevents accidental unbounded queries. Pagination shape: `{ limit, offset?, orderBy? }`.
+
+## Escape hatch: raw Drizzle and D1 batch
+
+### `app.db` — use raw Drizzle when needed
+
+When the typed API doesn't fit, drop down to `app.db` (raw Drizzle):
+
+```ts
+import { eq } from 'drizzle-orm'
+
+// Raw select with explicit types
+const users = await app.db
+  .select()
+  .from(User.table)
+  .where(eq(User.table.email, 'alice@example.com'))
+
+// Complex joins, subqueries, raw SQL
+const result = await app.db
+  .select()
+  .from(User.table)
+  .innerJoin(Post.table, eq(User.table.id, Post.table.userId))
+```
+
+`User.table` is the underlying Drizzle table. Combine with `eq()`, `lt()`, `and()`, `or()` from `drizzle-orm` for complex conditions. SQL injection is prevented by Drizzle's parametrized bindings.
+
+### `app.batch()` — D1 batch API directly
+
+For transactions or batched queries, use `app.batch()` (D1's native batch):
+
+```ts
+const results = await app.batch([
+  app.db.insert(User.table).values({ ... }),
+  app.db.update(User.table).set({ ... }).where(...),
+])
+
+// D1 batch returns results in order
+const [insertResult, updateResult] = results
+```
+
+No custom transaction abstraction. Nanoka exposes D1's `batch()` directly. Isolation level and rollback behavior match D1 docs.
+
+## Error handling
+
+### `HTTPException` (Hono standard)
+
+Nanoka uses Hono's `HTTPException` for errors:
+
+```ts
+import { HTTPException } from 'hono/http-exception'
+
+app.get('/users/:id', async (c) => {
+  const user = await User.findOne(c.req.param('id'))
+  if (!user) throw new HTTPException(404, { message: 'Not found' })
+  return c.json(user)
+})
+```
+
+### Hardening Zod validator errors
+
+By default, `@hono/zod-validator` returns the full `issues[]` array in the response, which leaks your API schema shape (field names, types, constraints) to attackers during reconnaissance.
+
+**Option 1: `app.onError` hook (recommended)**
+
+```ts
+import { ZodError } from 'zod'
+
+app.onError((err, c) => {
+  if (err instanceof ZodError) {
+    return c.json({ error: 'Invalid request' }, 400)
+  }
+  // ... handle other errors
+})
+```
+
+**Option 2: validator hook (field-level)**
+
+```ts
+app.post(
+  '/users',
+  User.validator('json', { omit: ['passwordHash'] }, (result, c) => {
+    if (!result.success) {
+      return c.json({ error: 'Invalid request' }, 400)
+    }
+  }),
+  handler
+)
+```
+
+Both approaches return a fixed error message instead of leaking the schema. Choose based on your error handling pattern.
+
+## Phase 1 scope: what is NOT included
+
+Nanoka Phase 1 is intentionally minimal. These features are Phase 2 or later:
+
+- **Relations** (`hasMany()`, `belongsTo()`, lazy loading) — Phase 2. Use raw Drizzle for joins.
+- **Field accessor API** (`User.schema({ pick: f => [f.name, f.email] })`, `User.where(f => eq(f.email, x))`) — Phase 2. Phase 1 uses string arrays and object-form `where`. When Phase 2 lands, the `f` object will be `as const`, with zero runtime cost.
+- **OpenAPI generation** — Phase 2 or 3.
+- **Turso / libSQL adapters** — Phase 2. Nanoka is designed adapter-first; additional adapters will follow.
+- **CLI scaffolder** (`create-nanoka-app`) — Phase 3.
+- **Auth, full-stack React, complex query DSL** — explicitly out of scope at every phase.
+
+For relations and complex joins in Phase 1, use raw Drizzle via `app.db`. The escape hatch is always open.
+
+## Workspace structure (for contributors)
+
+```
+packages/nanoka/          # Library
+  src/
+    field/                # DSL builder (t)
+    model/                # Model definition, schema(), validator()
+    router/               # nanoka() router, CRUD methods
+    adapter/              # Adapter interface, d1Adapter()
+    cli/                  # CLI entry point, nanoka generate
+    codegen/              # Schema code generator
+  dist/                   # Built ESM + types (not in repo, generated by tsup)
+  __tests__/              # Integration tests
+  README.md               # This file
+  LICENSE                 # MIT
+  package.json
+  tsup.config.ts
+  vitest.config.ts
+  vitest.node.config.ts
+  tsconfig.json
+
+examples/basic/           # Cloudflare Workers example
+  src/models/user.ts
+  src/index.ts
+  drizzle/schema.ts       # Generated by nanoka generate
+  drizzle/migrations/     # Generated by drizzle-kit generate
+  README.md
+  wrangler.toml
+```
+
+## Release checklist (for maintainers)
+
+Before running `pnpm publish`:
+
+1. **Add repository metadata to `package.json`** (GitHub URL must be confirmed first)
+   ```json
+   {
+     "repository": "https://github.com/username/nanoka",
+     "homepage": "https://github.com/username/nanoka#readme",
+     "bugs": "https://github.com/username/nanoka/issues"
+   }
+   ```
+
+2. **Run `pnpm publish --dry-run` and verify tarball contents**
+   ```bash
+   pnpm -C packages/nanoka publish --dry-run
+   ```
+   Expected in Tarball Contents:
+   - `dist/index.js`, `dist/index.d.ts`, `dist/*.js`, `dist/*.d.ts`
+   - `LICENSE`
+   - `package.json`, `README.md`
+
+   NOT included (confirm absence):
+   - `src/`, `__tests__/`, `.test.ts`, `.spec.ts`
+   - `tsconfig.json`, `vitest.config.ts`, `tsup.config.ts`, `scripts/`
+   - `node_modules/`
+
+3. **Verify package name is available**
+   ```bash
+   npm view nanoka 2>&1 | grep E404
+   ```
+   If E404 (not found), the name is available. If package exists, consider `@scope/nanoka`.
+
+4. **Rewrite relative links to GitHub URLs**
+   - Search `packages/nanoka/README.md` for `../../examples/basic`
+   - Replace with `https://github.com/username/nanoka/tree/main/examples/basic`
+   - npm registry does not resolve relative paths.
+
+5. **Run full test suite before publish**
+   ```bash
+   pnpm install
+   pnpm build
+   pnpm -C packages/nanoka test
+   pnpm -C examples/basic typecheck
+   pnpm -C examples/basic test
+   ```
+
+6. **Publish** (prepublishOnly hook will run build + test + typecheck again)
+   ```bash
+   pnpm -C packages/nanoka publish
+   ```
+
+## License
+
+MIT — see LICENSE file.
