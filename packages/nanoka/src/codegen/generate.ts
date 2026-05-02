@@ -71,7 +71,7 @@ export function generateDrizzleSchema(models: readonly ModelDef[]): string {
     const tableContent = fieldsStr ? `{\n${fieldsStr}\n}` : '{}'
 
     lines.push(
-      `export const ${model.tableName} = sqliteTable('${model.tableName}', ${tableContent})`,
+      `export const ${model.name} = sqliteTable('${model.name}', ${tableContent})`,
     )
     lines.push('')
   }

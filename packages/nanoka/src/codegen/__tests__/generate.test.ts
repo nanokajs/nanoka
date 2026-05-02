@@ -7,7 +7,7 @@ describe('generateDrizzleSchema', () => {
   it('generates schema for single model with all field types', () => {
     const models: ModelDef[] = [
       {
-        tableName: 'users',
+        name: 'users',
         fields: {
           id: t.uuid().primary(),
           name: t.string(),
@@ -28,14 +28,14 @@ describe('generateDrizzleSchema', () => {
   it('generates schema for multiple models', () => {
     const models: ModelDef[] = [
       {
-        tableName: 'users',
+        name: 'users',
         fields: {
           id: t.uuid().primary(),
           name: t.string(),
         },
       },
       {
-        tableName: 'posts',
+        name: 'posts',
         fields: {
           id: t.uuid().primary(),
           title: t.string(),
@@ -51,7 +51,7 @@ describe('generateDrizzleSchema', () => {
   it('handles optional fields', () => {
     const models: ModelDef[] = [
       {
-        tableName: 'users',
+        name: 'users',
         fields: {
           id: t.uuid().primary(),
           name: t.string(),
@@ -67,7 +67,7 @@ describe('generateDrizzleSchema', () => {
   it('handles default values (literal)', () => {
     const models: ModelDef[] = [
       {
-        tableName: 'posts',
+        name: 'posts',
         fields: {
           id: t.uuid().primary(),
           title: t.string(),
@@ -92,7 +92,7 @@ describe('generateDrizzleSchema', () => {
     try {
       const models: ModelDef[] = [
         {
-          tableName: 'posts',
+          name: 'posts',
           fields: {
             id: t.uuid().primary(),
             title: t.string(),
@@ -114,7 +114,7 @@ describe('generateDrizzleSchema', () => {
   it('handles combined modifiers', () => {
     const models: ModelDef[] = [
       {
-        tableName: 'users',
+        name: 'users',
         fields: {
           id: t.uuid().primary(),
           email: t.string().email().unique(),
@@ -138,7 +138,7 @@ describe('generateDrizzleSchema', () => {
   it('generates correct imports for used types', () => {
     const models: ModelDef[] = [
       {
-        tableName: 'metrics',
+        name: 'metrics',
         fields: {
           id: t.uuid().primary(),
           value: t.number(),
@@ -155,7 +155,7 @@ describe('generateDrizzleSchema', () => {
   it('preserves field order in model', () => {
     const models: ModelDef[] = [
       {
-        tableName: 'ordered',
+        name: 'ordered',
         fields: {
           z: t.string(),
           a: t.string(),
@@ -171,7 +171,7 @@ describe('generateDrizzleSchema', () => {
   it('handles string with min/max constraints', () => {
     const models: ModelDef[] = [
       {
-        tableName: 'users',
+        name: 'users',
         fields: {
           id: t.uuid().primary(),
           username: t.string().min(3).max(20),
@@ -186,7 +186,7 @@ describe('generateDrizzleSchema', () => {
   it('handles integer with min/max constraints', () => {
     const models: ModelDef[] = [
       {
-        tableName: 'stats',
+        name: 'stats',
         fields: {
           id: t.uuid().primary(),
           score: t.integer().min(0).max(100),

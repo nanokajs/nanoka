@@ -22,7 +22,7 @@ describe('CLI', () => {
     expect(exitCode).toBe(1)
   })
 
-  it('returns error with missing --out if config.out is not defined', async () => {
+  it('returns error with missing --output if config.output is not defined', async () => {
     const exitCode = await main(['generate', '--config', '/tmp/fake.ts'])
     expect(exitCode).toBe(1)
   })

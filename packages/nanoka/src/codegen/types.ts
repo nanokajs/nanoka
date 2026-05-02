@@ -1,11 +1,11 @@
 import type { Field } from '../field'
 
 export interface ModelDef {
-  readonly tableName: string
+  readonly name: string
   readonly fields: Record<string, Field<any, any, any>>
 }
 
 export interface NanokaConfig {
-  readonly out?: string | undefined
+  readonly output?: string | undefined
   readonly models: readonly ModelDef[]
 }

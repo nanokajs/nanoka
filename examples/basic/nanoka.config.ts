@@ -4,9 +4,9 @@ import { userFields, userTableName } from './src/models/user'
 export default defineConfig({
   models: [
     {
-      tableName: userTableName,
+      name: userTableName,
       fields: userFields,
     },
   ],
-  out: './drizzle/schema.ts',
+  output: './drizzle/schema.ts',
 })
