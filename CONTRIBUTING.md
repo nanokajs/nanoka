@@ -144,6 +144,7 @@ When Phase 1.5 / M5 implements CI-driven publishing, this `prepublishOnly` scrip
 - **`docs/phase1.5-plan.md` is the source of truth** for progress tracking. When you complete a task, update the corresponding checkbox immediately (don't batch updates to the end of your session).
 - **Deferred features and accepted risks** are documented in `docs/backlog.md`. If you encounter a new deferral or risk, add it to the appropriate section.
 - **Deferred features** (Phase 2 and beyond) are listed in `docs/backlog.md` §3. These are out of scope for Phase 1.5.
+- When you change `packages/nanoka/README.md` Install or Quickstart sections, also update `e2e/onboarding/fixture/` to match. The `Onboarding parity` CI workflow will fail otherwise.
 
 ## Links
 

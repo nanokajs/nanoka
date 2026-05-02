@@ -156,12 +156,13 @@ export default {
       User.validator('json', { omit: ['id', 'passwordHash', 'createdAt'] }),
       async (c) => {
         const body = c.req.valid('json')
-        const user = await User.create({
+        const created = await User.create({
           ...body,
           id: crypto.randomUUID(),
           passwordHash: 'hashed_value_here', // use bcrypt, argon2, etc. in production
           createdAt: new Date(),
         })
+        const user = User.schema({ omit: ['passwordHash'] }).parse(created)
         return c.json(user, 201)
       }
     )
