@@ -28,6 +28,7 @@ docs/                     # Design documents and implementation plan
 ## Documentation
 
 - [Library README](packages/nanoka/README.md) — install, quickstart, full API reference
+- [Contributing](CONTRIBUTING.md) — development workflow and manual release process
 - [Design document](docs/nanoka.md) — architecture decisions and design rationale
 - [Backlog](docs/backlog.md) — current follow-ups, accepted risks, and Phase 2 candidates
 - [Phase 1 plan](docs/phase1-plan.md) — Phase 1 completion history (M0–M8, all done)

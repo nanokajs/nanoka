@@ -1,5 +1,12 @@
 # Phase 1 実装計画
 
+> **Archived**: Phase 1 (M0–M8) was completed on 2026-05-02, and `@nanokajs/core` is now published on the npm registry. This file is retained as Phase 1's completion history and is not updated with new items.
+>
+> - Deferred tasks, accepted risks, and Phase 2 candidates have been moved to `docs/backlog.md`
+> - Progress tracking for Phase 1.5 (public library operational foundation) is now in `docs/phase1.5-plan.md`
+
+---
+
 `docs/nanoka.md` の Phase 1（MVP）を完走させるための作業計画。中断・再開を前提に、各マイルストーンを独立した完了可能単位として設計している。
 
 進捗が変わったら本ファイルのチェックボックスを更新する。新規セッション開始時はまず本ファイルを読み、未完了の最初のマイルストーンから着手する。

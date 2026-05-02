@@ -174,7 +174,7 @@ export default {
 ### Full working example
 
 Complete CRUD with curl tests, deployment steps, and troubleshooting:
-[examples/basic/README.md](../../examples/basic/README.md)
+[examples/basic/README.md](https://github.com/nanokajs/nanoka/blob/main/examples/basic/README.md)
 
 ## How it fits with drizzle-kit and wrangler
 
@@ -444,7 +444,7 @@ Before running `pnpm publish`:
    - `tsconfig.json`, `vitest.config.ts`, `tsup.config.ts`, `scripts/`
    - `node_modules/`
 
-   Note: `../../examples/basic` is a relative link in this README. It resolves correctly on GitHub but not on the npm registry. The link is kept for GitHub usability.
+   Note: External links use absolute GitHub URLs (https://github.com/nanokajs/nanoka/...) so they resolve on both GitHub and the npm registry page.
 
 2. **Verify publish access**
    ```bash
