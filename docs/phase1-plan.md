@@ -185,14 +185,45 @@ M5（`nanoka()` ルーター）でハンドラ実装の例コード / README を
 - **`examples/basic/test/e2e.test.ts` の seed データ投入を `User.create` 経由に**: 現状は生 SQL `INSERT INTO users` で列順依存。テーブル変更に脆い。implementation review M7 再レビューの Minor #2。優先度低い。
 - **`User.validator()` のエラーハンドリング例（M8 で対処）**: M7 セキュリティレビュー Minor #3。Hono の `@hono/zod-validator` がデフォルトで Zod の `issues` 配列をそのまま 400 で返す挙動により、API スキーマの内部構造（フィールド名・型・omit 後の shape）が attacker reconnaissance に利用可能。M8 README で `User.validator(target, opts, hook)` を使い `issues` を握りつぶした 400 を返す利用例を示す。または `app.onError` で ZodError を捕まえて固定文言に置き換えるパターンを併記する。Phase 1 ライブラリ本体には変更を入れない。
 
-### M8: README / migration ガイド
+### M8: README / migration ガイド + publish-ready 化
+
+M8 のスコープを拡張: 「README だけ読んで第三者が再現できる」ことに加え、`pnpm publish` 直前まで進められる状態（メタデータ・ライセンス・バージョン）に持っていく。
+
+#### ドキュメント
 
 - [ ] `packages/nanoka/README.md`: Quickstart（3 コマンドで動かす）
 - [ ] migration フロー図解（Nanoka と drizzle-kit / wrangler の分界線を明示）
 - [ ] escape hatch のコード例
 - [ ] 「Phase 1 でやらないこと」の明記（relation / フィールドアクセサ / OpenAPI 等）
+- [ ] M7 セキュリティ持ち越し Minor #3 への対応: `User.validator()` の hook で Zod `issues` を固定文言に置き換える利用例、または `app.onError` で `ZodError` を捕まえる例のいずれかを README に記載
 
-完了基準: README だけ読んで第三者が `examples/basic` 相当を再現できる。
+#### ライセンス
+
+- [ ] リポジトリルートに `LICENSE` ファイルを作成（**MIT** 採用）。Copyright 表記は `Copyright (c) 2026 Eiichiro Iriguchi`
+- [ ] `packages/nanoka/package.json` の `license` フィールドに `"MIT"` を追加
+- [ ] LICENSE は `packages/nanoka/` 配下にも置くか、`files: ["dist", "LICENSE"]` でリポジトリルートのコピーを公開対象に含めるかを決定（npm の慣行に従い、package 内に同梱）
+
+#### `packages/nanoka/package.json` メタデータ整備
+
+- [ ] `version`: `0.0.0` → `0.1.0` に bump（Phase 1 完了時点の API 安定線）
+- [ ] `description`: 一行説明（例: `"Thin wrapper over Hono + Drizzle + Zod for Cloudflare Workers + D1. 80% automatic, 20% explicit."`）
+- [ ] `author`: `"Eiichiro Iriguchi <eiichiro_iriguchi@a-1ro.dev>"`
+- [ ] `keywords`: `["hono", "drizzle", "zod", "cloudflare-workers", "d1", "orm", "validation"]` 程度（npm 検索ヒット用）
+- [ ] `repository` / `homepage` / `bugs`: GitHub URL は **未確定なので publish 直前に追記** とする旨をコメントアウトせず JSON では空のまま、README 末尾の Release checklist に明記
+- [ ] `engines`: `{ "node": ">=20" }`（Cloudflare Workers の Node 互換ターゲット相当）
+- [ ] `prepublishOnly` スクリプト: `"pnpm build && pnpm test && pnpm typecheck"`（dist の取りこぼしと回帰を防ぐ）
+- [ ] `sideEffects`: `false`（tree-shaking の最適化情報。現在のコードに副作用 import がないことを確認のうえ宣言）
+
+#### Publish 直前チェック（README または別ファイルに記録）
+
+- [ ] `pnpm publish --dry-run` の出力を確認し、`dist/` と `LICENSE` のみが含まれ、`src/` / `test/` / `node_modules/` が含まれないことを確認
+- [ ] npm registry 上で `nanoka` パッケージ名が空きであることを確認（占有されていれば scope 付き `@<scope>/nanoka` への変更を判断）
+- [ ] `repository` / `homepage` / `bugs` フィールドを GitHub URL で埋める
+
+完了基準:
+1. README だけ読んで第三者が `examples/basic` 相当を再現できる
+2. `pnpm -C packages/nanoka publish --dry-run` がエラーなく完了し、含まれるファイル一覧が想定通り（`dist/` + `LICENSE` + `package.json` + `README.md`）
+3. `version: 0.1.0`, `license: "MIT"`, `description`, `author`, `keywords`, `engines`, `prepublishOnly`, `sideEffects` が `package.json` に揃っている
 
 ---
 
