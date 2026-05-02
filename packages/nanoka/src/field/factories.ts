@@ -13,6 +13,8 @@ class StringFieldBuilder<
   Mods extends FieldModifiers = {},
   ZB extends z.ZodType<TS, z.ZodTypeDef, TS> = z.ZodType<TS, z.ZodTypeDef, TS>,
 > extends BaseFieldBuilder<TS, Mods, ZB> {
+  readonly kind = 'string' as const
+
   get zodBase(): ZB {
     let schema: z.ZodTypeAny = zLib.string()
 
@@ -144,6 +146,8 @@ class UuidFieldBuilder<
   Mods extends FieldModifiers = {},
   ZB extends z.ZodType<TS, z.ZodTypeDef, TS> = z.ZodType<TS, z.ZodTypeDef, TS>,
 > extends BaseFieldBuilder<TS, Mods, ZB> {
+  readonly kind = 'uuid' as const
+
   get zodBase(): ZB {
     let schema: z.ZodTypeAny = zLib.string().uuid()
 
@@ -257,6 +261,8 @@ class NumberFieldBuilder<
   Mods extends FieldModifiers = {},
   ZB extends z.ZodType<TS, z.ZodTypeDef, TS> = z.ZodType<TS, z.ZodTypeDef, TS>,
 > extends BaseFieldBuilder<TS, Mods, ZB> {
+  readonly kind = 'number' as const
+
   get zodBase(): ZB {
     let schema: z.ZodTypeAny = zLib.number()
 
@@ -376,6 +382,8 @@ class IntegerFieldBuilder<
   Mods extends FieldModifiers = {},
   ZB extends z.ZodType<TS, z.ZodTypeDef, TS> = z.ZodType<TS, z.ZodTypeDef, TS>,
 > extends BaseFieldBuilder<TS, Mods, ZB> {
+  readonly kind = 'integer' as const
+
   get zodBase(): ZB {
     let schema: z.ZodTypeAny = zLib.number().int()
 
@@ -495,6 +503,8 @@ class BooleanFieldBuilder<
   Mods extends FieldModifiers = {},
   ZB extends z.ZodType<TS, z.ZodTypeDef, TS> = z.ZodType<TS, z.ZodTypeDef, TS>,
 > extends BaseFieldBuilder<TS, Mods, ZB> {
+  readonly kind = 'boolean' as const
+
   get zodBase(): ZB {
     return this.applyModifiersToZod(zLib.boolean()) as ZB
   }
@@ -584,6 +594,8 @@ class TimestampFieldBuilder<
     Date | string | number
   >,
 > extends BaseFieldBuilder<TS, Mods, ZB> {
+  readonly kind = 'timestamp' as const
+
   get zodBase(): ZB {
     return this.applyModifiersToZod(zLib.coerce.date()) as ZB
   }
@@ -680,6 +692,8 @@ class JsonFieldBuilder<
   Mods extends FieldModifiers = {},
   ZB extends z.ZodType<TS, z.ZodTypeDef, TS> = z.ZodType<TS, z.ZodTypeDef, TS>,
 > extends BaseFieldBuilder<TS, Mods, ZB> {
+  readonly kind = 'json' as const
+
   get zodBase(): ZB {
     return this.applyModifiersToZod(zLib.unknown()) as ZB
   }

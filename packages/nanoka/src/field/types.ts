@@ -12,6 +12,8 @@ export interface FieldModifiers {
   max?: number
 }
 
+export type FieldKind = 'string' | 'uuid' | 'number' | 'integer' | 'boolean' | 'timestamp' | 'json'
+
 /**
  * Represents a typed database field with Zod validation and Drizzle column mapping.
  *
@@ -36,6 +38,12 @@ export interface Field<
    * @internal This is a phantom property and should not be accessed at runtime.
    */
   readonly tsType: TS
+
+  /**
+   * The kind of field (string, uuid, number, integer, boolean, timestamp, json).
+   * Used for code generation and field discrimination.
+   */
+  readonly kind: FieldKind
 
   /**
    * A Zod schema that validates values matching this field's configuration.

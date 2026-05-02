@@ -156,11 +156,11 @@ M5（`nanoka()` ルーター）でハンドラ実装の例コード / README を
 
 ### M6: スキーマ生成器（`nanoka generate`）
 
-- [ ] 純関数: `(models[]) => string`（Drizzle schema TS のソース）
-- [ ] CLI: `nanoka.config.ts` を読み込み `drizzle/schema.ts` を書き出す
-- [ ] diff / SQL / 適用には一切踏み込まない（rule #1）
-- [ ] snapshot test で出力を固定
-- [ ] `package.json` の `bin` に `nanoka` を登録
+- [x] 純関数: `(models[]) => string`（Drizzle schema TS のソース）
+- [x] CLI: `nanoka.config.ts` を読み込み `drizzle/schema.ts` を書き出す
+- [x] diff / SQL / 適用には一切踏み込まない（rule #1）
+- [x] snapshot test で出力を固定
+- [x] `package.json` の `bin` に `nanoka` を登録
 
 完了基準: `npx nanoka generate` で Drizzle schema ファイルが生成され、`drizzle-kit generate` がそれを読める。
 

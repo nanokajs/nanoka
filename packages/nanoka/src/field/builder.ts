@@ -1,6 +1,6 @@
 import type { SQLiteColumnBuilderBase } from 'drizzle-orm/sqlite-core'
 import type { z } from 'zod'
-import type { Field, FieldModifiers } from './types'
+import type { Field, FieldKind, FieldModifiers } from './types'
 
 /**
  * Abstract base class for field builders.
@@ -23,6 +23,7 @@ export abstract class BaseFieldBuilder<
 > implements Field<TS, Mods, ZB>
 {
   readonly tsType: TS = undefined as unknown as TS
+  abstract readonly kind: FieldKind
   readonly modifiers: Readonly<Mods>
 
   constructor(modifiers?: Mods) {
