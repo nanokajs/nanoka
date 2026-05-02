@@ -5,6 +5,14 @@
   "description": "Thin wrapper over Hono + Drizzle + Zod for Cloudflare Workers + D1. 80% automatic, 20% explicit.",
   "author": "Eiichiro Iriguchi <eiichiro_iriguchi@a-1ro.dev>",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/A-1ro/nanoka.git"
+  },
+  "homepage": "https://github.com/A-1ro/nanoka#readme",
+  "bugs": {
+    "url": "https://github.com/A-1ro/nanoka/issues"
+  },
   "keywords": ["hono", "drizzle", "zod", "cloudflare-workers", "d1", "orm", "validation"],
   "engines": {
     "node": ">=20"

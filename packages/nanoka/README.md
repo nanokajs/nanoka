@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="https://raw.githubusercontent.com/A-1ro/nanoka/main/assets/images/nanoka-logo.png" alt="nanoka" width="200" />
+</p>
+
 # nanoka
 
 > Thin wrapper over Hono + Drizzle + Zod for Cloudflare Workers + D1.
@@ -112,7 +116,7 @@ export default {
       }
     )
 
-    return app.fetch(req, { Bindings: env })
+    return app.fetch(req, env, ctx)
   },
 }
 ```
@@ -176,7 +180,7 @@ const fields = {
 ```
 
 Supported field types:
-- `t.string()` / `t.email()` / `t.uuid()`
+- `t.string()` / `t.uuid()`
 - `t.integer()` / `t.number()`
 - `t.boolean()`
 - `t.timestamp()`
@@ -188,7 +192,7 @@ Modifiers:
 - `.optional()` — nullable
 - `.default(fn)` — default value (function or constant)
 - `.min(n)` / `.max(n)` — numeric / string length bounds
-- `.email()` — email validation
+- `.email()` — email validation (string modifier: `t.string().email()`)
 
 ### `schema()` vs `validator()` (two methods, not one)
 
@@ -292,9 +296,25 @@ app.get('/users/:id', async (c) => {
 
 ### Hardening Zod validator errors
 
-By default, `@hono/zod-validator` returns the full `issues[]` array in the response, which leaks your API schema shape (field names, types, constraints) to attackers during reconnaissance.
+By default, `@hono/zod-validator` returns the full `issues[]` array in the response, which leaks your API schema shape (field names, types, constraints) to attackers during reconnaissance. Default zod-validator behavior leaks the API schema shape via `issues[]`. Replace with a fixed string in production.
 
-**Option 1: `app.onError` hook (recommended)**
+**Option 1: validator hook (recommended)**
+
+Pass a hook as the third argument to `User.validator()`. The hook receives the validation result and the Hono context. When you return a response from the hook, it replaces the default behavior:
+
+```ts
+app.post(
+  '/users',
+  User.validator('json', { omit: ['passwordHash'] }, (result, c) => {
+    if (!result.success) return c.json({ error: 'Invalid request' }, 400)
+  }),
+  handler
+)
+```
+
+**Option 2: `app.onError` (for non-validator paths)**
+
+`@hono/zod-validator` does not throw on validation failure — it calls `c.json(result, 400)` directly, so `app.onError` does not receive validator failures. Use `app.onError` for cases where you call `User.schema().parse(data)` directly or write middleware that throws `ZodError`:
 
 ```ts
 import { ZodError } from 'zod'
@@ -307,21 +327,7 @@ app.onError((err, c) => {
 })
 ```
 
-**Option 2: validator hook (field-level)**
-
-```ts
-app.post(
-  '/users',
-  User.validator('json', { omit: ['passwordHash'] }, (result, c) => {
-    if (!result.success) {
-      return c.json({ error: 'Invalid request' }, 400)
-    }
-  }),
-  handler
-)
-```
-
-Both approaches return a fixed error message instead of leaking the schema. Choose based on your error handling pattern.
+Note: this handler will not be called for validation failures originating from `User.validator()`. Use Option 1 for those.
 
 ## Phase 1 scope: what is NOT included
 
@@ -370,16 +376,7 @@ examples/basic/           # Cloudflare Workers example
 
 Before running `pnpm publish`:
 
-1. **Add repository metadata to `package.json`** (GitHub URL must be confirmed first)
-   ```json
-   {
-     "repository": "https://github.com/username/nanoka",
-     "homepage": "https://github.com/username/nanoka#readme",
-     "bugs": "https://github.com/username/nanoka/issues"
-   }
-   ```
-
-2. **Run `pnpm publish --dry-run` and verify tarball contents**
+1. **Run `pnpm publish --dry-run` and verify tarball contents**
    ```bash
    pnpm -C packages/nanoka publish --dry-run
    ```
@@ -393,27 +390,15 @@ Before running `pnpm publish`:
    - `tsconfig.json`, `vitest.config.ts`, `tsup.config.ts`, `scripts/`
    - `node_modules/`
 
-3. **Verify package name is available**
+   Note: `../../examples/basic` is a relative link in this README. It resolves correctly on GitHub but not on the npm registry. The link is kept for GitHub usability.
+
+2. **Verify package name is available**
    ```bash
    npm view nanoka 2>&1 | grep E404
    ```
    If E404 (not found), the name is available. If package exists, consider `@scope/nanoka`.
 
-4. **Rewrite relative links to GitHub URLs**
-   - Search `packages/nanoka/README.md` for `../../examples/basic`
-   - Replace with `https://github.com/username/nanoka/tree/main/examples/basic`
-   - npm registry does not resolve relative paths.
-
-5. **Run full test suite before publish**
-   ```bash
-   pnpm install
-   pnpm build
-   pnpm -C packages/nanoka test
-   pnpm -C examples/basic typecheck
-   pnpm -C examples/basic test
-   ```
-
-6. **Publish** (prepublishOnly hook will run build + test + typecheck again)
+3. **Publish** (prepublishOnly hook will run build + test + typecheck again)
    ```bash
    pnpm -C packages/nanoka publish
    ```
