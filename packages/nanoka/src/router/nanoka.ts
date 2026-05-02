@@ -48,7 +48,7 @@ export function nanoka(adapter: Adapter): Nanoka {
 
       schema: (opts) => inner.schema(opts),
 
-      validator: (target, opts) => inner.validator(target, opts),
+      validator: (target, opts, hook) => inner.validator(target, opts, hook),
 
       findMany: (options) => inner.findMany(adapter, options),
 

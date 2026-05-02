@@ -196,6 +196,103 @@ describe('Model: validator() Hono integration', () => {
     })
   })
 
+  describe('validator(target, opts, hook)', () => {
+    it('hook is called on successful validation', async () => {
+      const app = new Hono()
+      let hookCalled = false
+
+      app.post(
+        '/users',
+        User.validator('json', { omit: ['passwordHash'] }, (result, _c) => {
+          if (result.success) hookCalled = true
+        }),
+        (c) => c.json({ ok: true }),
+      )
+
+      const request = new Request('http://localhost/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: '550e8400-e29b-41d4-a716-446655440000',
+          name: 'John Doe',
+          email: 'john@example.com',
+        }),
+      })
+
+      const response = await app.fetch(request)
+      expect(response.status).toBe(200)
+      expect(hookCalled).toBe(true)
+    })
+
+    it('hook is called on failed validation', async () => {
+      const app = new Hono()
+      let hookCalled = false
+
+      app.post(
+        '/users',
+        User.validator('json', { omit: ['passwordHash'] }, (result, _c) => {
+          if (!result.success) hookCalled = true
+        }),
+        (c) => c.json({ ok: true }),
+      )
+
+      const request = new Request('http://localhost/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: 'John Doe' }), // missing id and email
+      })
+
+      const response = await app.fetch(request)
+      expect(response.status).toBe(400)
+      expect(hookCalled).toBe(true)
+    })
+
+    it('hook returning c.json overrides default validator behavior', async () => {
+      const app = new Hono()
+
+      app.post(
+        '/users',
+        User.validator('json', { omit: ['passwordHash'] }, (result, c) => {
+          if (!result.success) return c.json({ error: 'Invalid request' }, 400)
+        }),
+        (c) => c.json({ ok: true }),
+      )
+
+      const request = new Request('http://localhost/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: 'John Doe' }), // missing required fields
+      })
+
+      const response = await app.fetch(request)
+      expect(response.status).toBe(400)
+      const data = (await response.json()) as Record<string, unknown>
+      expect(data).toEqual({ error: 'Invalid request' })
+    })
+
+    it('validator without hook continues to work (backward compatibility)', async () => {
+      const app = new Hono()
+
+      app.post('/users', User.validator('json', { omit: ['passwordHash'] }), (c) => {
+        const body = c.req.valid('json')
+        return c.json({ received: body })
+      })
+
+      const validRequest = new Request('http://localhost/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: '550e8400-e29b-41d4-a716-446655440000',
+          name: 'John Doe',
+          email: 'john@example.com',
+        }),
+      })
+
+      const response = await app.fetch(validRequest)
+      expect(response.status).toBe(200)
+    })
+  })
+
   describe('validator() type safety', () => {
     it('typed context narrows body to exclude omitted fields', async () => {
       const app = new Hono()

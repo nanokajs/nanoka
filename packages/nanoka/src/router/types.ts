@@ -1,5 +1,7 @@
+import type { Hook } from '@hono/zod-validator'
 import type { SQLiteTable } from 'drizzle-orm/sqlite-core'
-import type { Hono } from 'hono'
+import type { Env, Hono } from 'hono'
+import type { z } from 'zod'
 import type { Adapter } from '../adapter/types'
 import type { Field } from '../field/types'
 import type {
@@ -36,11 +38,18 @@ export interface NanokaModel<Fields extends Record<string, Field<any, any, any>>
 
   /**
    * Returns a Hono middleware validator for this model.
+   * The optional `hook` argument is passed through to @hono/zod-validator.
    */
   validator<
     Target extends keyof import('hono').ValidationTargets,
     Opts extends SchemaOptions<keyof Fields & string> | undefined = undefined,
-  >(target: Target, opts?: Opts): ModelValidatorReturn<Fields, Target, Opts>
+    E extends Env = Env,
+    P extends string = string,
+  >(
+    target: Target,
+    opts?: Opts,
+    hook?: Hook<z.output<Apply<FieldsToZodShape<Fields>, Opts>>, E, P, Target>,
+  ): ModelValidatorReturn<Fields, Target, Opts>
 
   /**
    * Fetches multiple rows with pagination and optional ordering.

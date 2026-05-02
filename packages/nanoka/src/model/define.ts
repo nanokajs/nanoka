@@ -1,5 +1,6 @@
-import { zValidator } from '@hono/zod-validator'
-import type { ValidationTargets } from 'hono'
+import { type Hook, zValidator } from '@hono/zod-validator'
+import type { Env, ValidationTargets } from 'hono'
+import type { z } from 'zod'
 import type { Adapter } from '../adapter/types'
 import type { Field } from '../field/types'
 import { createImpl, deleteImpl, findManyImpl, findOneImpl, updateImpl } from './crud'
@@ -56,10 +57,16 @@ export function defineModel<Fields extends Record<string, Field<any, any, any>>>
     validator<
       Target extends keyof ValidationTargets,
       Opts extends SchemaOptions<keyof Fields & string> | undefined = undefined,
-    >(target: Target, opts?: Opts): ModelValidatorReturn<Fields, Target, Opts> {
+      E extends Env = Env,
+      P extends string = string,
+    >(
+      target: Target,
+      opts?: Opts,
+      hook?: Hook<z.output<Apply<FieldsToZodShape<Fields>, Opts>>, E, P, Target>,
+    ): ModelValidatorReturn<Fields, Target, Opts> {
       const schema = this.schema(opts)
       // biome-ignore lint/suspicious/noExplicitAny: zValidator requires casting for proper operation
-      return zValidator(target, schema as any) as any
+      return zValidator(target, schema as any, hook as any) as any
     },
 
     findMany(adapter: Adapter, options: FindManyOptions<Fields>): Promise<RowType<Fields>[]> {
