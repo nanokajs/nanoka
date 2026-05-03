@@ -207,15 +207,43 @@ By default, `app.onError` returns `{ error: "Internal Server Error" }` for unhan
 - **D1 migrations stuck**: Delete `.wrangler/` and re-run `db:migrate:local`
 - **Port 8787 in use**: Specify a different port with `wrangler dev --port 8788`
 
+## Using Turso/libSQL instead of D1
+
+Nanoka supports Turso/libSQL as a drop-in replacement for D1 via `tursoAdapter`.
+
+**Install the libSQL client:**
+```bash
+pnpm add @libsql/client
+```
+
+**Replace `d1Adapter` with `tursoAdapter` in your worker entry:**
+```typescript
+import { createClient } from '@libsql/client'
+import { tursoAdapter } from '@nanokajs/core/turso'
+import { nanoka } from '@nanokajs/core'
+
+const client = createClient({
+  url: process.env.TURSO_DATABASE_URL!,
+  authToken: process.env.TURSO_AUTH_TOKEN,
+})
+
+const app = nanoka(tursoAdapter(client))
+```
+
+**Migrations with libSQL:**
+Use `drizzle-kit` with the libSQL driver instead of `wrangler d1 migrations apply`:
+```bash
+# drizzle.config.ts: set driver: 'turso' and dbCredentials: { url, authToken }
+pnpm exec drizzle-kit migrate
+```
+
 ## Phase 1: what this is NOT
 
 This example does not include:
 - **Relations** (hasMany, belongsTo, foreign keys) → Phase 2
 - **Field accessor API** (`User.where(f => eq(f.email, 'x'))`) → Phase 2
 - **Zod 4** (Nanoka requires `zod@^3.23.0`; v4 changes `ZodType` generics and breaks field type inference) → Phase 2
-- **OpenAPI / Swagger generation** → Phase 2
 - **Authentication** (JWT, OAuth, etc.) → Out of scope
-- **Turso / libSQL adapters** → Phase 2
 - **CLI scaffolder** (`create-nanoka-app`) → Phase 3
 
 The focus of Phase 1 is a working end-to-end flow: model → schema → migrations → type-safe CRUD API.

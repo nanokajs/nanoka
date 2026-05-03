@@ -46,20 +46,20 @@ Phase 2C（M3）で確立したモデル単位の component 生成を、route-le
 
 `docs/nanoka.md` §「D1ファースト、adapter設計で逃げ道を用意」と `docs/backlog.md §3.5` 由来。adapter interface は Phase 1 から分離済みのため、実装は D1 adapter と対称的に書けるはず。
 
-- [ ] **2.1** adapter interface の確認・整理
+- [x] **2.1** adapter interface の確認・整理
   - `packages/nanoka/src/adapter/` の現行 D1 adapter interface を確認
   - Turso/libSQL クライアントとの差分（バッチ API・トランザクション等）を洗い出す
   - 必要なら `AdapterBase` を抽象化して D1 / Turso 共通 interface を明確にする
-- [ ] **2.2** `tursoAdapter(client)` 実装
+- [x] **2.2** `tursoAdapter(client)` 実装
   - `@libsql/client` を `peerDependencies` に追加（`packages/nanoka/package.json`）
   - `packages/nanoka/src/adapter/turso.ts` を作成
   - D1 adapter と同一 interface を満たす実装（CRUD / batch / transaction）
-- [ ] **2.3** 型テストで adapter 互換性を保証
+- [x] **2.3** 型テストで adapter 互換性を保証
   - `tursoAdapter(...)` が `d1Adapter(...)` と同一型として扱えることを `@ts-expect-error` / 型アサーションで確認
-- [ ] **2.4** Turso 向けテスト追加
+- [x] **2.4** Turso 向けテスト追加
   - `@libsql/client` の in-memory mode (`libsql::memory:`) を使い、D1 adapter と同等のテストスイートを追加
   - CI でも green になることを確認（`pnpm -C packages/nanoka test`）
-- [ ] **2.5** `examples/` に Turso 接続サンプル追加
+- [x] **2.5** `examples/` に Turso 接続サンプル追加
   - `examples/turso/` または `examples/basic` の README に Turso 接続手順を追記
 
 完了基準: `tursoAdapter(createClient({ url: 'libsql:...' }))` で D1 と同等の CRUD（`findMany` / `findOne` / `create` / `update` / `delete` / batch）が動作する。`pnpm -C packages/nanoka test` で Turso adapter のテストが green。アダプタ差し替えがコンパイルエラーなし。`pnpm lint` / `typecheck` が green。
