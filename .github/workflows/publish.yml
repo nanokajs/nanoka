@@ -84,12 +84,8 @@ jobs:
 
       - name: Publish to npm
         working-directory: packages/nanoka
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npm publish --provenance
 
       - name: Publish create-nanoka-app to npm
         working-directory: packages/create-nanoka-app
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npm publish --provenance
