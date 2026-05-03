@@ -1,0 +1,4 @@
+interface:
+  display_name: "Phase 2 Next"
+  short_description: "Advance Nanoka Phase 2 one milestone at a time."
+  default_prompt: "Advance the next Nanoka Phase 2 milestone using docs/phase2-plan.md."

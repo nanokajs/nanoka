@@ -1,0 +1,4 @@
+interface:
+  display_name: "Init Phase Plan"
+  short_description: "Create a Nanoka phase plan skeleton."
+  default_prompt: "Create a new Nanoka phase plan using the phase plan template."
