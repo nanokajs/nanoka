@@ -1,6 +1,5 @@
 import { d1Adapter, nanoka } from '@nanokajs/core'
-import { z } from 'zod'
-import { userFields, userTableName } from './models/user'
+import { postFields, postTableName } from './models/posts'
 
 export interface Env {
   DB: D1Database
@@ -8,29 +7,22 @@ export interface Env {
 
 export default {
   async fetch(req: Request, env: Env, ctx: ExecutionContext) {
-    const app = nanoka<{ Bindings: Env }>(d1Adapter(env.DB))
-    const User = app.model(userTableName, userFields)
+    const app = nanoka(d1Adapter(env.DB))
+    const Post = app.model(postTableName, postFields)
 
-    app.post(
-      '/users',
-      User.validator('json', { omit: ['id', 'passwordHash', 'createdAt'] }),
-      async (c) => {
-        const body = c.req.valid('json')
-        const created = await User.create({
-          ...body,
-          id: crypto.randomUUID(),
-          passwordHash: 'hashed_value_here',
-          createdAt: new Date(),
-        })
-        const user = User.outputSchema({ omit: ['passwordHash'] }).parse(created)
-        return c.json(user, 201)
-      },
-    )
+    app.post('/posts', Post.validator('json', { omit: ['id', 'createdAt'] }), async (c) => {
+      const body = c.req.valid('json')
+      const created = await Post.create({
+        ...body,
+        id: crypto.randomUUID(),
+        createdAt: new Date(),
+      })
+      return c.json(created, 201)
+    })
 
-    app.get('/users', async (c) => {
-      const users = await User.findMany({ limit: 20 })
-      const result = z.array(User.outputSchema({ omit: ['passwordHash'] })).parse(users)
-      return c.json(result)
+    app.get('/posts', async (c) => {
+      const posts = await Post.findMany({ limit: 20 })
+      return c.json(posts)
     })
 
     return app.fetch(req, env, ctx)

@@ -43,15 +43,15 @@ test('scaffold creates src/index.ts', async () => {
   await expect(access(join(targetDir, 'src', 'index.ts'))).resolves.toBeUndefined()
 })
 
-test('scaffold src/index.ts contains User.findMany and User.validator', async () => {
+test('scaffold src/index.ts contains Post.findMany and Post.validator', async () => {
   const tmp = await makeTmpDir()
   const targetDir = join(tmp, 'my-worker')
 
   await scaffold({ targetDir, template: 'default', force: false })
 
   const content = await readFile(join(targetDir, 'src', 'index.ts'), 'utf-8')
-  expect(content).toContain('User.findMany')
-  expect(content).toContain('User.validator')
+  expect(content).toContain('Post.findMany')
+  expect(content).toContain('Post.validator')
 })
 
 test('scaffold fails without --force on non-empty directory', async () => {
