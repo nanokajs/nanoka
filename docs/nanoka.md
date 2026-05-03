@@ -279,14 +279,14 @@ app.post('/users', zValidator('json', CreateUserBody), async (c) => {
 
 `1.0.0` は Phase 3 の完了ではなく、Nanoka の中心 API を長期維持できると判断できた時点で切る。具体的には Phase 2A / 2B と最小 OpenAPI seed を完了し、DBモデルとAPI入力/出力の境界設計を破壊的変更なしに保てる状態を条件にする。
 
-- [ ] `serverOnly()` / `writeOnly()` / `readOnly()` の意味論が確定している
-- [ ] `inputSchema('create' | 'update')` / `outputSchema()` の公開 API が安定している
-- [ ] `User.validator(...)` の用途別 preset が安定している
-- [ ] `t.json(zodSchema)` と Zod 4 対応が完了している
-- [ ] create / update input 型が実用上十分に精緻化されている
-- [ ] OpenAPI component 生成で schema 設計が破綻しないことを確認済み
-- [ ] onboarding parity CI により README 通りの導入が継続検証されている
-- [ ] 既知の破壊的変更候補が backlog 上で整理または解消されている
+- [x] `serverOnly()` / `writeOnly()` / `readOnly()` の意味論が確定している
+- [x] `inputSchema('create' | 'update')` / `outputSchema()` の公開 API が安定している
+- [x] `User.validator(...)` の用途別 preset が安定している
+- [x] `t.json(zodSchema)` と Zod 4 対応が完了している
+- [x] create / update input 型が実用上十分に精緻化されている
+- [x] OpenAPI component 生成で schema 設計が破綻しないことを確認済み
+- [x] onboarding parity CI により README 通りの導入が継続検証されている
+- [x] 既知の破壊的変更候補が backlog 上で整理または解消されている
 
 relation / Turso・libSQL adapter / route-level OpenAPI / `create-nanoka-app` / VSCode拡張は `1.0.0` の必須条件にしない。これらは中心 API の上に載る拡張として、1.x 系で追加してよい。
 

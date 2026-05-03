@@ -96,21 +96,21 @@ Phase 2 の軸は Drizzle クエリ DSL の再発明ではなく、`passwordHash
 
 `docs/nanoka.md`「1.0.0 リリース判断基準」由来。M1 / M2 / M3 完了後に着手。
 
-- [ ] **4.1** 1.0.0 リリース判断基準の最終確認
+- [x] **4.1** 1.0.0 リリース判断基準の最終確認
   - `docs/nanoka.md` の判断基準 8 項目を M1〜M3 の実装結果と逐一突き合わせ
   - 抜けがあれば該当マイルストーンに差し戻し
-- [ ] **4.2** 既知の破壊的変更候補の整理 / 解消
+- [x] **4.2** 既知の破壊的変更候補の整理 / 解消
   - `docs/backlog.md` §3 / §4 を全件レビュー
   - 1.0.0 で破壊的変更として取り込みたい項目はこのタイミングで実装
   - 保留分は `docs/backlog.md` 上で 1.x 系候補として整理
   - M3 security review 持ち越し: OpenAPI の Zod subset 変換は M3 時点では documentation / component seed 用であり、API gateway / client-side validator / route-level request validator の enforcement source として過信しないことを確認する。Phase 3 で route-level OpenAPI / Swagger UI を公開する前に、未対応 Zod 型や refinement の扱い（例: `x-nanoka-zod-unsupported` 明示、strict mode では生成エラー）を `docs/backlog.md` に整理する
-- [ ] **4.3** CHANGELOG.md / リリースノートの整備
+- [x] **4.3** CHANGELOG.md / リリースノートの整備
   - 0.x 系からの破壊的変更点を明示
   - 安定 API 一覧（フィールドポリシー / inputSchema / outputSchema / validator preset / フィールドアクセサ）を README に反映
-- [ ] **4.4** version bump と publish dry-run
+- [x] **4.4** version bump と publish dry-run
   - `packages/nanoka/package.json` を `1.0.0` に bump
   - Phase 1.5 / M5 で整備した tag push publish flow（`v1.0.0` push → npm Trusted Publisher OIDC）が green であることを `publish-dry-run.yml` で確認
-- [ ] **4.5** README の 1.0.0 安定化セクション追記
+- [x] **4.5** README の 1.0.0 安定化セクション追記
   - 中心 API の安定宣言
   - 1.x 系で追加予定（relation / Turso・libSQL adapter / `create-nanoka-app` / route-level OpenAPI / VSCode 拡張）を明示
   - OpenAPI component 生成は Zod の代表的 subset からの documentation / component seed であり、runtime validation の source of truth は引き続き Zod schema であることを明記
@@ -152,6 +152,39 @@ M1（API 境界の意味論確定）→ M2（型精緻化）→ M3（OpenAPI sou
 **経緯**: `define.ts` の実装が `z.ZodObject<z.ZodRawShape>` を返すシグネチャで宣言されていたため、TypeScript がインターフェースの精緻型と一致しないエラーを報告。実装側を `: any` に widening することで、型チェックは `Model<Fields>` インターフェースの overload から行われるようになり、呼び出し側では精緻型が利用可能になった。
 
 **制約**: `z.infer<typeof schema>` の型推論は `FieldsToZodShape` の各フィールドの `zodBase` が `ZodTypeAny` のため `any` になる。型テストは `@ts-expect-error` で excluded フィールドが型エラーになることを assert する形とした（「含まれるフィールドを正値として assert」は ZodTypeAny 由来の型情報不足で達成困難）。
+
+### 判断 C: 1.0.0 リリース判断基準の最終確認（M4 / 4.1、2026-05）
+
+| # | 判断基準 | 対応マイルストーン | 確認内容 | 判定 |
+|---|---|---|---|---|
+| 1 | `serverOnly()` / `writeOnly()` / `readOnly()` の意味論が確定 | M1 / 1.1 | `FieldPolicy` 型定義（`packages/nanoka/src/field/types.ts`）+ ポリシー挙動テスト | ✓ |
+| 2 | `inputSchema('create' \| 'update')` / `outputSchema()` の公開 API が安定 | M1 / 1.2 | `Model<Fields>` インターフェース overload シグネチャ（`model/types.ts`）+ 判断 B | ✓ |
+| 3 | `User.validator(...)` の用途別 preset が安定 | M1 / 1.3 | `Model.validator` の `'create'` / `'update'` / `Opts` overload | ✓ |
+| 4 | `t.json(zodSchema)` と Zod 4 対応が完了 | M1 / 1.5 + M2 / 2.2 | peerDependencies `^3.23.0 \|\| ^4.0.0` + 判断 A | ✓ |
+| 5 | create / update input 型が実用上十分に精緻化 | M2 / 2.3 | `CreateInput<Fields>` の `IsRequired` / `ServerOnlyKeys` ロジック + `@ts-expect-error` テスト | ✓ |
+| 6 | OpenAPI component 生成で schema 設計が破綻しない | M3 / 3.1, 3.2 | `packages/nanoka/src/openapi/generate.ts` + スナップショットテスト | ✓ |
+| 7 | onboarding parity CI により README 通りの導入が継続検証 | Phase 1.5 / M5 | `.github/workflows/onboarding.yml` 存在確認 | ✓ |
+| 8 | 既知の破壊的変更候補が backlog 上で整理または解消 | M4 / 4.2 | `docs/backlog.md` §3 / §4 全件レビュー + §4.11 追記 | ✓ |
+
+すべて ✓。M1〜M3 の実装により、1.0.0 リリース判断基準 8 項目がすべて満たされていることを確認。
+
+### 判断 D: 1.0.0 における破壊的変更の採否（M4 / 4.2、2026-05）
+
+**方針**: 0.x → 1.0.0 は API 追加のみ。破壊的変更なし。
+
+| 節 | 内容 | 1.0.0 採否 | 理由 |
+|---|---|---|---|
+| §1.1, §1.2 | Bindings generic / seed User.create | 解消済み | Phase 1.5 完了 |
+| §2.1〜2.3 | 受容リスク | 対象外 | 本フェーズ管轄外 |
+| §3.1〜3.4 | Phase 2A〜2C 実装 | 解消済み | M1〜M3 完了 |
+| §3.5 | Phase 3 候補（relation / Turso / `create-nanoka-app` 等） | 見送り（1.x 系） | README で宣言 |
+| §3.6 | `findMany` の `MAX_OFFSET`（DoS 緩和） | 見送り（1.x 系） | 1.0.0 は README 警告のみ。値の選定に追加議論が必要 |
+| §4.1〜4.7, §4.9 | CI/CD・LICENSE 等 | 解消済み | Phase 1.5 完了 |
+| §4.8 | `crud.ts` biome-ignore 一貫性 | 見送り（1.x 系） | 実害なし |
+| §4.10 | publish 拡張候補 | 見送り（1.x 系） | — |
+| §4.11 | OpenAPI Zod subset enforcement scope | Phase 3 着手前に評価 | `docs/backlog.md` §4.11 に記録 |
+
+OpenAPI Zod subset の enforcement source 問題は `docs/backlog.md` §4.11 として記録（M3 security review 持ち越し）。
 
 ---
 

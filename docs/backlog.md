@@ -14,6 +14,8 @@
 
 ### 1.1 `Nanoka<E extends Env>` Bindings generic 対応
 
+> **状態: 解消済み（Phase 1.5 完了）**
+
 - **概要**: 現状 `Nanoka extends Hono`（generic なし）のため、ハンドラ内で `c.env` の型が解決できず `examples/basic/src/index.ts:22` で `(c.env as Env)` キャストが必要になっている。
 - **修正方針**: `Nanoka<E extends Env = BlankEnv> extends Hono<E>` / `nanoka<E extends Env = BlankEnv>(adapter): Nanoka<E>` に変更すれば、利用側で `nanoka<{ Bindings: Env }>(...)` と書けて `c.env` が型推論される。
 - **修正範囲**: `packages/nanoka/src/router/types.ts` と `packages/nanoka/src/router/nanoka.ts` の 2 ファイルで完結。
@@ -22,6 +24,8 @@
 - **工数**: 小。
 
 ### 1.2 `examples/basic/test/e2e.test.ts` の seed を `User.create` 経由に
+
+> **状態: 解消済み（Phase 1.5 完了）**
 
 - **概要**: 現状 seed データ投入は生 SQL `INSERT INTO users` で列順依存。テーブル変更時に脆い。
 - **修正方針**: `User.create` 経由に書き換え、列順依存を排除。
@@ -35,6 +39,8 @@
 
 ### 2.1 `undici@5.29.0` High 2 件 (GHSA-vrm6-8vpv-qv8q / GHSA-v9p9-hfj2-hcw8)
 
+> **状態: 受容リスク（本フェーズ管轄外）**
+
 - **経路**: `@cloudflare/vitest-pool-workers@0.5.x` → `miniflare@3.x` → `undici@5.29.0`
 - **影響範囲**: vitest 実行時の miniflare 内部のみ（dev / CI 環境限定）。
 - **本番影響**: なし。Cloudflare Workers ランタイムは独自 fetch 実装を使用し undici を含まない。
@@ -43,10 +49,14 @@
 
 ### 2.2 devDep transitive moderate (`esbuild@0.17.19` / `vite@5.4.21`)
 
+> **状態: 受容リスク（本フェーズ管轄外）**
+
 - **影響範囲**: tsup 経由のビルド成果物（ESM）には乗らない。本番影響なし。
 - **対応**: 受容。アップストリーム更新を待つ。
 
 ### 2.3 `tsconfig.json` の `__tests__` 包含
+
+> **状態: 受容リスク（本フェーズ管轄外）**
 
 - **影響**: `declare module 'cloudflare:test'` がライブラリ実装側 typecheck にも適用されるが、`dist/index.d.ts` への漏洩はなし（tsup の entry-only 解析で剥がれる）。
 - **対応**: 必要なら `tsconfig.build.json` 分離を検討。
@@ -61,6 +71,8 @@ Phase 2 の軸は「Drizzle クエリDSLの再発明」ではなく、**DBモデ
 
 ### 3.1 Phase 2A: API境界
 
+> **状態: 解消済み（M1〜M3 完了）**
+
 - **フィールドポリシー**: `t.string().serverOnly()` / `.writeOnly()` / `.readOnly()` のようなマーカーを導入する。検討時の論点:
   - `serverOnly`: API input / output の両方から既定で除外する候補。例: `passwordHash`。
   - `writeOnly`: input には入るが output から除外する候補。例: `password` を受け取り、handler で `passwordHash` に変換する設計を許す場合。
@@ -74,6 +86,8 @@ Phase 2 の軸は「Drizzle クエリDSLの再発明」ではなく、**DBモデ
 
 ### 3.2 Phase 2B: 型と互換性
 
+> **状態: 解消済み（M1〜M3 完了）**
+
 - **フィールドアクセサ API**: まず `{ pick: f => [f.name] }` / `{ omit: f => [f.passwordHash] }` の schema / validator 用途から導入する。`User.where(f => eq(f.email, x))` は後回し。
   - 制約: `f` は `as const` の固定オブジェクトとし、Proxy にしない（runtime コスト ゼロ要件）。
 - **Zod 4 サポート**: 現状 `peerDependencies.zod: ^3.23.0`。v4 は `ZodType<Output, Def, Input>` → `ZodType<Output, Input, Internals>` に generic 順序が変わり、`packages/nanoka/src/field/factories.ts` 各 builder の `ZB extends z.ZodType<TS, z.ZodTypeDef, TS>` 制約が壊れる。結果として `Field<TS, Mods, ZB>` 由来の `InferFieldType` 条件型分岐が `never` に潰れ、`User.create({...})` で「string は undefined に代入できない」型エラーが発生する（2026-05 ユーザー報告）。対応方針:
@@ -84,10 +98,14 @@ Phase 2 の軸は「Drizzle クエリDSLの再発明」ではなく、**DBモデ
 
 ### 3.3 Phase 2C: OpenAPI seed
 
+> **状態: 解消済み（M1〜M3 完了）**
+
 - **モデル単位の JSON Schema / OpenAPI component 生成**: `inputSchema()` / `outputSchema()` / フィールドポリシーが OpenAPI の source of truth として成立するかを検証する。
 - **Phase 2 では最小に留める**: Hono ルート全体の自動収集、Swagger UI、route-level OpenAPI は Phase 3 に送る。
 
 ### 3.4 1.0.0 リリース判断基準
+
+> **状態: 解消済み（M1〜M3 完了）**
 
 `1.0.0` は Phase 3 の完了ではなく、Nanoka の中心 API を長期維持できると判断できた時点で切る。具体的には Phase 2A / 2B と最小 OpenAPI seed を完了し、DBモデルとAPI入力/出力の境界設計を破壊的変更なしに保てる状態を条件にする。
 
@@ -104,6 +122,8 @@ relation / Turso・libSQL adapter / route-level OpenAPI / `create-nanoka-app` / 
 
 ### 3.5 Phase 2 後半または Phase 3 候補
 
+> **状態: (1.x 系候補)**
+
 - **Turso / libSQL adapter**
 - **Relations** (`t.hasMany()` / `t.belongsTo()`)
 - **型安全なクエリビルダー** (`User.where(f => eq(f.email, x)).limit(10)`)
@@ -111,6 +131,8 @@ relation / Turso・libSQL adapter / route-level OpenAPI / `create-nanoka-app` / 
 - **`npx create-nanoka-app`**（Phase 3）
 
 ### 3.6 `findMany` の `offset` 上限導入（DoS 緩和）
+
+> **状態: (1.x 系候補) — 1.0.0 では README 警告のみ。MAX_OFFSET 導入は 1.x マイナーで追加**
 
 - **概要**: 現状 `findMany` は `MAX_LIMIT = 100` で limit を上限化しているが (`packages/nanoka/src/model/crud.ts:8`)、`offset` 側に上限がない。SQLite / D1 では `LIMIT 100 OFFSET 999999999` でも実行され、テーブル全件に近いスキャンコストを発生させる。リクエストごとに巨大 offset を送ることで read-amplification 型の DoS が成立する余地がある（M2 security review M-2）。
 - **対応候補**: (a) `MAX_OFFSET`（例: 10000）を追加、(b) README で「production では cursor pagination を使え」と明示、(c) 両方。
@@ -177,6 +199,8 @@ relation / Turso・libSQL adapter / route-level OpenAPI / `create-nanoka-app` / 
 
 ### 4.8 `crud.ts` の `biome-ignore` 一貫性
 
+> **状態: (1.x 系候補) — 実害なし**
+
 - **概要**: `packages/nanoka/src/model/crud.ts` の `findOneImpl` には drizzle query cast 用の `// biome-ignore lint/suspicious/noExplicitAny: drizzle query type` が付与されているが、`createImpl` / `updateImpl` の同種 `as any` cast には付与されていない。biome は `suppressions/unused` を 0 件として通すため lint は green だが、同種 cast の suppress 有無が不統一。
 - **状態**: 実害なし、Phase 1.5 / M3 implementation-review (Minor) で記録。
 - **対応方針**: `createImpl` / `updateImpl` にも biome-ignore を追加して揃えるか、`findOneImpl` の biome-ignore を削除して揃えるかを M4 着手前の任意タスクとして検討。
@@ -194,7 +218,26 @@ relation / Turso・libSQL adapter / route-level OpenAPI / `create-nanoka-app` / 
 
 ### 4.10 将来の publish 拡張候補（Phase 2 以降）
 
+> **状態: (1.x 系候補)**
+
 - 自動 changelog 生成 / release notes 自動投稿（conventional-commits / semantic-release 系）
 - canary / beta dist-tag publish
 - 複数パッケージ同時 publish（現状 `nanoka` のみ）
 - GitHub Environments 保護ルール（approval flow）
+
+### 4.11 OpenAPI Zod subset の enforcement source としての扱い
+
+> **状態: Phase 3 着手前に評価**
+
+M3 security review 持ち越し。`toOpenAPIComponent()` / `toOpenAPISchema()` で生成する OpenAPI component は **documentation / component seed** 用途に限定する。
+
+**現状の制約**:
+- API gateway / client-side validator / route-level request validator の enforcement source として使わない
+- runtime validation の source of truth は引き続き Zod schema（`inputSchema()` / `outputSchema()` が返すもの）
+
+**Phase 3 で route-level OpenAPI / Swagger UI を公開する前に整理すべき事項**:
+1. 未対応 Zod 型（refinement / preprocess / brand / discriminated union 等）を `x-nanoka-zod-unsupported` で明示する案
+2. strict mode option の導入（未対応型に当たったら生成エラーにする）
+3. fixture スナップショットでカバーする Zod 型のリストアップ
+
+これらは §3.5 の route-level OpenAPI 実装着手時に再評価する。
