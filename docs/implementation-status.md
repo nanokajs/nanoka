@@ -31,14 +31,30 @@
 - Turso/libSQL adapter: `tursoAdapter(client)` from `@nanokajs/core/turso`
 - CLI scaffolder package: `create-nanoka-app`
 
-## 未実装として残す
+## 未実装として残す（将来候補）
 
-- Relations: `t.hasMany()` / `t.belongsTo()` — [#14](https://github.com/nanokajs/nanoka/issues/14)
 - Typed query helper: `User.where(f => eq(f.email, x)).limit(10)` など — [#15](https://github.com/nanokajs/nanoka/issues/15)
 - VSCode extension — [#16](https://github.com/nanokajs/nanoka/issues/16)
 - Codex / Claude Code plugin — [#17](https://github.com/nanokajs/nanoka/issues/17)
 - `findMany` offset 上限 — [#18](https://github.com/nanokajs/nanoka/issues/18)
-- Auth / full-stack React / Drizzle replacement DSL は引き続き全 Phase 外
+
+## Non-goal（全 Phase 外）
+
+Relations (`t.hasMany()` / `t.belongsTo()`) / Auth / full-stack React / Drizzle replacement DSL は実装しない。
+
+### Relations を non-goal とする根拠
+
+- cascade / N+1 / join 型推論は Drizzle replacement DSL に最も寄りやすい領域であり、「Drizzle の複雑な query DSL を再発明しない」方針と直接抵触する
+- `app.db` の `innerJoin` / `leftJoin` (escape hatch) で代替可能（README に例あり）
+- field policy / inputSchema で達成した「80% automatic, 20% explicit」バランスを崩す
+- 1.0.0 stable surface の必須条件に含まれていない
+
+### 再検討トリガー（永久 non-goal ではない）
+
+以下が同時に満たされた場合のみ新規 Issue を起票して再検討する（#14 の reopen ではなく新規）:
+
+- ユーザーから「`app.db` 手書き Drizzle では足りない」具体的ユースケースが複数集まる
+- cascade / N+1 / join 型推論を DSL 再発明なしに収めるパターンが先行 OSS で確立する
 
 ## 運用・リスク追跡
 

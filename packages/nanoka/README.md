@@ -324,6 +324,8 @@ const result = await app.db
   .innerJoin(Post.table, eq(User.table.id, Post.table.userId))
 ```
 
+For relations and N+1 prevention, use `app.db` with Drizzle's `innerJoin` / `leftJoin` directly — this is the recommended long-term approach.
+
 `User.table` is the underlying Drizzle table. Combine with `eq()`, `lt()`, `and()`, `or()` from `drizzle-orm` for complex conditions. SQL injection is prevented by Drizzle's parametrized bindings.
 
 ### `app.batch()` — D1 batch API directly
@@ -405,11 +407,10 @@ Route-level OpenAPI is available via explicit route metadata: `app.openapi(metad
 
 The following features remain planned for later 1.x releases:
 
-- **Relations**: `t.hasMany()` / `t.belongsTo()` with cascade and N+1 query support
 - **Typed query helper**: optional query ergonomics without reimplementing Drizzle
 - **VSCode extension**: schema autocomplete and diagnostics
 
-For complex joins in the meantime, use raw Drizzle via `app.db`. The escape hatch is always open.
+For complex joins, use raw Drizzle via `app.db`. The escape hatch is always open.
 
 ## Workspace structure (for contributors)
 
