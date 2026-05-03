@@ -1,29 +1,38 @@
 # AGENTS.md
 
-This file provides Codex guidance for working in this repository. It is the Codex migration of the Claude Code setup in `CLAUDE.md` and `.claude/`.
+This file provides Codex guidance for working in this repository. It is the Codex-facing companion to `CLAUDE.md`.
 
 ## Repository state
 
-The M0 scaffold is in place: pnpm workspace with `packages/nanoka` (library) and `examples/basic` (example app), TypeScript / tsup / vitest-pool-workers / Biome configured. The library implementation is still early Phase 1 work.
+Nanoka is past the Phase 1 / Phase 1.5 / Phase 2 implementation plans. The repo is a pnpm workspace with:
+
+- `packages/nanoka` — `@nanokajs/core`
+- `packages/create-nanoka-app` — scaffold CLI
+- `examples/basic` — D1 example app with OpenAPI docs
 
 Before adding code, read:
 
-- `docs/nanoka.md` for the design.
-- `docs/phase1-plan.md` for Phase 1 progress and confirmed decisions.
+- `docs/implementation-status.md` for the current shipped / pending split.
+- `docs/nanoka.md` for the product and architecture design.
+- `docs/backlog.md` for remaining candidates and accepted risks.
+- The relevant phase document only when touching that historical area:
+  - `docs/phase1-plan.md`
+  - `docs/phase1.5-plan.md`
+  - `docs/phase2-plan.md`
+  - `docs/phase2後半-plan.md`
 
-The design constrains many choices that may otherwise look open-ended.
+The phase plan files are mostly historical records, not "resume from first unchecked item" task queues.
 
-## Phase 1 progress tracking
+## Progress tracking
 
-`docs/phase1-plan.md` is the source of truth for Phase 1 implementation progress.
-
-- At session start, read `docs/phase1-plan.md` and resume from the first unchecked item unless the user asks for something else.
-- As work completes, tick the matching checkbox in `docs/phase1-plan.md` when the item actually meets its completion criteria. Do not batch all progress updates at the end.
-- If scope or design shifts, update `docs/phase1-plan.md` in the same change as the code so the plan does not drift.
+- At session start, read `docs/implementation-status.md` unless the user asks for a specific file or task.
+- If work changes shipped API surface, roadmap, or phase classification, update the matching docs in the same change as the code.
+- If a task completes an item that still lives in `docs/backlog.md`, update that backlog entry only when the completion criteria are actually met.
+- Do not re-open Phase 1 / Phase 2 checkboxes as active work unless the user explicitly asks to revise history.
 
 ## What Nanoka is
 
-Nanoka is a thin wrapper over Hono + Drizzle + Zod targeting Cloudflare Workers + D1.
+Nanoka is a thin wrapper over Hono + Drizzle + Zod targeting Cloudflare Workers + D1, with Turso/libSQL available through the adapter interface.
 
 The core thesis: a single model definition is the source of truth for DB schema, TypeScript types, and base validation, but API validation is a deliberate derivation, not an automatic mirror. DB shape and API shape can diverge, for example `passwordHash` may exist in the DB but must not appear in responses.
 
@@ -33,46 +42,54 @@ The design phrase is "80% automatic, 20% explicit". When in doubt, prefer making
 
 These are non-obvious commitments from `docs/nanoka.md`. Do not violate them unless the user explicitly changes the project direction.
 
-1. No custom migration engine. `nanoka generate` produces Drizzle schema files; diff/SQL generation and application stay with `drizzle-kit` and `wrangler d1 migrations`.
+1. No custom migration engine. `nanoka generate` produces Drizzle schema files; diff/SQL generation and application stay with `drizzle-kit`, `wrangler d1 migrations`, or the relevant libSQL migration flow.
 2. Hono is internalized, not coexisting. The router is Hono-compatible and examples follow Hono idioms such as `c.req.valid('json')` and `HTTPException`.
-3. Adapter layer from day one. D1 is first-class, but the DB layer must be behind an adapter so Turso/libSQL remain reachable later. Do not bake `D1Database` types into the core query path.
+3. Adapter layer stays central. D1 is first-class and Turso/libSQL is supported through `tursoAdapter(client)`. Keep DB access behind the adapter interface; do not bake `D1Database` types into the core query path.
 4. Escape hatch always open. `app.db` exposes raw Drizzle, for example `app.db.select().from(User.table)`.
 5. `schema()` and `validator()` are separate concerns. `User.schema(opts)` returns a standalone Zod schema; `User.validator(target, opts)` returns a Hono validator.
 6. `findMany` must be safe by default. `limit` is required; calling `findMany` without a limit should be a type error. Pagination shape is `{ limit, offset, orderBy }`.
-7. Transactions equal D1 batch. Expose D1's batch API directly; do not create a bespoke transaction abstraction.
+7. Batch stays explicit. Nanoka exposes the adapter batch API directly; do not create a bespoke transaction abstraction.
+8. OpenAPI output is documentation/spec generation. Runtime validation source of truth remains Zod (`inputSchema()` / `outputSchema()`) plus Hono validators.
 
-## Phase boundaries
+## Phase boundaries and remaining scope
 
-Do not pull Phase 2 work into Phase 1. If a task appears to require one of these, stop and confirm scope with the user:
+Phase 2後半 and Phase 3 became partially mixed during implementation. Treat these as already shipped 1.x features:
+
+- Route-level OpenAPI: `app.openapi(metadata)` / `app.generateOpenAPISpec(options)`
+- Swagger UI: `swaggerUI({ url, title? })`
+- Turso/libSQL adapter: `@nanokajs/core/turso`
+- CLI scaffolder: `create-nanoka-app`
+
+These remain unimplemented or intentionally out of scope. If a task appears to require one of them, confirm scope before expanding the public API:
 
 - Relations: `t.hasMany()`, `t.belongsTo()`.
-- Field-accessor API: `{ pick: f => [f.name] }`, `User.where(f => eq(f.email, x))`. Phase 1 uses string arrays and object-form `where`.
-- OpenAPI generation, Turso/libSQL adapters, CLI scaffolder.
-- Auth, full-stack React, complex query DSL.
+- Typed query helper: `User.where(f => eq(f.email, x)).limit(10)`.
+- VSCode extension / Codex or Claude Code plugin.
+- Auth, full-stack React, or a complex query DSL that replaces Drizzle.
 
-When Phase 2 field accessors eventually land, the `f` object must be `as const`, not a Proxy. Runtime cost must be zero.
+The schema / validator field-accessor API already exists for `{ pick: f => [f.name] }` and `{ omit: f => [f.passwordHash] }`. Keep its `f` object `as const`, not a Proxy. Runtime cost must remain zero.
 
 ## Codex workflow
 
 For normal implementation work:
 
-1. Read `docs/nanoka.md`, `docs/phase1-plan.md`, and the relevant source files.
-2. Identify the current milestone and the exact unchecked tasks involved.
-3. Keep changes scoped to the requested task or current milestone.
+1. Read `docs/implementation-status.md`, `docs/nanoka.md`, `docs/backlog.md`, and the relevant source files.
+2. Identify whether the task touches shipped API, backlog, or historical docs.
+3. Keep changes scoped to the requested task.
 4. Update tests alongside code when behavior or public types change.
 5. Run the narrowest useful verification first, then broader checks when risk warrants it.
-6. Update `docs/phase1-plan.md` checkboxes only after the corresponding completion criteria are met.
+6. Update `docs/backlog.md` / status docs only after the corresponding completion criteria are met.
 
-For larger or ambiguous changes, present a short plan before editing. The plan should cover goal, affected files, implementation steps, tests, completion criteria, and deferred Phase 2 items.
+For larger or ambiguous changes, present a short plan before editing. The plan should cover goal, affected files, implementation steps, tests, completion criteria, and deferred scope.
 
 Codex custom sub-agents are not a one-to-one match for Claude Code custom agents. If the user explicitly asks for delegated or parallel agent work, map the old Claude roles this way:
 
 - `planner`: use a planning pass before edits; inspect docs and produce a concrete implementation plan.
 - `implementer`: use a worker-style implementation pass that follows the approved plan without expanding scope.
 - `implementation-reviewer`: use a code-review pass focused on design conformance, load-bearing rules, phase boundaries, and plan drift.
-- `security-reviewer`: use a security review pass for changes touching external input, DB queries, auth, secrets, Cloudflare Workers, or D1 behavior.
+- `security-reviewer`: use a security review pass for changes touching external input, DB queries, auth, secrets, Cloudflare Workers, D1, Turso/libSQL, or OpenAPI behavior.
 
-Do not invent Phase 1 design decisions during implementation. If the plan and existing code conflict, stop and surface the conflict.
+Do not invent new design decisions during implementation. If the docs and existing code conflict, stop and surface the conflict.
 
 ## Security review triggers
 
@@ -80,7 +97,8 @@ Run or request a security-focused review when a change touches:
 
 - HTTP body, params, query, or headers.
 - Zod validators or Hono validation.
-- DB query construction, Drizzle escape hatches, D1 adapters, or batch behavior.
+- DB query construction, Drizzle escape hatches, D1/Turso adapters, or batch behavior.
+- OpenAPI generation that might be treated as a validation/enforcement source.
 - Auth, authorization, sessions, tokens, API keys, or secrets.
 - CORS, redirects, external `fetch`, logging, or error messages.
 - New npm dependencies.
@@ -91,30 +109,36 @@ Security review priorities:
 - DB access should use Drizzle parameterized queries.
 - Do not leak DB-only fields such as `passwordHash` in API responses.
 - Do not expose `c.env` secrets, stack traces, internal paths, or PII in responses or logs.
-- Do not mix external side effects into D1 batch semantics.
-- Auth remains out of scope for Phase 1 unless the user explicitly changes scope.
+- Do not mix external side effects into adapter batch semantics.
+- Auth remains out of scope unless the user explicitly changes scope.
 
 ## Commands
 
 Run from the repo root unless otherwise noted.
 
-- `pnpm install` - install all workspace dependencies.
-- `pnpm build` - build all packages.
-- `pnpm -C packages/nanoka build` - build the library only.
-- `pnpm -C packages/nanoka test` - run vitest under `@cloudflare/vitest-pool-workers`.
-- `pnpm -C packages/nanoka typecheck` - run `tsc --noEmit` against the library.
-- `pnpm lint` - Biome check across the repo.
-- `pnpm format` - Biome format-write across the repo.
+- `pnpm install` — install all workspace dependencies.
+- `pnpm build` — build all packages.
+- `pnpm -C packages/nanoka build` — build the library only.
+- `pnpm -C packages/nanoka test` — run library tests.
+- `pnpm -C packages/nanoka test:workers` — run Worker-side tests.
+- `pnpm -C packages/nanoka test:node` — run Node-side tests.
+- `pnpm -C packages/nanoka typecheck` — run `tsc --noEmit` against the library.
+- `pnpm -C packages/create-nanoka-app build` — build the scaffolder.
+- `pnpm -C packages/create-nanoka-app test` — test the scaffolder.
+- `pnpm -C examples/basic test` — run the example tests.
+- `pnpm -C examples/basic typecheck` — typecheck the example app.
+- `pnpm lint` — Biome check across the repo.
+- `pnpm format` — Biome format-write across the repo.
 
-Cloudflare flow, used from M7 onward:
+Cloudflare / migration flow:
 
-- `pnpm -C examples/basic dev` - `wrangler dev` for the example app.
-- `pnpm -C examples/basic exec drizzle-kit generate` - schema diff to SQL after M6.
-- `pnpm -C examples/basic exec wrangler d1 migrations apply <DB> --local` - apply migrations.
+- `pnpm -C examples/basic dev` — `wrangler dev` for the example app.
+- `pnpm -C examples/basic exec drizzle-kit generate` — schema diff to SQL.
+- `pnpm -C examples/basic exec wrangler d1 migrations apply <DB> --local` — apply D1 migrations.
 
 ## Migration notes from Claude Code
 
-- `CLAUDE.md` was migrated into this Codex-readable `AGENTS.md`.
+- `CLAUDE.md` is the Claude Code version of this guidance; keep both files semantically aligned.
 - `.claude/settings.local.json` command allow rules do not have a direct repository-local Codex equivalent. Codex command permissions are controlled by the active sandbox and approval settings.
-- `.claude/agents/*` were migrated into the Codex workflow and review guidance above. Codex may use built-in agent delegation only when explicitly requested by the user.
-- `.claude/skills/phase1-next/SKILL.md` was migrated into the Phase 1 progress and workflow sections above. One milestone at a time remains the intended operating mode.
+- `.claude/agents/*` map to the workflow and review guidance above. Codex may use built-in agent delegation only when explicitly requested by the user.
+- `.claude/skills/phase1-next/SKILL.md` was migrated into historical Phase 1 workflow. Current work should start from `docs/implementation-status.md`.

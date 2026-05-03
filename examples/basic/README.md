@@ -237,23 +237,18 @@ Use `drizzle-kit` with the libSQL driver instead of `wrangler d1 migrations appl
 pnpm exec drizzle-kit migrate
 ```
 
-## Phase 1: what this is NOT
+## Current scope: what this is NOT
 
 This example does not include:
-- **Relations** (hasMany, belongsTo, foreign keys) → Phase 2
-- **Field accessor API** (`User.where(f => eq(f.email, 'x'))`) → Phase 2
-- **Zod 4** (Nanoka requires `zod@^3.23.0`; v4 changes `ZodType` generics and breaks field type inference) → Phase 2
+- **Relations** (hasMany, belongsTo, foreign keys) → future 1.x
+- **Typed query helper** (`User.where(f => eq(f.email, 'x'))`) → future 1.x candidate
 - **Authentication** (JWT, OAuth, etc.) → Out of scope
-- **CLI scaffolder** (`create-nanoka-app`) → Phase 3
 
-The focus of Phase 1 is a working end-to-end flow: model → schema → migrations → type-safe CRUD API.
+The focus of this example is a working end-to-end flow: model → schema → migrations → type-safe CRUD API → OpenAPI docs.
 
 ## Next steps
 
-After Phase 1:
-1. **M8**: Write migration guides in `packages/nanoka/README.md`
-2. **Phase 2**: Add relations, field accessors, OpenAPI, Turso
-3. **Phase 3**: Scaffolding and examples for common patterns
+Next likely additions are relation design and optional typed query ergonomics. Until then, use raw Drizzle via `app.db` for joins and advanced SQL.
 
 ## License
 

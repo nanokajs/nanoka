@@ -112,7 +112,7 @@ Phase 2 の軸は Drizzle クエリ DSL の再発明ではなく、`passwordHash
   - Phase 1.5 / M5 で整備した tag push publish flow（`v1.0.0` push → npm Trusted Publisher OIDC）が green であることを `publish-dry-run.yml` で確認
 - [x] **4.5** README の 1.0.0 安定化セクション追記
   - 中心 API の安定宣言
-  - 1.x 系で追加予定（relation / Turso・libSQL adapter / `create-nanoka-app` / route-level OpenAPI / VSCode 拡張）を明示
+  - 1.0.0 時点では 1.x 系で追加予定だった relation / Turso・libSQL adapter / `create-nanoka-app` / route-level OpenAPI / VSCode 拡張を明示
   - OpenAPI component 生成は Zod の代表的 subset からの documentation / component seed であり、runtime validation の source of truth は引き続き Zod schema であることを明記
 
 完了基準: `docs/nanoka.md` の 1.0.0 リリース判断基準 8 項目すべてに ✓ が付く。`v1.0.0` tag push で publish が走り、`@nanokajs/core@1.0.0` が npm registry に出る。onboarding parity CI が `1.0.0` に対して green。`docs/backlog.md` 上に 1.0.0 ブロッカーがゼロ。

@@ -265,15 +265,15 @@ app.post('/users', zValidator('json', CreateUserBody), async (c) => {
 単体 row のレスポンス整形は `User.toResponse(row)` で convenience wrapper を提供する。配列の場合は `z.array(User.outputSchema()).parse(rows)` で zod schema 合成として書く。これにより「80% automatic, 20% explicit」を維持し、配列変換は明示的に書く設計にする。
 
 #### Phase 2B — 型と互換性
-- [ ] フィールドアクセサAPI（まず `pick` / `omit` / validator 用途から: `User.schema({ pick: f => [f.name] })`）
-- [ ] **Zod 4 サポート**（Phase 1 は `zod@^3.23.0` のみ。v4 は `ZodType<Output, Def, Input>` → `ZodType<Output, Input, Internals>` の generic 順序変更により、現行の `Field<TS, Mods, ZB>` 由来型推論が `never` に潰れる。`peerDependencies.zod` を `^3.23.0 || ^4.0.0` に広げるか、v4 に切り替えて v3 を切るかを着手時に判断する）
-- [ ] create / update input の必須・任意フィールド精緻化
-- [ ] **Phase 1.5 持ち越しの型精緻化**: `noExplicitAny` 87 件 / `noNonNullAssertion` 10 件の解消。Phase 1.5 / M3 で `pnpm lint` を導入した時点では warnings として残置（主な箇所: `packages/nanoka/src/model/crud.ts` / `model/types.ts` / `router/types.ts` / `__tests__/*`）。フィールドアクセサ API（`as const` ベース）導入時に `Field<any, any, any>` を精緻型へ置き換え、`!` non-null assertion は型ガードまたは zod parse 経由で解消する。完了基準は緩く「Phase 2 完了時点で warnings が大幅に減ること」（ゼロ化必須ではない）。テストコード内の意図的な `as any`（`@ts-expect-error` 周辺）は `// biome-ignore` での個別抑制を許容する。
+- [x] フィールドアクセサAPI（まず `pick` / `omit` / validator 用途から: `User.schema({ pick: f => [f.name] })`）
+- [x] **Zod 4 サポート**（`peerDependencies.zod` は `^3.23.0 || ^4.0.0`）
+- [x] create / update input の必須・任意フィールド精緻化
+- [x] **Phase 1.5 持ち越しの型精緻化**: `noExplicitAny` warning は大幅削減、`noNonNullAssertion` は 0 件化
 
 #### Phase 2C — OpenAPI seed
-- [ ] モデル単位の JSON Schema / OpenAPI component 生成
-- [ ] `inputSchema()` / `outputSchema()` / フィールドポリシーが OpenAPI の source of truth として成立するか検証
-- [ ] Hono ルート全体の自動収集や Swagger UI は Phase 3 に送る
+- [x] モデル単位の JSON Schema / OpenAPI component 生成
+- [x] `inputSchema()` / `outputSchema()` / フィールドポリシーが OpenAPI の source of truth として成立するか検証
+- [x] Hono ルート全体の自動収集や Swagger UI は Phase 3 に送る判断を記録
 
 #### 1.0.0 リリース判断基準
 
@@ -288,16 +288,17 @@ app.post('/users', zValidator('json', CreateUserBody), async (c) => {
 - [x] onboarding parity CI により README 通りの導入が継続検証されている
 - [x] 既知の破壊的変更候補が backlog 上で整理または解消されている
 
-relation / Turso・libSQL adapter / route-level OpenAPI / `create-nanoka-app` / VSCode拡張は `1.0.0` の必須条件にしない。これらは中心 API の上に載る拡張として、1.x 系で追加してよい。
+relation / Turso・libSQL adapter / route-level OpenAPI / `create-nanoka-app` / VSCode拡張は `1.0.0` の必須条件にしない。ただし 2026-05 時点の実装では、Turso・libSQL adapter、route-level OpenAPI / Swagger UI、`create-nanoka-app` は 1.0.0 後の 1.x 機能として既に取り込まれている。
 
-#### Phase 2 後半または Phase 3 候補
-- [ ] Turso / libSQL adapter
+#### 1.x 追加済み（Phase 2 後半 / Phase 3 が混在して実装されたもの）
+- [x] route-level OpenAPI: `app.openapi(metadata)` / `app.generateOpenAPISpec(options)`
+- [x] Swagger UI middleware: `swaggerUI({ url, title? })`
+- [x] Turso / libSQL adapter: `tursoAdapter(client)`（`@nanokajs/core/turso` export）
+- [x] CLIスキャフォールダ: `create-nanoka-app`
+
+#### 次に残っている設計候補
 - [ ] リレーション定義（`t.hasMany()` / `t.belongsTo()`）※cascade/N+1/joinの型推論を含む重い作業
 - [ ] 型安全なクエリビルダー（`User.where(f => eq(f.email, x)).limit(10)`）※Drizzle再発明に寄りやすいため優先度を下げる
-
-### Phase 3 — エコシステム
-- [ ] CLIツール（`npx create-nanoka-app`）
-- [ ] route-level OpenAPI / Hono ルート自動収集 / Swagger UI
 - [ ] VSCode拡張（モデル定義からの補完）
 - [ ] Claude Code / Codex プラグイン（モデル定義・ルート生成・migration手順の補助）
 - [ ] OSSコミュニティ整備

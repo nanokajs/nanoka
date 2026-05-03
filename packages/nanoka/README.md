@@ -395,22 +395,20 @@ app.onError((err, c) => {
 
 Note: this handler will not be called for validation failures originating from `User.validator()`. Use Option 1 for those.
 
-## OpenAPI seed scope
+## OpenAPI scope
 
 `Model.toOpenAPIComponent()` and `Model.toOpenAPISchema(usage)` generate **documentation / component seed** output from a representative subset of Zod types. They are not intended as the enforcement source for API gateways, client-side validators, or route-level request validators.
 
 The runtime source of truth for validation remains the Zod schema returned by `inputSchema()` / `outputSchema()`.
 
-Route-level OpenAPI integration and Swagger UI are planned for a future 1.x release.
+Route-level OpenAPI is available via explicit route metadata: `app.openapi(metadata)` registers operation details, and `app.generateOpenAPISpec(options)` builds the OpenAPI 3.1 document. Swagger UI is available through `swaggerUI({ url, title? })`.
 
 ## Roadmap (1.x)
 
-The following features are planned for 1.x releases and are **not** required for 1.0.0:
+The following features remain planned for later 1.x releases:
 
 - **Relations**: `t.hasMany()` / `t.belongsTo()` with cascade and N+1 query support
-- **Turso / libSQL adapter**: alternative to D1 via the existing `Adapter` interface
-- **`create-nanoka-app`**: scaffolding CLI (`npx create-nanoka-app`)
-- **Route-level OpenAPI + Swagger UI**: full Hono route collection and spec generation
+- **Typed query helper**: optional query ergonomics without reimplementing Drizzle
 - **VSCode extension**: schema autocomplete and diagnostics
 
 For complex joins in the meantime, use raw Drizzle via `app.db`. The escape hatch is always open.
