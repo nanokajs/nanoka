@@ -24,3 +24,10 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - run: pnpm -C packages/nanoka publish --dry-run --no-git-checks
+
+      - name: Build create-nanoka-app
+        run: pnpm -C packages/create-nanoka-app build
+
+      - name: Publish create-nanoka-app (dry run)
+        working-directory: packages/create-nanoka-app
+        run: pnpm publish --dry-run --no-git-checks

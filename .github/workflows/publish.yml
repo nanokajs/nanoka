@@ -53,6 +53,25 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      - name: Verify create-nanoka-app version matches nanoka
+        shell: bash
+        run: |
+          NANOKA_VERSION=$(node -p "require('./packages/nanoka/package.json').version")
+          CLI_VERSION=$(node -p "require('./packages/create-nanoka-app/package.json').version")
+          if [ "$NANOKA_VERSION" != "$CLI_VERSION" ]; then
+            echo "::error::create-nanoka-app version ($CLI_VERSION) must equal @nanokajs/core version ($NANOKA_VERSION)."
+            exit 1
+          fi
+
+      - name: Build create-nanoka-app
+        run: pnpm -C packages/create-nanoka-app build
+
+      - name: Typecheck create-nanoka-app
+        run: pnpm -C packages/create-nanoka-app typecheck
+
+      - name: Test create-nanoka-app
+        run: pnpm -C packages/create-nanoka-app test
+
       - run: pnpm -C packages/nanoka build
 
       - run: pnpm -C packages/nanoka test
@@ -65,4 +84,12 @@ jobs:
 
       - name: Publish to npm
         working-directory: packages/nanoka
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --provenance
+
+      - name: Publish create-nanoka-app to npm
+        working-directory: packages/create-nanoka-app
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npm publish --provenance
