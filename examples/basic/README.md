@@ -241,7 +241,6 @@ pnpm exec drizzle-kit migrate
 
 This example does not include:
 - **Relations** (hasMany, belongsTo, foreign keys) → future 1.x
-- **Typed query helper** (`User.where(f => eq(f.email, 'x'))`) → future 1.x candidate
 - **Authentication** (JWT, OAuth, etc.) → Out of scope
 
 The focus of this example is a working end-to-end flow: model → schema → migrations → type-safe CRUD API → OpenAPI docs.

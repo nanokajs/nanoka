@@ -33,7 +33,6 @@
 
 ## 未実装として残す（将来候補）
 
-- Typed query helper: `User.where(f => eq(f.email, x)).limit(10)` など — [#15](https://github.com/nanokajs/nanoka/issues/15)
 - VSCode extension — [#16](https://github.com/nanokajs/nanoka/issues/16)
 - Codex / Claude Code plugin — [#17](https://github.com/nanokajs/nanoka/issues/17)
 - `findMany` offset 上限 — [#18](https://github.com/nanokajs/nanoka/issues/18)
@@ -49,12 +48,28 @@ Relations (`t.hasMany()` / `t.belongsTo()`) / Auth / full-stack React / Drizzle 
 - field policy / inputSchema で達成した「80% automatic, 20% explicit」バランスを崩す
 - 1.0.0 stable surface の必須条件に含まれていない
 
-### 再検討トリガー（永久 non-goal ではない）
+### Typed query helper を non-goal とする根拠
+
+- `findOne` / `update` / `delete` は既に `Where<Fields>`（等価 AND）を受け付けており、単純なルックアップは shipped
+- `User.where(f => eq(...))` 形は `and / or / inArray / lt / gt / like` まで広がり、Drizzle replacement DSL に直結する
+- 等価 AND のみの最小 API（`findMany({ where: { email } })`）は `OR` / 範囲 / `LIKE` の瞬間に `app.db` が必要になり「半端な抽象」になる
+- チェーン形（`User.where(...).limit(10)`）は `limit` 呼び忘れを型で強制しづらく、`findMany` の limit 必須安全方針を弱める
+- `app.db.select().from(User.table).where(eq(...)).limit(10)` は 1 行で書け、README で推奨済み（escape hatch）
+
+### 再検討トリガー（Relations — 永久 non-goal ではない）
 
 以下が同時に満たされた場合のみ新規 Issue を起票して再検討する（#14 の reopen ではなく新規）:
 
 - ユーザーから「`app.db` 手書き Drizzle では足りない」具体的ユースケースが複数集まる
 - cascade / N+1 / join 型推論を DSL 再発明なしに収めるパターンが先行 OSS で確立する
+
+### 再検討トリガー（Typed query helper — 永久 non-goal ではない）
+
+以下が同時に満たされた場合のみ新規 Issue を起票して再検討する（#15 の reopen ではなく新規）:
+
+- ユーザーから「`app.db` 手書き Drizzle では足りない」具体的ユースケースが複数集まる
+- `findMany` の等価 AND ユースケース（管理画面の単純フィルタ等）が 1.x 利用者の主流要望として現れる
+- `limit` 必須の安全方針を壊さない API 形が先行 OSS で確立する
 
 ## 運用・リスク追跡
 

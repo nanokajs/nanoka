@@ -407,7 +407,6 @@ Route-level OpenAPI is available via explicit route metadata: `app.openapi(metad
 
 The following features remain planned for later 1.x releases:
 
-- **Typed query helper**: optional query ergonomics without reimplementing Drizzle
 - **VSCode extension**: schema autocomplete and diagnostics
 
 For complex joins, use raw Drizzle via `app.db`. The escape hatch is always open.

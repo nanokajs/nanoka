@@ -57,8 +57,8 @@ Phase 2後半 and Phase 3 became partially mixed during implementation. Treat th
 
 These remain unimplemented or intentionally out of scope. If a task appears to require one of them, confirm scope before expanding the public API:
 
-- Relations: `t.hasMany()`, `t.belongsTo()`.
-- Typed query helper: `User.where(f => eq(f.email, x)).limit(10)`.
+- Relations: `t.hasMany()`, `t.belongsTo()`. — non-goal, Issue #14
+- Typed query helper: `User.where(f => eq(f.email, x)).limit(10)`. — non-goal, Issue #15
 - VSCode extension / Codex or Claude Code plugin.
 - Auth, full-stack React, or a complex query DSL that replaces Drizzle.
 
