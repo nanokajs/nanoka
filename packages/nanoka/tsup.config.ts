@@ -3,6 +3,7 @@ import { defineConfig } from 'tsup'
 export default defineConfig({
   entry: {
     index: 'src/index.ts',
+    turso: 'src/turso.ts',
     config: 'src/config.ts',
     cli: 'src/cli/index.ts',
   },

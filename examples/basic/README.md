@@ -219,7 +219,8 @@ pnpm add @libsql/client
 **Replace `d1Adapter` with `tursoAdapter` in your worker entry:**
 ```typescript
 import { createClient } from '@libsql/client'
-import { tursoAdapter, nanoka } from '@nanokajs/core'
+import { tursoAdapter } from '@nanokajs/core/turso'
+import { nanoka } from '@nanokajs/core'
 
 const client = createClient({
   url: process.env.TURSO_DATABASE_URL!,
