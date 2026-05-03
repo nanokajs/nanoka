@@ -30,28 +30,13 @@ description: GitHub Issue を 1 件処理する実装オーケストレーショ
 
 ### Step 3: 実装（implementer エージェント）
 
-#### 3-0: 実装者の選択（haiku か sonnet か）
-
-着手前に、プランの性質を見て**どちらの実装者を呼ぶか決める**:
-
-- **`implementer`（デフォルト）** — 機械的な編集、明確に一直線で書ける実装、コメント修正、ファイル名変更、簡単なテスト追加など。
-- **`implementer-sonnet`** — 以下のいずれかを含む場合:
-  - 型システムの設計（generic / 条件型 / `infer` / mapped types を組み立てる）
-  - 複数ライブラリの型統合（Hono + Zod + Drizzle の generic を透過させる等）
-  - 4 ファイル以上を横断する変更
-  - 「型を `as any` で逃げず精緻型で実装する」が成否のクリティカルパスになるタスク
-
-判断に迷ったら `implementer-sonnet` を選ぶ。プラン承認時にユーザーに「この実装は implementer-sonnet で進めます」と一言伝えること。
-
-#### 3-1: 実装の実行
-
-1. `spawn_agent` で `agent_type: "implementer"` または `agent_type: "implementer-sonnet"` を呼ぶ。プロンプトには以下を含める:
+1. `spawn_agent` で `agent_type: "implementer"` を呼ぶ。プロンプトには以下を含める:
    - 確定したプランの全文
    - 「プランに書かれた変更だけを行うこと」を明示
    - Issue 番号（後の PR 作成で使う）
 2. implementer から完了報告が返ってきたら、変更ファイル一覧とテスト結果をユーザーに見せる。
 3. implementer がプランから逸脱せざるを得なかった旨を報告した場合は、**そこで一度止めてユーザーに確認**。勝手に次に進まない。
-4. **implementer が以下の失敗パターンを示したら implementer-sonnet に切り替える**:
+4. **implementer が以下の失敗パターンを示したら停止して、ユーザーに再計画または手動実装へ切り替えるか確認する**:
    - プランで指定された型を `any` にスタブして「完了」と報告した
    - 既に行った修正を `git checkout` などで巻き戻した
    - ツールエラーを「権限がロック」のような曖昧な言葉で諦めた
