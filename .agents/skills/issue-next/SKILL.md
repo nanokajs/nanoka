@@ -1,9 +1,9 @@
 ---
 name: issue-next
-description: GitHub Issue を 1 件処理する実装オーケストレーション。Issue 番号を引数に受け取り、Issue 内容を取得してから planner → implementer → implementation-reviewer → security-reviewer の順にサブエージェントを呼ぶ。1 回の起動で **1 Issue だけ** 処理し、完了後に Issue をクローズして終了する。
+description: GitHub Issue を 1 件処理する実装オーケストレーション。Issue 番号を引数に受け取り、Issue 内容を取得してから planner → implementer → implementation-reviewer → security-reviewer の順にサブエージェントを呼ぶ。1 回の起動で **1 Issue だけ** 処理し、完了後に PR を作成して終了する。
 ---
 
-# GitHub Issue を 1 件実装して閉じる
+# GitHub Issue を 1 件実装して PR を出す
 
 このスキルは **Issue 1 件を完了させたら止まる**。次の Issue に進むかはユーザーが判断する。
 
@@ -17,6 +17,19 @@ description: GitHub Issue を 1 件処理する実装オーケストレーショ
    - `state: closed` の場合は警告を出してユーザー確認。
    - ユーザーが No と言ったらその理由を聞いて終了。
 4. `docs/implementation-status.md` を Read して、Issue が既存の実装済み範囲・対象外範囲と衝突していないか確認する。衝突がある場合はユーザーに提示して判断を仰ぐ。
+
+### Step 1.5: ブランチ準備
+
+1. デフォルトブランチ（`main`）を最新にする:
+   ```bash
+   git checkout main
+   git pull origin main
+   ```
+2. Issue 番号をもとに作業ブランチを切る:
+   ```bash
+   git checkout -b issue-{番号}-{kebab-case-summary}
+   ```
+   ブランチ名の `{kebab-case-summary}` は Issue タイトルから 3〜5 語程度の英語 kebab-case で付ける。
 
 ### Step 2: プラン策定（planner エージェント）
 
@@ -74,16 +87,30 @@ description: GitHub Issue を 1 件処理する実装オーケストレーショ
 
 1. `docs/implementation-status.md` に変更が反映すべき内容があれば更新する（shipped API 変更・新機能追加時など）。
 2. 完了確認コマンドがある場合（テスト・typecheck など）、ユーザーに「実行して回帰確認していいか」を聞く。実行する場合は Bash で実行。
-3. **ユーザーに以下のサマリを 1 メッセージで提示し、Issue をクローズしていいか確認する**:
+3. **ユーザーに以下のサマリを 1 メッセージで提示し、PR を出していいか確認する**:
    ```
    ✅ #{Issue番号} {タイトル} 完了
    - 変更ファイル: ...
    - テスト: ...
    - docs 更新: ...
-   Issue #{番号} をクローズしてよいですか？
+   PR を作成してよいですか？
    ```
-4. ユーザーが Yes なら GitHub connector または `gh issue close {番号} --comment "実装完了。"` でクローズ。
-5. **ここで停止**。次の Issue に進むかはユーザーが判断する。
+4. ユーザーが Yes なら:
+   - 変更をコミット（未コミットの場合）:
+     ```bash
+     git add <変更ファイル>
+     git commit -m "feat/fix/...: {タイトル} (#{番号})"
+     ```
+   - ブランチを push:
+     ```bash
+     git push -u origin {ブランチ名}
+     ```
+   - PR を作成（`Closes #{番号}` を body に含める）:
+     ```bash
+     gh pr create --title "..." --body "..."
+     ```
+   - PR URL をユーザーに見せる。
+5. **ここで停止**。Issue のクローズは PR マージ時に自動で行われる（`Closes #番号` による）。次の Issue に進むかはユーザーが判断する。
 
 ## ガードレール
 
@@ -92,7 +119,7 @@ description: GitHub Issue を 1 件処理する実装オーケストレーショ
   - Step 1 の着手確認
   - Step 2 のプラン承認
   - Step 4 / 5 のレビュー結果確認
-  - Step 6 のクローズ確認
+  - Step 6 の PR 作成確認
 - **planner / implementer / reviewer の役割を混同しない**。このスキルを実行する Codex はオーケストレータ。コードを直接書かず、レビューも直接行わない。サブエージェントの結果を仲介する。
 - **エージェントの返答を要約しすぎない**。特に planner のプランは実装の契約なので、ユーザーが原文を見られるようにする。
 - Issue のスコープを超えた改善・リファクタリングは提案に留め、実装しない。
