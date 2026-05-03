@@ -405,6 +405,21 @@ Route-level OpenAPI is available via explicit route metadata: `app.openapi(metad
 
 For complex joins, use raw Drizzle via `app.db`. The escape hatch is always open.
 
+## AI coding support (llms.txt)
+
+Nanoka publishes [`llms.txt`](https://raw.githubusercontent.com/nanokajs/nanoka/main/llms.txt) and [`llms-full.txt`](https://raw.githubusercontent.com/nanokajs/nanoka/main/llms-full.txt) at the repository root following the [llmstxt.org](https://llmstxt.org/) convention. AI coding agents (Claude Code, Cursor, Copilot, etc.) can read these to understand the API surface, conventions, and anti-patterns.
+
+To make your AI agent aware of Nanoka, reference one of these URLs from your project's agent instructions file (`CLAUDE.md`, `AGENTS.md`, `.cursorrules`, etc.):
+
+~~~markdown
+## Project uses Nanoka
+
+When working with Nanoka APIs, follow the conventions in:
+https://raw.githubusercontent.com/nanokajs/nanoka/main/llms-full.txt
+~~~
+
+`llms.txt` is a compact index pointing at all docs. `llms-full.txt` is the self-contained reference suitable for direct context injection.
+
 ## Workspace structure (for contributors)
 
 ```
