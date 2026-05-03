@@ -9,6 +9,7 @@ type FieldsRecord = Record<string, AnyField>
 
 interface OpenAPIOptions {
   readonly opts?: SchemaOptions
+  readonly strict?: boolean
 }
 
 export function toOpenAPIComponent(
@@ -39,7 +40,7 @@ export function toOpenAPISchema(
     const field = fields[key]
     if (field === undefined) continue
 
-    properties[key] = fieldToOpenAPISchema(field)
+    properties[key] = fieldToOpenAPISchema(field, opts?.strict)
     if (field.modifiers.policy === 'writeOnly' && (usage === 'create' || usage === 'update')) {
       properties[key].writeOnly = true
     }
@@ -58,10 +59,10 @@ export function toOpenAPISchema(
   }
 }
 
-function fieldToOpenAPISchema(field: AnyField): OpenAPISchemaObject {
+function fieldToOpenAPISchema(field: AnyField, strict = false): OpenAPISchemaObject {
   const schema: OpenAPISchemaObject =
     field.kind === 'json'
-      ? zodToOpenAPISchema(field.zodBase)
+      ? zodToOpenAPISchema(field.zodBase, strict)
       : field.kind === 'string'
         ? { type: 'string' }
         : field.kind === 'uuid'
@@ -97,20 +98,20 @@ function fieldToOpenAPISchema(field: AnyField): OpenAPISchemaObject {
   return schema
 }
 
-function zodToOpenAPISchema(schema: unknown): OpenAPISchemaObject {
+function zodToOpenAPISchema(schema: unknown, strict = false): OpenAPISchemaObject {
   const def = getZodDef(schema)
   if (def === undefined) return {}
 
   const typeName = getZodTypeName(def)
 
   if (typeName === 'ZodOptional' || typeName === 'optional') {
-    return zodToOpenAPISchema(def.innerType)
+    return zodToOpenAPISchema(def.innerType, strict)
   }
   if (typeName === 'ZodDefault' || typeName === 'default') {
-    return zodToOpenAPISchema(def.innerType)
+    return zodToOpenAPISchema(def.innerType, strict)
   }
   if (typeName === 'ZodNullable' || typeName === 'nullable') {
-    return { ...zodToOpenAPISchema(def.innerType), nullable: true }
+    return { ...zodToOpenAPISchema(def.innerType, strict), nullable: true }
   }
 
   if (typeName === 'ZodObject' || typeName === 'object') {
@@ -119,7 +120,7 @@ function zodToOpenAPISchema(schema: unknown): OpenAPISchemaObject {
     const required: string[] = []
 
     for (const [key, childSchema] of Object.entries(shape)) {
-      properties[key] = zodToOpenAPISchema(childSchema)
+      properties[key] = zodToOpenAPISchema(childSchema, strict)
       if (isRequiredZodSchema(childSchema)) {
         required.push(key)
       }
@@ -148,18 +149,28 @@ function zodToOpenAPISchema(schema: unknown): OpenAPISchemaObject {
     const itemSchema = def.element ?? def.type
     return {
       type: 'array',
-      items: zodToOpenAPISchema(itemSchema),
+      items: zodToOpenAPISchema(itemSchema, strict),
     }
   }
 
   if (typeName === 'ZodRecord' || typeName === 'record') {
     return {
       type: 'object',
-      additionalProperties: zodToOpenAPISchema(def.valueType),
+      additionalProperties: zodToOpenAPISchema(def.valueType, strict),
     }
   }
 
-  return {}
+  if (typeName === 'ZodUnknown' || typeName === 'unknown') {
+    return {}
+  }
+
+  if (strict) {
+    throw new Error(`Unsupported Zod type for strict OpenAPI generation: ${typeName ?? 'unknown'}`)
+  }
+  return {
+    'x-nanoka-zod-unsupported': true,
+    ...(typeName ? { 'x-nanoka-zod-type': typeName } : {}),
+  }
 }
 
 function getZodObjectShape(schema: unknown): Record<string, unknown> {
