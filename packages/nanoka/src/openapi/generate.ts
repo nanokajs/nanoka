@@ -95,6 +95,10 @@ function fieldToOpenAPISchema(field: AnyField, strict = false): OpenAPISchemaObj
     }
   }
 
+  if (field.modifiers.optional) {
+    schema.nullable = true
+  }
+
   return schema
 }
 

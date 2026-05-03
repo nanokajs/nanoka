@@ -144,7 +144,7 @@ describe('OpenAPI component generation', () => {
 
     expect(properties.name).toEqual({ type: 'string', minLength: 1, maxLength: 100 })
     expect(properties.email).toEqual({ type: 'string', format: 'email' })
-    expect(properties.age).toEqual({ type: 'integer', minimum: 0, maximum: 150 })
+    expect(properties.age).toEqual({ type: 'integer', minimum: 0, maximum: 150, nullable: true })
     expect(properties.score).toEqual({ type: 'number', minimum: 0, maximum: 1 })
     expect(properties.active).toEqual({ type: 'boolean' })
     expect(properties.metadata).toEqual({ nullable: true })

@@ -10,6 +10,7 @@ exports[`OpenAPI component generation > matches snapshot 1`] = `
       "age": {
         "maximum": 150,
         "minimum": 0,
+        "nullable": true,
         "type": "integer",
       },
       "email": {
@@ -82,6 +83,7 @@ exports[`OpenAPI component generation > matches snapshot 1`] = `
       "age": {
         "maximum": 150,
         "minimum": 0,
+        "nullable": true,
         "type": "integer",
       },
       "createdAt": {
@@ -159,6 +161,7 @@ exports[`OpenAPI component generation > matches snapshot 1`] = `
       "age": {
         "maximum": 150,
         "minimum": 0,
+        "nullable": true,
         "type": "integer",
       },
       "email": {
