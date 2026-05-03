@@ -17,7 +17,14 @@ import type {
   SchemaOptions,
   ValidatorInput,
 } from '../model/types'
-import type { OpenAPIModelComponent, OpenAPISchemaObject, OpenAPIUsage } from '../openapi/types'
+import type {
+  OpenAPIDocument,
+  OpenAPIModelComponent,
+  OpenAPIRouteMetadata,
+  OpenAPISchemaObject,
+  OpenAPISpecOptions,
+  OpenAPIUsage,
+} from '../openapi/types'
 
 /**
  * A model registered in a Nanoka application.
@@ -188,4 +195,15 @@ export interface Nanoka<E extends Env = BlankEnv> extends Hono<E> {
     name: string,
     fields: Fields,
   ): NanokaModel<Fields>
+
+  /**
+   * Registers OpenAPI metadata for a route.
+   * Does NOT register the actual Hono handler — call app.get/post/... separately.
+   */
+  openapi(metadata: OpenAPIRouteMetadata): this
+
+  /**
+   * Builds the full OpenAPI 3.1 document from all registered openapi() metadata.
+   */
+  generateOpenAPISpec(options: OpenAPISpecOptions): OpenAPIDocument
 }

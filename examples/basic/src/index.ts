@@ -1,4 +1,4 @@
-import { d1Adapter, nanoka } from '@nanokajs/core'
+import { d1Adapter, nanoka, swaggerUI } from '@nanokajs/core'
 import { HTTPException } from 'hono/http-exception'
 import { z } from 'zod'
 import { userFields, userTableName } from './models/user'
@@ -35,6 +35,85 @@ export default {
       return c.json(body, status)
     })
 
+    // OpenAPI metadata registration
+    app.openapi({
+      path: '/users',
+      method: 'post',
+      summary: 'Create user',
+      requestBody: {
+        required: true,
+        content: { 'application/json': { schema: User.toOpenAPISchema('create') } },
+      },
+      responses: {
+        '201': {
+          description: 'Created user',
+          content: { 'application/json': { schema: User.toOpenAPISchema('output') } },
+        },
+        '400': { description: 'Validation error' },
+      },
+    })
+    app.openapi({
+      path: '/users',
+      method: 'get',
+      summary: 'List users',
+      responses: {
+        '200': {
+          description: 'List of users',
+          content: {
+            'application/json': {
+              schema: { type: 'array', items: User.toOpenAPISchema('output') },
+            },
+          },
+        },
+      },
+    })
+    app.openapi({
+      path: '/users/:id',
+      method: 'get',
+      summary: 'Get user by ID',
+      params: [
+        { name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } },
+      ],
+      responses: {
+        '200': {
+          description: 'User found',
+          content: { 'application/json': { schema: User.toOpenAPISchema('output') } },
+        },
+        '404': { description: 'User not found' },
+      },
+    })
+    app.openapi({
+      path: '/users/:id',
+      method: 'patch',
+      summary: 'Update user',
+      params: [
+        { name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } },
+      ],
+      requestBody: {
+        required: true,
+        content: { 'application/json': { schema: User.toOpenAPISchema('update') } },
+      },
+      responses: {
+        '200': {
+          description: 'Updated user',
+          content: { 'application/json': { schema: User.toOpenAPISchema('output') } },
+        },
+        '404': { description: 'User not found' },
+      },
+    })
+    app.openapi({
+      path: '/users/:id',
+      method: 'delete',
+      summary: 'Delete user',
+      params: [
+        { name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } },
+      ],
+      responses: {
+        '204': { description: 'User deleted' },
+        '404': { description: 'User not found' },
+      },
+    })
+
     // POST /users - Create user
     app.post('/users', User.validator('json', 'create'), async (c) => {
       const body = c.req.valid('json')
@@ -45,6 +124,7 @@ export default {
       const passwordHash = `demo-${body.email}`
       const createdAt = new Date()
 
+      // app.db 経由の行は policy 未適用（passwordHash を含む完全な DB 行）。必ず User.toResponse() を通すこと。
       const rows = await app.db
         .insert(User.table)
         .values({ ...body, id, passwordHash, createdAt })
@@ -107,6 +187,15 @@ export default {
       }
       return c.body(null, 204)
     })
+
+    app.get('/openapi.json', (c) =>
+      c.json(
+        app.generateOpenAPISpec({
+          info: { title: 'Nanoka Basic Example', version: '0.1.0' },
+        }),
+      ),
+    )
+    app.get('/docs', swaggerUI({ url: '/openapi.json', title: 'API Docs' }))
 
     return app.fetch(req, env, ctx)
   },

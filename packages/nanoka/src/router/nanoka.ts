@@ -3,6 +3,8 @@ import type { BlankEnv, Env } from 'hono/types'
 import type { Adapter } from '../adapter/types'
 import type { Field } from '../field/types'
 import { defineModel } from '../model/define'
+import { buildOpenAPIDocument } from '../openapi/route'
+import type { OpenAPIRouteMetadata } from '../openapi/types'
 import type { Nanoka, NanokaModel } from './types'
 
 /**
@@ -26,6 +28,7 @@ import type { Nanoka, NanokaModel } from './types'
  */
 export function nanoka<E extends Env = BlankEnv>(adapter: Adapter): Nanoka<E> {
   const app = new Hono<E>() as Nanoka<E>
+  const openapiRoutes: OpenAPIRouteMetadata[] = []
 
   Object.defineProperty(app, 'db', {
     get: () => adapter.drizzle,
@@ -34,6 +37,13 @@ export function nanoka<E extends Env = BlankEnv>(adapter: Adapter): Nanoka<E> {
 
   app.batch = ((queries: Parameters<Adapter['batch']>[0]) =>
     adapter.batch(queries)) as unknown as Adapter['batch']
+
+  app.openapi = (metadata: OpenAPIRouteMetadata) => {
+    openapiRoutes.push(metadata)
+    return app
+  }
+
+  app.generateOpenAPISpec = (options) => buildOpenAPIDocument(openapiRoutes, options)
 
   // biome-ignore lint/suspicious/noExplicitAny: any is necessary for Field generic constraint
   app.model = function model<Fields extends Record<string, Field<any, any, any>>>(

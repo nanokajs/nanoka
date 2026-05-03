@@ -227,7 +227,7 @@ relation / Turso・libSQL adapter / route-level OpenAPI / `create-nanoka-app` / 
 
 ### 4.11 OpenAPI Zod subset の enforcement source としての扱い
 
-> **状態: Phase 3 着手前に評価**
+> **状態: 解消済み（Phase 2後半 M1 で実装完了）**
 
 M3 security review 持ち越し。`toOpenAPIComponent()` / `toOpenAPISchema()` で生成する OpenAPI component は **documentation / component seed** 用途に限定する。
 
