@@ -147,8 +147,9 @@ describe('OpenAPI component generation', () => {
     expect(properties.age).toEqual({ type: 'integer', minimum: 0, maximum: 150 })
     expect(properties.score).toEqual({ type: 'number', minimum: 0, maximum: 1 })
     expect(properties.active).toEqual({ type: 'boolean' })
-    expect(properties.metadata).toEqual({})
+    expect(properties.metadata).toEqual({ nullable: true })
     expect(properties.profile).toEqual({
+      nullable: true,
       type: 'object',
       properties: {
         foo: { type: 'string' },

@@ -22,14 +22,14 @@ export default {
           passwordHash: 'hashed_value_here',
           createdAt: new Date(),
         })
-        const user = User.schema({ omit: ['passwordHash'] }).parse(created)
+        const user = User.outputSchema({ omit: ['passwordHash'] }).parse(created)
         return c.json(user, 201)
       },
     )
 
     app.get('/users', async (c) => {
       const users = await User.findMany({ limit: 20 })
-      const result = z.array(User.schema({ omit: ['passwordHash'] })).parse(users)
+      const result = z.array(User.outputSchema({ omit: ['passwordHash'] })).parse(users)
       return c.json(result)
     })
 

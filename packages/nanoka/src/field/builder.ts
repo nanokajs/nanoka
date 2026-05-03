@@ -47,9 +47,9 @@ export abstract class BaseFieldBuilder<
   protected applyModifiersToZod(baseSchema: z.ZodTypeAny): z.ZodTypeAny {
     let schema = baseSchema
 
-    // Apply optional
+    // Apply optional — use nullable() first so D1/SQLite null values are accepted
     if (this.modifiers.optional) {
-      schema = schema.optional()
+      schema = schema.nullable().optional()
     }
 
     // Apply default
