@@ -276,6 +276,55 @@ describe('Model: schema() runtime behavior', () => {
   })
 })
 
+describe('Model: schema() with accessor (function) form', () => {
+  const User = defineModel('users', {
+    id: t.uuid().primary(),
+    name: t.string(),
+    email: t.string().email(),
+    passwordHash: t.string(),
+  })
+
+  it('accessor pick: parses only picked fields', () => {
+    const schema = User.schema({ pick: (f) => [f.id, f.name] })
+    const result = schema.safeParse({
+      id: validUuid,
+      name: 'Alice',
+    })
+    expect(result.success).toBe(true)
+    expect(result.data).toEqual({ id: validUuid, name: 'Alice' })
+  })
+
+  it('accessor omit: strips omitted fields', () => {
+    const schema = User.schema({ omit: (f) => [f.passwordHash] })
+    const result = schema.safeParse({
+      id: validUuid,
+      name: 'Alice',
+      email: 'alice@example.com',
+      passwordHash: 'secret',
+    })
+    expect(result.success).toBe(true)
+    expect(result.data).not.toHaveProperty('passwordHash')
+    expect(result.data).toHaveProperty('id')
+  })
+
+  it('accessor is a frozen plain object (not a Proxy)', () => {
+    let capturedF: unknown = null
+    User.schema({
+      pick: (f) => {
+        capturedF = f
+        return [f.name]
+      },
+    })
+    expect(Object.isFrozen(capturedF)).toBe(true)
+    // Verify it's a plain object with string-keyed string values (not a Proxy)
+    expect(typeof capturedF).toBe('object')
+    expect(Object.prototype.toString.call(capturedF)).toBe('[object Object]')
+    const f = capturedF as Record<string, unknown>
+    expect(f.name).toBe('name')
+    expect(f.id).toBe('id')
+  })
+})
+
 describe('Model: inputSchema / outputSchema / toResponse', () => {
   const PolicyUser = defineModel('users', {
     id: t.uuid().primary().readOnly(),

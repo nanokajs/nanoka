@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import type { Field } from '../field/types'
-import type { SchemaOptions } from './types'
+import { type FieldAccessor, resolveSchemaOptionKeys, type SchemaOptions } from './types'
 
 type PolicyUsage = 'input-create' | 'input-update' | 'output'
 
@@ -24,6 +24,14 @@ function computeForcedOmit(
 /**
  * Returns field names to omit based on UX-oriented policy (writeOnly / readOnly).
  * These can be overridden when user explicitly provides pick.
+ *
+ * Policy mapping:
+ * - `writeOnly`: omitted from output only. For input targets (input-create, input-update),
+ *   writeOnly fields are NOT omitted — they are intentionally part of the input (e.g. password).
+ * - `readOnly`: omitted from input targets (input-create, input-update) only. Remains in output.
+ *
+ * The asymmetry is by design: writeOnly means "accepted on write, hidden on read";
+ * readOnly means "visible on read, rejected on write".
  */
 function computeOptionalOmit(
   // biome-ignore lint/suspicious/noExplicitAny: any is necessary for generic Field handling
@@ -55,16 +63,22 @@ export function derivePolicyOptions(
   fields: Record<string, Field<any, any, any>>,
   usage: PolicyUsage,
   userOpts?: SchemaOptions,
+  // biome-ignore lint/suspicious/noExplicitAny: accessor is a plain object with string keys
+  accessor?: FieldAccessor<any>,
 ): SchemaOptions {
   const forced = computeForcedOmit(fields)
   const optional = computeOptionalOmit(fields, usage)
 
-  if (userOpts?.pick !== undefined) {
-    const partial = usage === 'input-update' ? (userOpts.partial ?? true) : userOpts.partial
+  const acc = accessor ?? ({} as FieldAccessor<string>)
+  const resolvedPick = resolveSchemaOptionKeys(userOpts?.pick, acc)
+  const resolvedOmit = resolveSchemaOptionKeys(userOpts?.omit, acc)
+
+  if (resolvedPick !== undefined) {
+    const partial = usage === 'input-update' ? (userOpts?.partial ?? true) : userOpts?.partial
     // serverOnly fields are stripped from pick even if user explicitly listed them
-    const sanitizedPick = Array.from(userOpts.pick).filter((k) => !forced.includes(k))
+    const sanitizedPick = Array.from(resolvedPick).filter((k) => !forced.includes(k))
     // Combine forced omit with user-provided omit to preserve both constraints
-    const combinedOmit = [...new Set([...forced, ...(userOpts.omit ?? [])])]
+    const combinedOmit = [...new Set([...forced, ...(resolvedOmit ?? [])])]
     return {
       ...userOpts,
       pick: sanitizedPick,
@@ -73,12 +87,13 @@ export function derivePolicyOptions(
     }
   }
 
-  const combinedOmit = [...new Set([...forced, ...optional, ...(userOpts?.omit ?? [])])]
+  const combinedOmit = [...new Set([...forced, ...optional, ...(resolvedOmit ?? [])])]
   const partial =
     usage === 'input-update' ? (userOpts?.partial ?? true) : (userOpts?.partial ?? undefined)
 
   return {
     ...(userOpts ?? {}),
+    pick: undefined,
     ...(combinedOmit.length > 0 ? { omit: combinedOmit } : {}),
     ...(partial !== undefined ? { partial } : {}),
   }
@@ -108,18 +123,23 @@ export function applySchemaOptions(
   // biome-ignore lint/suspicious/noExplicitAny: any is necessary for generic Zod shape operations
   baseSchema: z.ZodObject<any>,
   opts: SchemaOptions | undefined,
+  // biome-ignore lint/suspicious/noExplicitAny: accessor is a plain object with string keys
+  accessor?: FieldAccessor<any>,
   // biome-ignore lint/suspicious/noExplicitAny: any is necessary for return type
 ): z.ZodObject<any> {
   if (!opts) {
     return baseSchema
   }
 
+  const acc = accessor ?? ({} as FieldAccessor<string>)
+  const resolvedPick = resolveSchemaOptionKeys(opts.pick, acc)
+  const resolvedOmit = resolveSchemaOptionKeys(opts.omit, acc)
+
   let schema = baseSchema
 
   // Apply pick
-  if (opts.pick !== undefined) {
-    // Convert readonly array to string array for .pick()
-    const pickArray = Array.from(opts.pick)
+  if (resolvedPick !== undefined) {
+    const pickArray = Array.from(resolvedPick)
     schema = schema.pick(
       // biome-ignore lint/suspicious/noExplicitAny: Zod API
       Object.fromEntries(pickArray.map((k) => [k, true])) as any,
@@ -127,9 +147,8 @@ export function applySchemaOptions(
   }
 
   // Apply omit
-  if (opts.omit !== undefined) {
-    // Convert readonly array to string array for .omit()
-    const omitArray = Array.from(opts.omit)
+  if (resolvedOmit !== undefined) {
+    const omitArray = Array.from(resolvedOmit)
     schema = schema.omit(
       // biome-ignore lint/suspicious/noExplicitAny: Zod API
       Object.fromEntries(omitArray.map((k) => [k, true])) as any,

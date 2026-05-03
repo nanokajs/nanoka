@@ -1,6 +1,6 @@
 import type { Hook } from '@hono/zod-validator'
 import type { SQLiteTable } from 'drizzle-orm/sqlite-core'
-import type { Hono } from 'hono'
+import type { Hono, MiddlewareHandler } from 'hono'
 import type { BlankEnv, Env } from 'hono/types'
 import type { z } from 'zod'
 import type { Adapter } from '../adapter/types'
@@ -12,6 +12,7 @@ import type {
   FindManyOptions,
   IdOrWhere,
   ModelValidatorReturn,
+  PolicyOmitKeys,
   RowType,
   SchemaOptions,
   ValidatorInput,
@@ -49,9 +50,46 @@ export interface NanokaModel<Fields extends Record<string, Field<any, any, any>>
     P extends string = string,
   >(
     target: Target,
-    preset: 'create' | 'update',
-    hook?: Hook<z.output<z.ZodObject<z.ZodRawShape>>, E, P, Target>,
-  ): import('hono').MiddlewareHandler<E, P, ValidatorInput<Target, z.ZodObject<z.ZodRawShape>>>
+    preset: 'create',
+    hook?: Hook<
+      Omit<RowType<Fields>, PolicyOmitKeys<Fields, 'input-create'> & string>,
+      E,
+      P,
+      Target
+    >,
+  ): MiddlewareHandler<
+    E,
+    P,
+    ValidatorInput<
+      Target,
+      z.ZodObject<z.ZodRawShape>,
+      Omit<RowType<Fields>, PolicyOmitKeys<Fields, 'input-create'> & string>,
+      Omit<RowType<Fields>, PolicyOmitKeys<Fields, 'input-create'> & string>
+    >
+  >
+  validator<
+    Target extends keyof import('hono').ValidationTargets,
+    E extends Env = Env,
+    P extends string = string,
+  >(
+    target: Target,
+    preset: 'update',
+    hook?: Hook<
+      Partial<Omit<RowType<Fields>, PolicyOmitKeys<Fields, 'input-update'> & string>>,
+      E,
+      P,
+      Target
+    >,
+  ): MiddlewareHandler<
+    E,
+    P,
+    ValidatorInput<
+      Target,
+      z.ZodObject<z.ZodRawShape>,
+      Partial<Omit<RowType<Fields>, PolicyOmitKeys<Fields, 'input-update'> & string>>,
+      Partial<Omit<RowType<Fields>, PolicyOmitKeys<Fields, 'input-update'> & string>>
+    >
+  >
   validator<
     Target extends keyof import('hono').ValidationTargets,
     Opts extends SchemaOptions<keyof Fields & string> | undefined = undefined,

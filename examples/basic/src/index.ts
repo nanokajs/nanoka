@@ -45,12 +45,11 @@ export default {
       const passwordHash = `demo-${body.email}`
       const createdAt = new Date()
 
-      const created = await User.create({
-        ...body,
-        id,
-        passwordHash,
-        createdAt,
-      })
+      const rows = await app.db
+        .insert(User.table)
+        .values({ ...body, id, passwordHash, createdAt })
+        .returning()
+      const created = rows[0] as import('@nanokajs/core').RowType<typeof User.fields>
 
       return c.json(User.toResponse(created), 201)
     })

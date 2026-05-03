@@ -1,11 +1,13 @@
 import { Hono } from 'hono'
 import { describe, expect, it, vi } from 'vitest'
+import type { Adapter } from '../../adapter/types'
 import { t } from '../../field'
 import { nanoka } from '../nanoka'
 
 describe('nanoka(adapter)', () => {
-  // Mock adapter for testing without D1
-  const createMockAdapter = () => {
+  // Mock adapter for testing without D1.
+  // biome-ignore lint/suspicious/noExplicitAny: mock adapter uses simplified types for testing
+  const createMockAdapter = (): Adapter<any> => {
     const mockDrizzle = {
       select: vi.fn(),
       insert: vi.fn(),
@@ -17,32 +19,31 @@ describe('nanoka(adapter)', () => {
       return queries.map(() => ({ success: true }))
     })
 
-    return {
-      drizzle: mockDrizzle,
-      batch: mockBatch,
-    }
+    // biome-ignore lint/suspicious/noExplicitAny: mock drizzle simplified for testing
+    return { drizzle: mockDrizzle as any, batch: mockBatch as any }
   }
 
   describe('nanoka() factory', () => {
     it('returns a Hono instance', () => {
       const adapter = createMockAdapter()
-      const app = nanoka(adapter as any)
+      const app = nanoka(adapter)
 
       expect(app).toBeInstanceOf(Hono)
     })
 
     it('exposes db property that references adapter.drizzle', () => {
       const adapter = createMockAdapter()
-      const app = nanoka(adapter as any)
+      const app = nanoka(adapter)
 
       expect(app.db).toBe(adapter.drizzle)
     })
 
     it('exposes batch method that delegates to adapter.batch', async () => {
       const adapter = createMockAdapter()
-      const app = nanoka(adapter as any)
+      const app = nanoka(adapter)
 
       const queries = [{ query: 'SELECT 1' }]
+      // biome-ignore lint/suspicious/noExplicitAny: batch query type is complex, test uses simplified value
       const result = await app.batch(queries as any)
 
       expect(adapter.batch).toHaveBeenCalledWith(queries)
@@ -51,10 +52,11 @@ describe('nanoka(adapter)', () => {
 
     it('app.batch is bound to the adapter', async () => {
       const adapter = createMockAdapter()
-      const app = nanoka(adapter as any)
+      const app = nanoka(adapter)
 
       // Even when called without explicit this binding, should work
       const batchMethod = app.batch
+      // biome-ignore lint/suspicious/noExplicitAny: batch query type is complex, test uses simplified value
       await batchMethod([{ query: 'SELECT 1' }] as any)
 
       expect(adapter.batch).toHaveBeenCalled()
@@ -64,7 +66,7 @@ describe('nanoka(adapter)', () => {
   describe('app.model()', () => {
     it('registers a model and returns NanokaModel', () => {
       const adapter = createMockAdapter()
-      const app = nanoka(adapter as any)
+      const app = nanoka(adapter)
 
       const User = app.model('users', {
         id: t.uuid().primary(),
@@ -81,7 +83,7 @@ describe('nanoka(adapter)', () => {
 
     it('NanokaModel.schema() works', () => {
       const adapter = createMockAdapter()
-      const app = nanoka(adapter as any)
+      const app = nanoka(adapter)
 
       const User = app.model('users', {
         id: t.uuid().primary(),
@@ -96,7 +98,7 @@ describe('nanoka(adapter)', () => {
 
     it('NanokaModel.validator() works', () => {
       const adapter = createMockAdapter()
-      const app = nanoka(adapter as any)
+      const app = nanoka(adapter)
 
       const User = app.model('users', {
         id: t.uuid().primary(),
@@ -112,7 +114,7 @@ describe('nanoka(adapter)', () => {
 
     it('multiple models can be registered', () => {
       const adapter = createMockAdapter()
-      const app = nanoka(adapter as any)
+      const app = nanoka(adapter)
 
       const User = app.model('users', {
         id: t.uuid().primary(),
@@ -132,7 +134,7 @@ describe('nanoka(adapter)', () => {
   describe('Hono integration', () => {
     it('app.use works (standard Hono middleware)', async () => {
       const adapter = createMockAdapter()
-      const app = nanoka(adapter as any)
+      const app = nanoka(adapter)
 
       let middlewareExecuted = false
 
@@ -152,7 +154,7 @@ describe('nanoka(adapter)', () => {
 
     it('app.get/post/patch/delete work (standard Hono routing)', async () => {
       const adapter = createMockAdapter()
-      const app = nanoka(adapter as any)
+      const app = nanoka(adapter)
 
       app.get('/get', (c) => c.json({ method: 'GET' }))
       app.post('/post', (c) => c.json({ method: 'POST' }))
@@ -170,7 +172,7 @@ describe('nanoka(adapter)', () => {
 
     it('app.notFound works (standard Hono 404 handler)', async () => {
       const adapter = createMockAdapter()
-      const app = nanoka(adapter as any)
+      const app = nanoka(adapter)
 
       app.notFound((c) => c.json({ error: 'not found' }, 404))
 
@@ -181,7 +183,7 @@ describe('nanoka(adapter)', () => {
 
     it('app.fetch works for standard HTTP requests', async () => {
       const adapter = createMockAdapter()
-      const app = nanoka(adapter as any)
+      const app = nanoka(adapter)
 
       app.get('/users', (c) => c.json({ users: [] }))
 
@@ -196,7 +198,7 @@ describe('nanoka(adapter)', () => {
   describe('error handling', () => {
     it('Hono HTTPException is handled by default error handler', async () => {
       const adapter = createMockAdapter()
-      const app = nanoka(adapter as any)
+      const app = nanoka(adapter)
       const { HTTPException } = await import('hono/http-exception')
 
       app.get('/error', () => {

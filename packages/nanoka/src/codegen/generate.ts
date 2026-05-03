@@ -79,5 +79,5 @@ export function generateDrizzleSchema(models: readonly ModelDef[]): string {
     lines.pop()
   }
 
-  return lines.join('\n') + '\n'
+  return `${lines.join('\n')}\n`
 }

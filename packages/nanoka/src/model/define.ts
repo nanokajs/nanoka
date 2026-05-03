@@ -13,10 +13,10 @@ import type {
   FindManyOptions,
   IdOrWhere,
   Model,
-  ModelValidatorReturn,
   RowType,
   SchemaOptions,
 } from './types'
+import { buildFieldAccessor } from './types'
 
 /**
  * Creates a Model instance from a tableName and fields definition.
@@ -39,25 +39,26 @@ export function defineModel<Fields extends Record<string, Field<any, any, any>>>
   fields: Fields,
 ): Model<Fields> {
   const table = buildTable(tableName, fields)
+  const accessor = buildFieldAccessor(fields)
 
   return {
     fields,
     tableName,
     table,
 
-    schema<Opts extends SchemaOptions<keyof Fields & string> | undefined = undefined>(
+    schema<Opts extends SchemaOptions<keyof Fields & string> | undefined>(
       opts?: Opts,
     ): Apply<FieldsToZodShape<Fields>, Opts> {
       const baseSchema = buildBaseObject(fields)
-      const schema = applySchemaOptions(baseSchema, opts)
+      const schema = applySchemaOptions(baseSchema, opts, accessor)
       // biome-ignore lint/suspicious/noExplicitAny: Zod .pick()/.omit() return type narrowing requires cast at boundary
       return schema as any
     },
 
-    // biome-ignore lint/suspicious/noExplicitAny: Hook<T> is contravariant in T; implementation signature must use any to satisfy both overloads
     validator(
       target: keyof ValidationTargets,
       optsOrPreset?: 'create' | 'update' | SchemaOptions<keyof Fields & string>,
+      // biome-ignore lint/suspicious/noExplicitAny: Hook<T> is contravariant in T; any is required to bridge overload implementations
       hook?: Hook<any, Env, string, keyof ValidationTargets>,
     ) {
       let schema: z.ZodTypeAny
@@ -73,22 +74,25 @@ export function defineModel<Fields extends Record<string, Field<any, any, any>>>
     inputSchema(
       usage: 'create' | 'update',
       opts?: SchemaOptions<keyof Fields & string>,
-    ): z.ZodObject<z.ZodRawShape> {
+      // biome-ignore lint/suspicious/noExplicitAny: precise return type is enforced by Model<Fields> overload signatures
+    ): any {
       const merged = derivePolicyOptions(
         fields,
         usage === 'create' ? 'input-create' : 'input-update',
         opts,
+        accessor,
       )
       const baseSchema = buildBaseObject(fields)
-      // biome-ignore lint/suspicious/noExplicitAny: Return type cast for ZodObject<ZodRawShape>
-      return applySchemaOptions(baseSchema, merged) as any
+      return applySchemaOptions(baseSchema, merged)
     },
 
-    outputSchema(opts?: SchemaOptions<keyof Fields & string>): z.ZodObject<z.ZodRawShape> {
-      const merged = derivePolicyOptions(fields, 'output', opts)
+    outputSchema(
+      opts?: SchemaOptions<keyof Fields & string>,
+      // biome-ignore lint/suspicious/noExplicitAny: precise return type is enforced by Model<Fields> overload signatures
+    ): any {
+      const merged = derivePolicyOptions(fields, 'output', opts, accessor)
       const baseSchema = buildBaseObject(fields)
-      // biome-ignore lint/suspicious/noExplicitAny: Return type cast for ZodObject<ZodRawShape>
-      return applySchemaOptions(baseSchema, merged) as any
+      return applySchemaOptions(baseSchema, merged)
     },
 
     toResponse(row: RowType<Fields>): unknown {

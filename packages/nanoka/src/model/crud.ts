@@ -3,7 +3,7 @@ import type { SQLiteTable } from 'drizzle-orm/sqlite-core'
 import { HTTPException } from 'hono/http-exception'
 import type { Adapter } from '../adapter/types'
 import type { Field } from '../field/types'
-import type { CreateInput, IdOrWhere, RowType, Where } from './types'
+import type { CreateInput, IdOrWhere, OrderBy, RowType, Where } from './types'
 
 const MAX_LIMIT = 100
 
@@ -41,11 +41,14 @@ function guardOffset(offset: unknown): number {
  * @internal
  */
 function findPrimaryKey(
+  // biome-ignore lint/suspicious/noExplicitAny: any is necessary for Field constraint
   fields: Record<string, Field<any, any, any>>,
+  // biome-ignore lint/suspicious/noExplicitAny: any is necessary for Field constraint
 ): [string, Field<any, any, any>] | null {
+  let pkKey: string | undefined
+  // biome-ignore lint/suspicious/noExplicitAny: any is necessary for Field constraint
+  let pkField: Field<any, any, any> | undefined
   let pkCount = 0
-  let pkKey: string | null = null
-  let pkField: Field<any, any, any> | null = null
 
   for (const [key, field] of Object.entries(fields)) {
     if (field.modifiers.primary === true) {
@@ -63,8 +66,11 @@ function findPrimaryKey(
   if (pkCount > 1) {
     throw new HTTPException(500, { message: 'model has multiple primary keys' })
   }
+  if (pkKey === undefined || pkField === undefined) {
+    return null
+  }
 
-  return [pkKey!, pkField!]
+  return [pkKey, pkField]
 }
 
 /**
@@ -77,7 +83,7 @@ function buildWhereClause(
   fields: Record<string, Field<any, any, any>>,
   where: Where<Record<string, any>>,
 ): ReturnType<typeof and> | null {
-  const conditions: any[] = []
+  const conditions: ReturnType<typeof eq>[] = []
 
   for (const [key, value] of Object.entries(where)) {
     // Multi-layered guard against identifier injection
@@ -87,8 +93,8 @@ function buildWhereClause(
     if (!Object.hasOwn(table, key)) {
       throw new HTTPException(400, { message: 'invalid column in table' })
     }
-    // biome-ignore lint/suspicious/noExplicitAny: table column access is runtime-guarded
-    const col: any = (table as any)[key]
+    // biome-ignore lint/suspicious/noExplicitAny: table column access is runtime-guarded by hasOwn
+    const col = (table as unknown as Record<string, any>)[key]
     conditions.push(eq(col, value))
   }
 
@@ -105,14 +111,17 @@ function buildWhereClause(
  * Fetches multiple rows with limit, offset, and optional ordering.
  * @internal
  */
-export async function findManyImpl<Fields extends Record<string, Field<any, any, any>>>(
+export async function findManyImpl<
+  // biome-ignore lint/suspicious/noExplicitAny: any is necessary for Field constraint
+  Fields extends Record<string, Field<any, any, any>>,
+>(
   adapter: Adapter,
   table: SQLiteTable,
   _fields: Fields,
   options: {
     limit: unknown
     offset?: unknown
-    orderBy?: any
+    orderBy?: OrderBy<Fields>
   },
 ): Promise<RowType<Fields>[]> {
   const limit = guardLimit(options.limit)
@@ -149,8 +158,8 @@ export async function findManyImpl<Fields extends Record<string, Field<any, any,
         throw new HTTPException(400, { message: 'invalid field in orderBy' })
       }
 
-      // biome-ignore lint/suspicious/noExplicitAny: table column access is runtime-guarded
-      const col: any = (table as any)[column]
+      // biome-ignore lint/suspicious/noExplicitAny: table column access is runtime-guarded by hasOwn
+      const col = (table as unknown as Record<string, any>)[column]
       query = query.orderBy(direction === 'asc' ? asc(col) : desc(col))
     }
   }

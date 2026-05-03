@@ -51,27 +51,28 @@ Phase 2 の軸は Drizzle クエリ DSL の再発明ではなく、`passwordHash
 
 `docs/backlog.md` §3.2 由来。Zod 4 サポート（2.2）は M1 と並行可能。
 
-- [ ] **2.1** フィールドアクセサ API（schema / validator 用途のみ）
+- [x] **2.1** フィールドアクセサ API（schema / validator 用途のみ）
   - `User.schema({ pick: f => [f.name] })` / `User.schema({ omit: f => [f.passwordHash] })`
   - `f` は `as const` の固定オブジェクト。Proxy 禁止（runtime コスト ゼロ要件）
   - 既存の文字列配列形式 `{ pick: ['name'] }` も維持（後方互換）
   - クエリ側 `User.where(f => ...)` は対象外（Phase 2 後半 / Phase 3 候補）
-- [ ] **2.2** Zod 4 サポートの方針決定と実装
+- [x] **2.2** Zod 4 サポートの方針決定と実装
   - 現状 `peerDependencies.zod: ^3.23.0`。v4 は `ZodType<Output, Def, Input>` → `ZodType<Output, Input, Internals>` の generic 順序変更で `Field<TS, Mods, ZB>` 由来の型推論が `never` に潰れる（2026-05 ユーザー報告）
   - 対応方針: (a) `^3.23.0 || ^4.0.0` に拡張して両対応、または (b) v4 に切り替えて v3 を切る（破壊的変更）
   - 着手時に判断。検出は `docs/backlog.md` §4.7 onboarding parity E2E で担保
-- [ ] **2.3** create / update input 型の精緻化
+- [x] **2.3** create / update input 型の精緻化
   - Phase 1 は `CreateInput = Partial<RowType>` で受容した
   - `readOnly` / default / optional / primary の情報を使って入力型を精緻化
   - 例: `readOnly` は `CreateInput` から除外 / default 持ちは optional / primary かつ default なしは required
   - **M1 より持ち越し**: `inputSchema('create' | 'update')` / `outputSchema()` の戻り型を Phase 2A では `z.ZodObject<z.ZodRawShape>` に緩めた（判断 B）。`policy` 由来の自動 omit を型レベルで反映する精緻化（`ApplyShape` への組み込み）を本タスク 2.3 に含める。`validator('json', preset)` 経由の `c.req.valid('json')` の型推論は M1 時点でも preset が `MiddlewareHandler` として緩く推論される（精緻な shape は 2.3 で解消）。
-- [ ] **2.4** Phase 1.5 持ち越しの型精緻化（`docs/nanoka.md` Phase 2B 由来）
+- [x] **2.4** Phase 1.5 持ち越しの型精緻化（`docs/nanoka.md` Phase 2B 由来）
   - `noExplicitAny` 87 件 / `noNonNullAssertion` 10 件の削減
   - 主な箇所: `packages/nanoka/src/model/crud.ts` / `model/types.ts` / `router/types.ts` / `__tests__/*`
   - フィールドアクセサ API（2.1）導入時に `Field<any, any, any>` を精緻型へ置換
   - `!` non-null assertion は型ガードまたは zod parse 経由で解消
   - 完了基準は緩く「Phase 2 完了時点で warnings が大幅に減ること」（ゼロ化必須ではない）
   - テストコード内の意図的な `as any`（`@ts-expect-error` 周辺）は `// biome-ignore` 個別抑制を許容
+  - **完了**: 103 → 59 warnings（43% 削減）、`noNonNullAssertion` 10 → 0 件
 
 完了基準: フィールドアクセサ API でタイポが型エラーになる（`@ts-expect-error` テスト付き）。Zod 3 / 4 両対応 or v4 切り替えで onboarding parity CI が green。`pnpm lint` の `noExplicitAny` warnings が Phase 1.5 完了時点から有意に減少。
 
@@ -129,6 +130,26 @@ M1（API 境界の意味論確定）→ M2（型精緻化）→ M3（OpenAPI sou
 - **Phase 2 後半 / Phase 3 候補**（relation / Turso・libSQL adapter / 型安全クエリビルダー / `npx create-nanoka-app` / route-level OpenAPI / Swagger UI / VSCode 拡張）は 1.0.0 必須条件にしない。`docs/backlog.md` §3.5 / §4.10 の管轄。
 - **全 Phase 外**: 認証 / フルスタック React / Drizzle を置き換える複雑な query DSL（`docs/nanoka.md`「Nanokaがやらないこと」）。
 - **受容リスク**（`docs/backlog.md` §2）も本フェーズ対象外。状況が変われば該当節で更新する。
+
+---
+
+## 判断履歴
+
+### 判断 A: Zod 両対応（`^3.23.0 || ^4.0.0`）を採用（M2 / 2.2、2026-05）
+
+**採用した方針**: `peerDependencies.zod: ^3.23.0 || ^4.0.0` に拡張して v3 / v4 両対応。
+
+**経緯**: Zod v4 は `ZodType<Output, Def, Input>` → `ZodType<Output, Input, Internals>` の generic 順序変更で現行の `Field<TS, Mods, ZB>` 型推論に影響する可能性があったが、`@hono/zod-validator@0.4.x` が両対応モードで動作することを確認。既存コードへの影響も軽微（`ValidatorInput` の `z.input<Schema>` / `z.output<Schema>` はそのまま利用可能）。1.0.0 リリース前に v4 への移行負担が低いため両対応を採用。
+
+**onboarding-zod4 スクリプト**: `e2e/onboarding/scripts/run-onboarding-zod4.sh` は「typecheck が成功することを assert」する形で既に整備済みであることを確認。
+
+### 判断 B（M1 持ち越し解消）: `inputSchema` / `outputSchema` 戻り型精緻化（M2 / 2.3、2026-05）
+
+**採用した方針**: `inputSchema` / `outputSchema` の実装メソッドシグネチャを `: any` に変更し、`Model<Fields>` インターフェースの精緻な overload シグネチャ（`ApplyShape<Omit<FieldsToZodShape<Fields>, PolicyOmitKeys<...>>>` を返す）をそのまま採用。
+
+**経緯**: `define.ts` の実装が `z.ZodObject<z.ZodRawShape>` を返すシグネチャで宣言されていたため、TypeScript がインターフェースの精緻型と一致しないエラーを報告。実装側を `: any` に widening することで、型チェックは `Model<Fields>` インターフェースの overload から行われるようになり、呼び出し側では精緻型が利用可能になった。
+
+**制約**: `z.infer<typeof schema>` の型推論は `FieldsToZodShape` の各フィールドの `zodBase` が `ZodTypeAny` のため `any` になる。型テストは `@ts-expect-error` で excluded フィールドが型エラーになることを assert する形とした（「含まれるフィールドを正値として assert」は ZodTypeAny 由来の型情報不足で達成困難）。
 
 ---
 

@@ -110,6 +110,12 @@ relation / Turso・libSQL adapter / route-level OpenAPI / `create-nanoka-app` / 
   - Drizzle 再発明に寄りやすいため優先度を下げる。
 - **`npx create-nanoka-app`**（Phase 3）
 
+### 3.6 `findMany` の `offset` 上限導入（DoS 緩和）
+
+- **概要**: 現状 `findMany` は `MAX_LIMIT = 100` で limit を上限化しているが (`packages/nanoka/src/model/crud.ts:8`)、`offset` 側に上限がない。SQLite / D1 では `LIMIT 100 OFFSET 999999999` でも実行され、テーブル全件に近いスキャンコストを発生させる。リクエストごとに巨大 offset を送ることで read-amplification 型の DoS が成立する余地がある（M2 security review M-2）。
+- **対応候補**: (a) `MAX_OFFSET`（例: 10000）を追加、(b) README で「production では cursor pagination を使え」と明示、(c) 両方。
+- **優先度**: 中。M2 範囲外。1.0.0 までに対応するか、1.x 系に持ち越すかは Phase 2 後半着手時に判断。
+
 ### 全 Phase でスコープ外
 
 - 認証 / フルスタック React / Drizzleを置き換える複雑な query DSL

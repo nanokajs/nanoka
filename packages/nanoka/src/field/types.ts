@@ -75,4 +75,10 @@ export interface Field<
  * type T1 = InferFieldType<typeof t.string()> // string
  * type T2 = InferFieldType<typeof t.string().optional()> // string | undefined
  */
-export type InferFieldType<F> = F extends Field<infer T, FieldModifiers, z.ZodTypeAny> ? T : never
+export type InferFieldType<F> =
+  F extends Field<infer T, FieldModifiers, z.ZodTypeAny>
+    ? T
+    : // biome-ignore lint/suspicious/noExplicitAny: fallback for Zod 4 ZodTypeAny representation
+      F extends Field<infer T, FieldModifiers, any>
+      ? T
+      : never

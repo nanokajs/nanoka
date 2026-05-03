@@ -11,7 +11,7 @@ class StringFieldBuilder<
   TS = string,
   // biome-ignore lint/complexity/noBannedTypes: {} is used intentionally for the default empty modifiers
   Mods extends FieldModifiers = {},
-  ZB extends z.ZodType<TS, z.ZodTypeDef, TS> = z.ZodType<TS, z.ZodTypeDef, TS>,
+  ZB extends z.ZodTypeAny = z.ZodTypeAny,
 > extends BaseFieldBuilder<TS, Mods, ZB> {
   readonly kind = 'string' as const
 
@@ -171,7 +171,7 @@ class UuidFieldBuilder<
   TS = string,
   // biome-ignore lint/complexity/noBannedTypes: {} is used intentionally for the default empty modifiers
   Mods extends FieldModifiers = {},
-  ZB extends z.ZodType<TS, z.ZodTypeDef, TS> = z.ZodType<TS, z.ZodTypeDef, TS>,
+  ZB extends z.ZodTypeAny = z.ZodTypeAny,
 > extends BaseFieldBuilder<TS, Mods, ZB> {
   readonly kind = 'uuid' as const
 
@@ -313,7 +313,7 @@ class NumberFieldBuilder<
   TS = number,
   // biome-ignore lint/complexity/noBannedTypes: {} is used intentionally for the default empty modifiers
   Mods extends FieldModifiers = {},
-  ZB extends z.ZodType<TS, z.ZodTypeDef, TS> = z.ZodType<TS, z.ZodTypeDef, TS>,
+  ZB extends z.ZodTypeAny = z.ZodTypeAny,
 > extends BaseFieldBuilder<TS, Mods, ZB> {
   readonly kind = 'number' as const
 
@@ -461,7 +461,7 @@ class IntegerFieldBuilder<
   TS = number,
   // biome-ignore lint/complexity/noBannedTypes: {} is used intentionally for the default empty modifiers
   Mods extends FieldModifiers = {},
-  ZB extends z.ZodType<TS, z.ZodTypeDef, TS> = z.ZodType<TS, z.ZodTypeDef, TS>,
+  ZB extends z.ZodTypeAny = z.ZodTypeAny,
 > extends BaseFieldBuilder<TS, Mods, ZB> {
   readonly kind = 'integer' as const
 
@@ -609,7 +609,7 @@ class BooleanFieldBuilder<
   TS = boolean,
   // biome-ignore lint/complexity/noBannedTypes: {} is used intentionally for the default empty modifiers
   Mods extends FieldModifiers = {},
-  ZB extends z.ZodType<TS, z.ZodTypeDef, TS> = z.ZodType<TS, z.ZodTypeDef, TS>,
+  ZB extends z.ZodTypeAny = z.ZodTypeAny,
 > extends BaseFieldBuilder<TS, Mods, ZB> {
   readonly kind = 'boolean' as const
 
@@ -723,11 +723,7 @@ class TimestampFieldBuilder<
   TS = Date,
   // biome-ignore lint/complexity/noBannedTypes: {} is used intentionally for the default empty modifiers
   Mods extends FieldModifiers = {},
-  ZB extends z.ZodType<TS, z.ZodTypeDef, Date | string | number> = z.ZodType<
-    TS,
-    z.ZodTypeDef,
-    Date | string | number
-  >,
+  ZB extends z.ZodTypeAny = z.ZodTypeAny,
 > extends BaseFieldBuilder<TS, Mods, ZB> {
   readonly kind = 'timestamp' as const
 
@@ -852,7 +848,7 @@ class JsonFieldBuilder<
   TS = T,
   // biome-ignore lint/complexity/noBannedTypes: {} is used intentionally for the default empty modifiers
   Mods extends FieldModifiers = {},
-  ZB extends z.ZodType<TS, z.ZodTypeDef, TS> = z.ZodType<TS, z.ZodTypeDef, TS>,
+  ZB extends z.ZodTypeAny = z.ZodTypeAny,
 > extends BaseFieldBuilder<TS, Mods, ZB> {
   readonly kind = 'json' as const
   private readonly _zodSchema: z.ZodTypeAny | undefined

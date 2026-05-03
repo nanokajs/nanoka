@@ -17,10 +17,6 @@ pnpm add "@nanokajs/core@file:$TARBALL"
 # zod を ^4 に上書き
 pnpm add zod@^4.0.0
 
-# tsc --noEmit が **失敗** することを assert (exit code 反転)
-if pnpm exec tsc --noEmit; then
-  echo "::error::Expected typecheck to fail with zod@^4 but it passed"
-  exit 1
-fi
-
-echo "onboarding zod4 regression OK (typecheck failed as expected)"
+# tsc --noEmit が **成功** することを assert
+pnpm exec tsc --noEmit
+echo "onboarding zod4 OK (typecheck passes with zod@^4)"

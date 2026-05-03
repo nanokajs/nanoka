@@ -27,10 +27,12 @@ async function main(args: string[]): Promise<number> {
     let i = 1
     while (i < args.length) {
       if (args[i] === '--config' && i + 1 < args.length) {
-        configPath = args[i + 1]!
+        const next = args[i + 1]
+        if (next !== undefined) configPath = next
         i += 2
       } else if (args[i] === '--output' && i + 1 < args.length) {
-        outputPath = args[i + 1]!
+        const next = args[i + 1]
+        if (next !== undefined) outputPath = next
         i += 2
       } else {
         console.error(`Error: unknown option '${args[i]}'`)

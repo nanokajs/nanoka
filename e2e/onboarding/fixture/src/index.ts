@@ -27,6 +27,19 @@ export default {
       },
     )
 
+    app.post('/users/create-preset', User.validator('json', 'create'), async (c) => {
+      const body = c.req.valid('json')
+      // @ts-expect-error serverToken is serverOnly and must not appear in create input
+      const _check: string = body.serverToken
+      const created = await User.create({
+        ...body,
+        id: crypto.randomUUID(),
+        passwordHash: 'hashed_value_here',
+        createdAt: new Date(),
+      })
+      return c.json(User.toResponse(created), 201)
+    })
+
     app.get('/users', async (c) => {
       const users = await User.findMany({ limit: 20 })
       const result = z.array(User.schema({ omit: ['passwordHash'] })).parse(users)

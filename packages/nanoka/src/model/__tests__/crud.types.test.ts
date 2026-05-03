@@ -1,7 +1,7 @@
 import { describe, it } from 'vitest'
 import { t } from '../../field'
 import { defineModel } from '../define'
-import type { FindManyOptions } from '../types'
+import type { CreateInput, FindManyOptions } from '../types'
 
 describe('CRUD methods: type checking', () => {
   const User = defineModel('users', {
@@ -13,11 +13,13 @@ describe('CRUD methods: type checking', () => {
   describe('findMany type constraints', () => {
     it('requires limit parameter', () => {
       // @ts-expect-error - limit is required
+      // biome-ignore lint/suspicious/noExplicitAny: intentional test for type constraint
       User.findMany({} as any, {})
     })
 
     it('rejects findMany with no options argument', () => {
       // @ts-expect-error - options argument is required
+      // biome-ignore lint/suspicious/noExplicitAny: intentional test for type constraint
       User.findMany({} as any)
     })
 
@@ -90,9 +92,96 @@ describe('CRUD methods: type checking', () => {
     })
   })
 
+  describe('CreateInput: writeOnly field is required', () => {
+    const UserWithWriteOnly = defineModel('users', {
+      id: t.uuid().primary(),
+      name: t.string(),
+      email: t.string().email(),
+      password: t.string().writeOnly(),
+    })
+
+    it('writeOnly field is included as required in CreateInput', () => {
+      type C = CreateInput<typeof UserWithWriteOnly.fields>
+      const _valid: C = {
+        id: '550e8400-e29b-41d4-a716-446655440000',
+        name: 'Alice',
+        email: 'alice@example.com',
+        password: 'secret',
+      }
+      void _valid
+    })
+
+    it('omitting writeOnly field is a type error', () => {
+      type C = CreateInput<typeof UserWithWriteOnly.fields>
+      // @ts-expect-error - password (writeOnly) is required in CreateInput
+      const _missing: C = {
+        id: '550e8400-e29b-41d4-a716-446655440000',
+        name: 'Alice',
+        email: 'alice@example.com',
+      }
+      void _missing
+    })
+  })
+
+  describe('CreateInput: readOnly field is optional', () => {
+    const UserWithReadOnly = defineModel('users', {
+      id: t.uuid().primary().readOnly(),
+      name: t.string(),
+      email: t.string().email(),
+      createdAt: t.timestamp().readOnly(),
+    })
+
+    it('readOnly field can be omitted in CreateInput', () => {
+      type C = CreateInput<typeof UserWithReadOnly.fields>
+      const _omitted: C = {
+        name: 'Alice',
+        email: 'alice@example.com',
+      }
+      void _omitted
+    })
+
+    it('readOnly field can be provided in CreateInput', () => {
+      type C = CreateInput<typeof UserWithReadOnly.fields>
+      const _provided: C = {
+        id: '550e8400-e29b-41d4-a716-446655440000',
+        name: 'Alice',
+        email: 'alice@example.com',
+        createdAt: new Date('2024-01-01'),
+      }
+      void _provided
+    })
+  })
+
+  describe('CreateInput: serverOnly field is excluded', () => {
+    const UserWithServerOnly = defineModel('users', {
+      id: t.uuid().primary(),
+      name: t.string(),
+      email: t.string().email(),
+      passwordHash: t.string().serverOnly(),
+    })
+
+    it('serverOnly field is not a key of CreateInput', () => {
+      type C = CreateInput<typeof UserWithServerOnly.fields>
+      type HasPasswordHash = 'passwordHash' extends keyof C ? true : false
+      const _: HasPasswordHash = false
+      void _
+    })
+
+    it('serverOnly field absent allows valid CreateInput', () => {
+      type C = CreateInput<typeof UserWithServerOnly.fields>
+      const _valid: C = {
+        id: '550e8400-e29b-41d4-a716-446655440000',
+        name: 'Alice',
+        email: 'alice@example.com',
+      }
+      void _valid
+    })
+  })
+
   describe('delete type constraints', () => {
     it('requires idOrWhere parameter', () => {
       // @ts-expect-error - idOrWhere is required
+      // biome-ignore lint/suspicious/noExplicitAny: intentional test for type constraint
       User.delete({} as any)
     })
 
