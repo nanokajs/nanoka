@@ -177,7 +177,7 @@ const result = await app.db
 - 複雑なSQLをDSLですべて表現しない（素のDrizzleで書く）
 - マイグレーションを自動実行しない
 - D1以外のDBをMVP段階で完全サポートしない
-- relationをMVPに含めない（Phase 2以降、手書きDrizzleで対応）
+- relationは引き続き non-goal（手書きDrizzleで対応）
 - フィールドアクセサAPIをMVPに含めない（Phase 2以降）
 
 > **成長戦略**: 薄いラッパーとして始め、使われたらフレームワークに育てる。スコープを広げるタイミングはユーザーの声が判断基準。名乗るのは後でいい。
@@ -203,7 +203,7 @@ const result = await app.db
 - エラーハンドリング: Honoの `HTTPException` に乗る。Nanokaは独自エラー型を持たない
 - transaction: D1のbatch APIをそのまま公開。独自抽象は持たない
 
-> **Phase 1時点のrelationについて**: `t.hasMany()` / `t.belongsTo()` はMVPに含めない。リレーションが必要な場合は素のDrizzleで書く。cascade・N+1・join型推論の設計負荷はPhase 2以降で向き合う。
+> **relationについて**: `t.hasMany()` / `t.belongsTo()` は non-goal と決定（Issue #14）。cascade・N+1・join型推論の設計負荷が高く Drizzle 再発明に寄るため、引き続き手書き Drizzle（`app.db`）で対応する。
 
 ### Phase 1.5 — 公開運用基盤
 - [ ] README onboarding parity CI（公開 tarball / 最小 scaffold で `tsc --noEmit` と `drizzle-kit generate` を検証）
@@ -297,7 +297,7 @@ relation / Turso・libSQL adapter / route-level OpenAPI / `create-nanoka-app` / 
 - [x] CLIスキャフォールダ: `create-nanoka-app`
 
 #### 次に残っている設計候補
-- [ ] リレーション定義（`t.hasMany()` / `t.belongsTo()`）※cascade/N+1/joinの型推論を含む重い作業
+- [x] リレーション定義（`t.hasMany()` / `t.belongsTo()`）— 採用しないと決定（Issue #14 参照）
 - [ ] 型安全なクエリビルダー（`User.where(f => eq(f.email, x)).limit(10)`）※Drizzle再発明に寄りやすいため優先度を下げる
 - [ ] VSCode拡張（モデル定義からの補完）
 - [ ] Claude Code / Codex プラグイン（モデル定義・ルート生成・migration手順の補助）
