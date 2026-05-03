@@ -51,7 +51,7 @@ Implemented:
 Still pending or intentionally out of scope:
 
 - Relations (`t.hasMany()` / `t.belongsTo()`)
-- VSCode extension / Codex or Claude Code plugin
+- Codex or Claude Code plugin
 - Auth, full-stack React, or a query DSL that replaces Drizzle
 
 ## Development

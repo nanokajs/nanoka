@@ -33,7 +33,6 @@
 
 ## 未実装として残す（将来候補）
 
-- VSCode extension — [#16](https://github.com/nanokajs/nanoka/issues/16)
 - Codex / Claude Code plugin — [#17](https://github.com/nanokajs/nanoka/issues/17)
 - `findMany` offset 上限 — [#18](https://github.com/nanokajs/nanoka/issues/18)
 
@@ -70,6 +69,20 @@ Relations (`t.hasMany()` / `t.belongsTo()`) / Auth / full-stack React / Drizzle 
 - ユーザーから「`app.db` 手書き Drizzle では足りない」具体的ユースケースが複数集まる
 - `findMany` の等価 AND ユースケース（管理画面の単純フィルタ等）が 1.x 利用者の主流要望として現れる
 - `limit` 必須の安全方針を壊さない API 形が先行 OSS で確立する
+
+### VSCode extension を non-goal とする根拠
+
+- core API の価値（model DSL → schema/validator 派生・OpenAPI・adapters）は TypeScript 言語サーバと既存 Hono / Drizzle / Zod エコシステムで完結しており、editor integration なしで「80% automatic, 20% explicit」を実現できる
+- VSCode 拡張の候補機能は既存ツールで代替可能: DSL 補完 → TypeScript 言語サーバ、schema generation → `nanoka generate` CLI、docs link → README / Swagger UI、diagnostics → `tsc --noEmit` と Biome
+- Marketplace publish・VSCode API メジャーアップ追従・Cursor/Windsurf などの派生 IDE 対応など、維持コストが core 価値に対して大きい
+- `#14`（Relations）/ `#15`（Typed query helper）と同じ「核心価値でないものを抱え込まない」方針の延長
+
+### 再検討トリガー（VSCode extension — 永久 non-goal ではない）
+
+以下が同時に満たされた場合のみ新規 Issue を起票して再検討する（#16 の reopen ではなく新規）:
+
+- ユーザーから「TypeScript 言語サーバの補完では足りない」具体的ユースケースが複数集まる（例: `pick`/`omit` の field accessor が IDE 上で見えづらい等）
+- Nanoka 専用の lint/diagnostic（`extend()` で `serverOnly` フィールドを再注入した場合の警告等）が ESLint plugin では実装困難であることが判明する
 
 ## 運用・リスク追跡
 
