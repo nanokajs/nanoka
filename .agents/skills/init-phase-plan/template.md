@@ -5,10 +5,16 @@
 プレースホルダ一覧:
   {{PHASE_DISPLAY}}     表示名。例: `Phase 2`, `Phase 1.5`. ドット (`.`) はそのまま残す。
   {{PHASE_OVERVIEW}}    1〜2 段落でフェーズのスコープ・前提・モチベーション。
-  {{GOALS}}             ゴール（番号付き bullet list）。
+  {{GOALS}}             ゴール（番号付き bullet list）。例:
+                          1. 〜
+                          2. 〜
   {{MILESTONES}}        マイルストーン全文（複数の `### M{N}: {title}` ブロックの連結）。
-  {{DEPENDENCIES}}      マイルストーン間の依存関係の説明。
+                          各ブロックは「未完了チェックボックス + 完了基準」を持つ skeleton で出力。
+                          中身はユーザーが後で追記する前提。
+  {{DEPENDENCIES}}      マイルストーン間の依存関係の説明（段落 + bullet）。依存なしなら
+                          「すべてのマイルストーンが独立で並行可」と記載。
   {{OUT_OF_SCOPE}}      対象外項目（次フェーズ候補 / 受容リスク / 全 Phase 外の項目への参照）。
+                          通常 `docs/backlog.md` §2 / §3 への誘導を含める。
 -->
 
 # {{PHASE_DISPLAY}} 実装計画

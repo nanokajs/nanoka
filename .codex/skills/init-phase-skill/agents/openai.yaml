@@ -1,4 +1,0 @@
-interface:
-  display_name: "Init Phase Skill"
-  short_description: "Create a Nanoka phase orchestration skill."
-  default_prompt: "Create a new Nanoka phase next skill from an existing phase plan."
