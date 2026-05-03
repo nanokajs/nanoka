@@ -230,15 +230,27 @@ export interface Model<Fields extends Record<string, Field<any, any, any>>> {
    * Integrates with @hono/zod-validator to validate request inputs.
    * The optional `hook` argument is passed through to @hono/zod-validator.
    *
+   * Accepts a preset ('create' | 'update') as second argument to use inputSchema.
+   * When a preset is used, the return type is a MiddlewareHandler (loosely typed in Phase 2A).
+   * Precise type narrowing for preset is deferred to Phase 2B M2.3.
+   *
    * @example
+   * app.post('/users', User.validator('json', 'create'), c => {
+   *   const body = c.req.valid('json')
+   * })
    * app.post('/users', User.validator('json', { omit: ['passwordHash'] }), c => {
    *   const body = c.req.valid('json')
    * })
-   * // With hook for hardened error responses:
+   * // With hook:
    * app.post('/users', User.validator('json', opts, (result, c) => {
    *   if (!result.success) return c.json({ error: 'Invalid request' }, 400)
    * }), handler)
    */
+  validator<Target extends keyof ValidationTargets, E extends Env = Env, P extends string = string>(
+    target: Target,
+    preset: 'create' | 'update',
+    hook?: Hook<z.output<z.ZodObject<z.ZodRawShape>>, E, P, Target>,
+  ): MiddlewareHandler<E, P, ValidatorInput<Target, z.ZodObject<z.ZodRawShape>>>
   validator<
     Target extends keyof ValidationTargets,
     Opts extends SchemaOptions<keyof Fields & string> | undefined = undefined,
@@ -249,6 +261,35 @@ export interface Model<Fields extends Record<string, Field<any, any, any>>> {
     opts?: Opts,
     hook?: Hook<z.output<Apply<FieldsToZodShape<Fields>, Opts>>, E, P, Target>,
   ): ModelValidatorReturn<Fields, Target, Opts>
+
+  /**
+   * Returns a Zod schema for API input, with policy-based field exclusions applied.
+   * - 'create': serverOnly and readOnly fields are excluded
+   * - 'update': same exclusions + all fields become optional (partial: true)
+   *
+   * Note: Return type is `z.ZodObject<z.ZodRawShape>` in Phase 2A.
+   * Precise generic narrowing is deferred to Phase 2B M2.3.
+   */
+  inputSchema(
+    usage: 'create' | 'update',
+    opts?: SchemaOptions<keyof Fields & string>,
+  ): z.ZodObject<z.ZodRawShape>
+
+  /**
+   * Returns a Zod schema for API output, with policy-based field exclusions applied.
+   * - serverOnly and writeOnly fields are excluded
+   * - readOnly fields remain present
+   *
+   * Note: Return type is `z.ZodObject<z.ZodRawShape>` in Phase 2A.
+   * Precise generic narrowing is deferred to Phase 2B M2.3.
+   */
+  outputSchema(opts?: SchemaOptions<keyof Fields & string>): z.ZodObject<z.ZodRawShape>
+
+  /**
+   * Parses a DB row through outputSchema and returns the safe response object.
+   * Equivalent to `User.outputSchema().parse(row)`.
+   */
+  toResponse(row: RowType<Fields>): unknown
 
   /**
    * Fetches multiple rows with pagination and optional ordering.

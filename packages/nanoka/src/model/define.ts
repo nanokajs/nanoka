@@ -4,7 +4,7 @@ import type { z } from 'zod'
 import type { Adapter } from '../adapter/types'
 import type { Field } from '../field/types'
 import { createImpl, deleteImpl, findManyImpl, findOneImpl, updateImpl } from './crud'
-import { applySchemaOptions, buildBaseObject } from './schema'
+import { applySchemaOptions, buildBaseObject, derivePolicyOptions } from './schema'
 import { buildTable } from './table'
 import type {
   Apply,
@@ -54,19 +54,45 @@ export function defineModel<Fields extends Record<string, Field<any, any, any>>>
       return schema as any
     },
 
-    validator<
-      Target extends keyof ValidationTargets,
-      Opts extends SchemaOptions<keyof Fields & string> | undefined = undefined,
-      E extends Env = Env,
-      P extends string = string,
-    >(
-      target: Target,
-      opts?: Opts,
-      hook?: Hook<z.output<Apply<FieldsToZodShape<Fields>, Opts>>, E, P, Target>,
-    ): ModelValidatorReturn<Fields, Target, Opts> {
-      const schema = this.schema(opts)
-      // biome-ignore lint/suspicious/noExplicitAny: zValidator requires casting for proper operation
-      return zValidator(target, schema as any, hook as any) as any
+    // biome-ignore lint/suspicious/noExplicitAny: Hook<T> is contravariant in T; implementation signature must use any to satisfy both overloads
+    validator(
+      target: keyof ValidationTargets,
+      optsOrPreset?: 'create' | 'update' | SchemaOptions<keyof Fields & string>,
+      hook?: Hook<any, Env, string, keyof ValidationTargets>,
+    ) {
+      let schema: z.ZodTypeAny
+      if (optsOrPreset === 'create' || optsOrPreset === 'update') {
+        schema = this.inputSchema(optsOrPreset)
+      } else {
+        schema = this.schema(optsOrPreset as SchemaOptions<keyof Fields & string>)
+      }
+      // biome-ignore lint/suspicious/noExplicitAny: zValidator return type cast required at overload boundary
+      return zValidator(target, schema, hook) as any
+    },
+
+    inputSchema(
+      usage: 'create' | 'update',
+      opts?: SchemaOptions<keyof Fields & string>,
+    ): z.ZodObject<z.ZodRawShape> {
+      const merged = derivePolicyOptions(
+        fields,
+        usage === 'create' ? 'input-create' : 'input-update',
+        opts,
+      )
+      const baseSchema = buildBaseObject(fields)
+      // biome-ignore lint/suspicious/noExplicitAny: Return type cast for ZodObject<ZodRawShape>
+      return applySchemaOptions(baseSchema, merged) as any
+    },
+
+    outputSchema(opts?: SchemaOptions<keyof Fields & string>): z.ZodObject<z.ZodRawShape> {
+      const merged = derivePolicyOptions(fields, 'output', opts)
+      const baseSchema = buildBaseObject(fields)
+      // biome-ignore lint/suspicious/noExplicitAny: Return type cast for ZodObject<ZodRawShape>
+      return applySchemaOptions(baseSchema, merged) as any
+    },
+
+    toResponse(row: RowType<Fields>): unknown {
+      return this.outputSchema().parse(row)
     },
 
     findMany(adapter: Adapter, options: FindManyOptions<Fields>): Promise<RowType<Fields>[]> {

@@ -11,6 +11,17 @@ describe('Model: validator() Hono integration', () => {
     passwordHash: t.string(),
   })
 
+  const PolicyUser = defineModel('users', {
+    id: t.uuid().primary().readOnly(),
+    name: t.string(),
+    email: t.string().email(),
+    passwordHash: t.string().serverOnly(),
+    createdAt: t
+      .timestamp()
+      .readOnly()
+      .default(() => new Date()),
+  })
+
   describe('validator(target, opts)', () => {
     it('creates a Hono middleware for JSON validation', async () => {
       const app = new Hono()
@@ -354,6 +365,148 @@ describe('Model: validator() Hono integration', () => {
       const data = (await response.json()) as Record<string, unknown>
       const received = data.received as Record<string, unknown>
       expect(received).not.toHaveProperty('passwordHash')
+    })
+  })
+
+  describe('validator preset', () => {
+    it('validator("json", "create") excludes serverOnly fields', async () => {
+      const app = new Hono()
+
+      app.post('/users', PolicyUser.validator('json', 'create'), (c) => {
+        const body = c.req.valid('json')
+        return c.json({ received: body })
+      })
+
+      const request = new Request('http://localhost/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: 'Alice',
+          email: 'alice@example.com',
+        }),
+      })
+
+      const response = await app.fetch(request)
+      expect(response.status).toBe(200)
+
+      const data = (await response.json()) as Record<string, unknown>
+      const received = data.received as Record<string, unknown>
+      expect(received).not.toHaveProperty('passwordHash')
+      expect(received).not.toHaveProperty('id')
+      expect(received).not.toHaveProperty('createdAt')
+    })
+
+    it('validator("json", "create") strips serverOnly/readOnly fields from injected input', async () => {
+      const app = new Hono()
+
+      app.post('/users', PolicyUser.validator('json', 'create'), (c) => {
+        const body = c.req.valid('json')
+        return c.json({ received: body })
+      })
+
+      const request = new Request('http://localhost/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: 'Alice',
+          email: 'alice@example.com',
+          passwordHash: 'injected',
+          id: '550e8400-e29b-41d4-a716-446655440000',
+        }),
+      })
+
+      const response = await app.fetch(request)
+      expect(response.status).toBe(200)
+
+      const data = (await response.json()) as Record<string, unknown>
+      const received = data.received as Record<string, unknown>
+      expect(received).not.toHaveProperty('passwordHash')
+      expect(received).not.toHaveProperty('id')
+    })
+
+    it('validator("json", "update") accepts partial input', async () => {
+      const app = new Hono()
+
+      app.patch('/users/:id', PolicyUser.validator('json', 'update'), (c) => {
+        const body = c.req.valid('json')
+        return c.json({ received: body })
+      })
+
+      const request = new Request('http://localhost/users/some-id', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: 'Bob' }),
+      })
+
+      const response = await app.fetch(request)
+      expect(response.status).toBe(200)
+
+      const data = (await response.json()) as Record<string, unknown>
+      const received = data.received as Record<string, unknown>
+      expect(received).toEqual({ name: 'Bob' })
+    })
+
+    it('validator("json", "update") accepts empty body', async () => {
+      const app = new Hono()
+
+      app.patch('/users/:id', PolicyUser.validator('json', 'update'), (c) => {
+        const body = c.req.valid('json')
+        return c.json({ received: body })
+      })
+
+      const request = new Request('http://localhost/users/some-id', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      })
+
+      const response = await app.fetch(request)
+      expect(response.status).toBe(200)
+    })
+
+    it('preset works with hook', async () => {
+      const app = new Hono()
+      let hookCalled = false
+
+      app.post(
+        '/users',
+        PolicyUser.validator('json', 'create', (result, _c) => {
+          if (result.success) hookCalled = true
+        }),
+        (c) => c.json({ ok: true }),
+      )
+
+      const request = new Request('http://localhost/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: 'Alice', email: 'alice@example.com' }),
+      })
+
+      const response = await app.fetch(request)
+      expect(response.status).toBe(200)
+      expect(hookCalled).toBe(true)
+    })
+
+    it('existing opts form still works after adding preset support', async () => {
+      const app = new Hono()
+
+      app.post('/users', User.validator('json', { omit: ['passwordHash'] }), (c) => {
+        const body = c.req.valid('json')
+        return c.json({ received: body })
+      })
+
+      const request = new Request('http://localhost/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: '550e8400-e29b-41d4-a716-446655440000',
+          name: 'Alice',
+          email: 'alice@example.com',
+        }),
+      })
+
+      const response = await app.fetch(request)
+      expect(response.status).toBe(200)
     })
   })
 })

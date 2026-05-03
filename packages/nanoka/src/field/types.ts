@@ -1,6 +1,8 @@
 import type { SQLiteColumnBuilderBase } from 'drizzle-orm/sqlite-core'
 import type { z } from 'zod'
 
+export type FieldPolicy = 'serverOnly' | 'writeOnly' | 'readOnly'
+
 export interface FieldModifiers {
   optional?: boolean
   primary?: boolean
@@ -10,6 +12,7 @@ export interface FieldModifiers {
   format?: 'email' | 'uuid'
   min?: number
   max?: number
+  policy?: FieldPolicy
 }
 
 export type FieldKind = 'string' | 'uuid' | 'number' | 'integer' | 'boolean' | 'timestamp' | 'json'

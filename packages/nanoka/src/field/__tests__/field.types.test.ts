@@ -1,6 +1,7 @@
 import { describe, expectTypeOf, it } from 'vitest'
+import { z } from 'zod'
 import { t } from '../factories'
-import type { Field } from '../types'
+import type { Field, InferFieldType } from '../types'
 
 describe('Field: type inference', () => {
   describe('precise tsType inference', () => {
@@ -56,6 +57,23 @@ describe('Field: type inference', () => {
 
     it('chaining preserves tsType union: t.string().optional().default reverts to string when default given', () => {
       expectTypeOf(t.string().optional().default('x').tsType).toEqualTypeOf<string | undefined>()
+    })
+  })
+
+  describe('t.json(zodSchema) type inference', () => {
+    it('t.json(z.object({...})) infers tsType from zod schema', () => {
+      const field = t.json(z.object({ foo: z.string() }))
+      expectTypeOf<InferFieldType<typeof field>>().toEqualTypeOf<{ foo: string }>()
+    })
+
+    it('t.json() without args infers tsType as unknown', () => {
+      const field = t.json()
+      expectTypeOf<InferFieldType<typeof field>>().toEqualTypeOf<unknown>()
+    })
+
+    it('t.json(zodSchema).optional() infers tsType as T | undefined', () => {
+      const field = t.json(z.object({ foo: z.string() })).optional()
+      expectTypeOf<InferFieldType<typeof field>>().toEqualTypeOf<{ foo: string } | undefined>()
     })
   })
 
@@ -170,6 +188,23 @@ describe('Field: type inference', () => {
     })
   })
 
+  describe('policy last-wins at type level', () => {
+    it('t.string().serverOnly().readOnly() Mods contains { policy: "readOnly" }', () => {
+      const f = t.string().serverOnly().readOnly()
+      expectTypeOf(f.modifiers).toMatchTypeOf<{ policy: 'readOnly' }>()
+    })
+
+    it('t.string().readOnly().serverOnly() Mods contains { policy: "serverOnly" }', () => {
+      const f = t.string().readOnly().serverOnly()
+      expectTypeOf(f.modifiers).toMatchTypeOf<{ policy: 'serverOnly' }>()
+    })
+
+    it('t.string().serverOnly().writeOnly() Mods does not contain serverOnly', () => {
+      const f = t.string().serverOnly().writeOnly()
+      expectTypeOf(f.modifiers).toMatchTypeOf<{ policy: 'writeOnly' }>()
+    })
+  })
+
   describe('chaining modifier combinations', () => {
     it('email then optional returns Field', () => {
       const f = t.string().email().optional()
@@ -193,6 +228,10 @@ describe('Field: type inference', () => {
   })
 
   describe('type-level negative cases', () => {
+    // 各 it ブロックは type-only テストで、runtime の expect は持たない。
+    // 実際の `@ts-expect-error` アサーションは末尾の `_typeGuards` オブジェクトに集約してあり、
+    // `it` 名と `_typeGuards` のキー名が 1:1 対応する。
+    // 例: 'uuid does not have .email()' の `@ts-expect-error` は `_typeGuards.uuid_email` に存在。
     it('uuid does not have .email()', () => {
       // type-only test; runtime body empty to avoid TypeError
     })

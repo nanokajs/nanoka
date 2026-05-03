@@ -26,22 +26,22 @@ Phase 2 の軸は Drizzle クエリ DSL の再発明ではなく、`passwordHash
 
 `docs/backlog.md` §3.1 由来。Phase 2 の中核。
 
-- [ ] **1.1** フィールドポリシー導入: `t.string().serverOnly()` / `.writeOnly()` / `.readOnly()`
+- [x] **1.1** フィールドポリシー導入: `t.string().serverOnly()` / `.writeOnly()` / `.readOnly()`
   - `serverOnly`: API input / output の両方から既定で除外。例: `passwordHash`
   - `writeOnly`: input には入るが output から既定で除外。例: `password`（handler 内で `passwordHash` に変換する設計を許す）
   - `readOnly`: output には入るが create / update input から既定で除外。例: `id`, `createdAt`
   - スコープは API 派生 schema / validator / response helper に限定する。`findMany` の戻り値や `app.db.select()` を自動変換しない
   - 既存の `{ omit: [...] }` / `{ pick: [...] }` 明示指定は引き続き効く
-- [ ] **1.2** 用途別スキーマ: `User.inputSchema('create')` / `User.inputSchema('update')` / `User.outputSchema()`
+- [x] **1.2** 用途別スキーマ: `User.inputSchema('create')` / `User.inputSchema('update')` / `User.outputSchema()`
   - 内部は既存 `schema()` 派生でよいが、API 入力 / API 出力 / DB row の違いを明示する
   - フィールドポリシー（1.1）を反映: `serverOnly` は両方から除外 / `writeOnly` は output から除外 / `readOnly` は input から除外
-- [ ] **1.3** validator preset: `User.validator('json', 'create')` / `User.validator('json', 'update')`
+- [x] **1.3** validator preset: `User.validator('json', 'create')` / `User.validator('json', 'update')`
   - 用途別スキーマ（1.2）を Hono validator に渡すショートカット
   - 既存の `User.validator('json', { omit: [...] })` 形式は維持
-- [ ] **1.4** 明示的レスポンス整形 helper の API 決定と実装
+- [x] **1.4** 明示的レスポンス整形 helper の API 決定と実装
   - 候補: `User.outputSchema().parse(row)` または `User.toResponse(row)`
   - 自動変換は避け「80% automatic, 20% explicit」を維持
-- [ ] **1.5** `t.json(zodSchema)` の引数化（Phase 1 / M-1 review 指摘）
+- [x] **1.5** `t.json(zodSchema)` の引数化（Phase 1 / M-1 review 指摘）
   - 現状 `t.json()` は `z.unknown()` で runtime 検証なし
   - `t.json(z.object({...}))` で create / update 時に zod parse が走るようにする
 
@@ -64,6 +64,7 @@ Phase 2 の軸は Drizzle クエリ DSL の再発明ではなく、`passwordHash
   - Phase 1 は `CreateInput = Partial<RowType>` で受容した
   - `readOnly` / default / optional / primary の情報を使って入力型を精緻化
   - 例: `readOnly` は `CreateInput` から除外 / default 持ちは optional / primary かつ default なしは required
+  - **M1 より持ち越し**: `inputSchema('create' | 'update')` / `outputSchema()` の戻り型を Phase 2A では `z.ZodObject<z.ZodRawShape>` に緩めた（判断 B）。`policy` 由来の自動 omit を型レベルで反映する精緻化（`ApplyShape` への組み込み）を本タスク 2.3 に含める。`validator('json', preset)` 経由の `c.req.valid('json')` の型推論は M1 時点でも preset が `MiddlewareHandler` として緩く推論される（精緻な shape は 2.3 で解消）。
 - [ ] **2.4** Phase 1.5 持ち越しの型精緻化（`docs/nanoka.md` Phase 2B 由来）
   - `noExplicitAny` 87 件 / `noNonNullAssertion` 10 件の削減
   - 主な箇所: `packages/nanoka/src/model/crud.ts` / `model/types.ts` / `router/types.ts` / `__tests__/*`

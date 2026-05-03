@@ -1,6 +1,6 @@
 export type { Adapter } from './adapter'
 export { d1Adapter } from './adapter'
-export type { Field, FieldModifiers, InferFieldType } from './field'
+export type { Field, FieldModifiers, FieldPolicy, InferFieldType } from './field'
 export { t } from './field'
 export type {
   CreateInput,

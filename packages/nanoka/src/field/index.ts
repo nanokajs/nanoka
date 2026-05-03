@@ -1,2 +1,2 @@
 export { t } from './factories'
-export type { Field, FieldModifiers, InferFieldType } from './types'
+export type { Field, FieldModifiers, FieldPolicy, InferFieldType } from './types'

@@ -17,11 +17,17 @@ export default {
     // Error handler
     app.onError((err, c) => {
       if (err instanceof HTTPException) {
+        if (err.status >= 500) {
+          // 5xx は内部実装エラーなのでメッセージを外部に出さない
+          return c.json({ error: 'Internal Server Error' }, err.status)
+        }
         return err.getResponse()
       }
       const status = 500
       // Fail-closed: stack traces only when DEBUG is explicitly enabled.
       // Defaults to safe behavior even if ENVIRONMENT is misconfigured at deploy time.
+      // DEBUG=1 のとき err.message / err.stack をレスポンスに含める。production では絶対に設定しないこと。
+      // Drizzle / D1 のエラーメッセージに DB 値（パスワードハッシュ等）が含まれる可能性がある。
       const debugEnabled = c.env.DEBUG === '1'
       const body = debugEnabled
         ? { error: err.message, stack: err.stack }
@@ -30,29 +36,24 @@ export default {
     })
 
     // POST /users - Create user
-    app.post(
-      '/users',
-      User.validator('json', { omit: ['id', 'passwordHash', 'createdAt'] }),
-      async (c) => {
-        const body = c.req.valid('json')
-        const id = crypto.randomUUID()
-        // SECURITY: demo-only — the email is reversible, NEVER use in production.
-        // Replace with a real password hash (bcrypt, argon2, scrypt) or accept a
-        // pre-hashed value from the client and verify the algorithm.
-        const passwordHash = `demo-${body.email}`
-        const createdAt = new Date()
+    app.post('/users', User.validator('json', 'create'), async (c) => {
+      const body = c.req.valid('json')
+      const id = crypto.randomUUID()
+      // SECURITY: demo-only — the email is reversible, NEVER use in production.
+      // Replace with a real password hash (bcrypt, argon2, scrypt) or accept a
+      // pre-hashed value from the client and verify the algorithm.
+      const passwordHash = `demo-${body.email}`
+      const createdAt = new Date()
 
-        const created = await User.create({
-          ...body,
-          id,
-          passwordHash,
-          createdAt,
-        })
+      const created = await User.create({
+        ...body,
+        id,
+        passwordHash,
+        createdAt,
+      })
 
-        const result = User.schema({ omit: ['passwordHash'] }).parse(created)
-        return c.json(result, 201)
-      },
-    )
+      return c.json(User.toResponse(created), 201)
+    })
 
     // GET /users - List users
     app.get('/users', async (c) => {
@@ -68,7 +69,7 @@ export default {
 
       const { limit, offset } = queryResult.data
       const users = await User.findMany({ limit, offset, orderBy: 'id' })
-      const result = z.array(User.schema({ omit: ['passwordHash'] })).parse(users)
+      const result = z.array(User.outputSchema()).parse(users)
       return c.json(result)
     })
 
@@ -79,8 +80,7 @@ export default {
       if (!user) {
         throw new HTTPException(404, { message: 'User not found' })
       }
-      const result = User.schema({ omit: ['passwordHash'] }).parse(user)
-      return c.json(result)
+      return c.json(User.toResponse(user))
     })
 
     // PATCH /users/:id - Update user
@@ -95,8 +95,7 @@ export default {
         if (!updated) {
           throw new HTTPException(404, { message: 'User not found' })
         }
-        const result = User.schema({ omit: ['passwordHash'] }).parse(updated)
-        return c.json(result)
+        return c.json(User.toResponse(updated))
       },
     )
 

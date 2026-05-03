@@ -14,6 +14,7 @@ import type {
   ModelValidatorReturn,
   RowType,
   SchemaOptions,
+  ValidatorInput,
 } from '../model/types'
 
 /**
@@ -40,7 +41,17 @@ export interface NanokaModel<Fields extends Record<string, Field<any, any, any>>
   /**
    * Returns a Hono middleware validator for this model.
    * The optional `hook` argument is passed through to @hono/zod-validator.
+   * Accepts a preset ('create' | 'update') as second argument to use inputSchema.
    */
+  validator<
+    Target extends keyof import('hono').ValidationTargets,
+    E extends Env = Env,
+    P extends string = string,
+  >(
+    target: Target,
+    preset: 'create' | 'update',
+    hook?: Hook<z.output<z.ZodObject<z.ZodRawShape>>, E, P, Target>,
+  ): import('hono').MiddlewareHandler<E, P, ValidatorInput<Target, z.ZodObject<z.ZodRawShape>>>
   validator<
     Target extends keyof import('hono').ValidationTargets,
     Opts extends SchemaOptions<keyof Fields & string> | undefined = undefined,
@@ -51,6 +62,24 @@ export interface NanokaModel<Fields extends Record<string, Field<any, any, any>>
     opts?: Opts,
     hook?: Hook<z.output<Apply<FieldsToZodShape<Fields>, Opts>>, E, P, Target>,
   ): ModelValidatorReturn<Fields, Target, Opts>
+
+  /**
+   * Returns a Zod schema for API input, with policy-based field exclusions applied.
+   */
+  inputSchema(
+    usage: 'create' | 'update',
+    opts?: SchemaOptions<keyof Fields & string>,
+  ): z.ZodObject<z.ZodRawShape>
+
+  /**
+   * Returns a Zod schema for API output, with policy-based field exclusions applied.
+   */
+  outputSchema(opts?: SchemaOptions<keyof Fields & string>): z.ZodObject<z.ZodRawShape>
+
+  /**
+   * Parses a DB row through outputSchema and returns the safe response object.
+   */
+  toResponse(row: RowType<Fields>): unknown
 
   /**
    * Fetches multiple rows with pagination and optional ordering.

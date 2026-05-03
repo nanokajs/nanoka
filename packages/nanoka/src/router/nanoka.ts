@@ -49,7 +49,33 @@ export function nanoka<E extends Env = BlankEnv>(adapter: Adapter): Nanoka<E> {
 
       schema: (opts) => inner.schema(opts),
 
-      validator: (target, opts, hook) => inner.validator(target, opts, hook),
+      // biome-ignore lint/suspicious/noExplicitAny: Hook<T> is contravariant in T; any is required to bridge overload implementations
+      validator: (
+        ...args: [
+          keyof import('hono').ValidationTargets,
+          ('create' | 'update' | import('../model/types').SchemaOptions<keyof Fields & string>)?,
+          import('@hono/zod-validator').Hook<
+            any,
+            import('hono').Env,
+            string,
+            keyof import('hono').ValidationTargets
+          >?,
+        ]
+      ) => {
+        // `ReturnType<typeof inner.validator>` は overload の最後の戻り型しか取れないため、
+        // preset overload の戻り型と完全には一致しない。outer の `NanokaModel` interface の
+        // overload 定義 (router/types.ts) で type safety は担保しているが、
+        // `validator` preset の型を精緻化するタイミング (Phase 2 M2.3) でこの cast も併せて見直す。
+        return (inner.validator as (...a: typeof args) => ReturnType<typeof inner.validator>)(
+          ...args,
+        )
+      },
+
+      inputSchema: (usage, opts) => inner.inputSchema(usage, opts),
+
+      outputSchema: (opts) => inner.outputSchema(opts),
+
+      toResponse: (row) => inner.toResponse(row),
 
       findMany: (options) => inner.findMany(adapter, options),
 

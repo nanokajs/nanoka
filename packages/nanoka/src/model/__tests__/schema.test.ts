@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { t } from '../../field'
 import { defineModel } from '../define'
 
+const validUuid = '550e8400-e29b-41d4-a716-446655440000'
+
 describe('Model: schema() runtime behavior', () => {
   const User = defineModel('users', {
     id: t.uuid().primary(),
@@ -236,6 +238,338 @@ describe('Model: schema() runtime behavior', () => {
         id: '550e8400-e29b-41d4-a716-446655440000',
         name: 'John Doe',
       })
+    })
+
+    it('preserves user omit when pick is also specified', () => {
+      const schema = User.schema({ pick: ['id', 'name', 'email'], omit: ['email'] })
+      const result = schema.safeParse({
+        id: '550e8400-e29b-41d4-a716-446655440000',
+        name: 'John Doe',
+        email: 'john@example.com',
+      })
+      expect(result.success).toBe(true)
+      expect(result.data).toEqual({
+        id: '550e8400-e29b-41d4-a716-446655440000',
+        name: 'John Doe',
+      })
+      expect(result.data).not.toHaveProperty('email')
+    })
+
+    it('combines multiple omit constraints with pick', () => {
+      const schema = User.schema({
+        pick: ['id', 'name', 'passwordHash'],
+        omit: ['passwordHash'],
+      })
+      const result = schema.safeParse({
+        id: '550e8400-e29b-41d4-a716-446655440000',
+        name: 'John Doe',
+        email: 'john@example.com',
+        passwordHash: 'secret123',
+      })
+      expect(result.success).toBe(true)
+      expect(result.data).toEqual({
+        id: '550e8400-e29b-41d4-a716-446655440000',
+        name: 'John Doe',
+      })
+      expect(result.data).not.toHaveProperty('passwordHash')
+    })
+  })
+})
+
+describe('Model: inputSchema / outputSchema / toResponse', () => {
+  const PolicyUser = defineModel('users', {
+    id: t.uuid().primary().readOnly(),
+    name: t.string(),
+    email: t.string().email(),
+    passwordHash: t.string().serverOnly(),
+    createdAt: t
+      .timestamp()
+      .readOnly()
+      .default(() => new Date()),
+  })
+
+  describe('inputSchema("create")', () => {
+    it('excludes serverOnly fields', () => {
+      const schema = PolicyUser.inputSchema('create')
+      const result = schema.safeParse({
+        name: 'Alice',
+        email: 'alice@example.com',
+      })
+      expect(result.success).toBe(true)
+      expect(result.data).not.toHaveProperty('passwordHash')
+    })
+
+    it('excludes readOnly fields', () => {
+      const schema = PolicyUser.inputSchema('create')
+      const result = schema.safeParse({
+        name: 'Alice',
+        email: 'alice@example.com',
+      })
+      expect(result.success).toBe(true)
+      expect(result.data).not.toHaveProperty('id')
+      expect(result.data).not.toHaveProperty('createdAt')
+    })
+
+    it('rejects missing required fields', () => {
+      const schema = PolicyUser.inputSchema('create')
+      const result = schema.safeParse({ name: 'Alice' })
+      expect(result.success).toBe(false)
+    })
+
+    it('strips serverOnly/readOnly fields from input even if provided', () => {
+      const schema = PolicyUser.inputSchema('create')
+      const result = schema.safeParse({
+        id: validUuid,
+        name: 'Alice',
+        email: 'alice@example.com',
+        passwordHash: 'injected',
+        createdAt: new Date(),
+      })
+      expect(result.success).toBe(true)
+      expect(result.data).not.toHaveProperty('id')
+      expect(result.data).not.toHaveProperty('passwordHash')
+      expect(result.data).not.toHaveProperty('createdAt')
+    })
+
+    it('user omit works with pick in inputSchema("create")', () => {
+      const schema = PolicyUser.inputSchema('create', {
+        pick: ['name', 'email'],
+        omit: ['email'],
+      })
+      const result = schema.safeParse({
+        name: 'Alice',
+      })
+      expect(result.success).toBe(true)
+      expect(result.data).toEqual({
+        name: 'Alice',
+      })
+      expect(result.data).not.toHaveProperty('email')
+    })
+  })
+
+  describe('inputSchema("update")', () => {
+    it('excludes serverOnly and readOnly fields', () => {
+      const schema = PolicyUser.inputSchema('update')
+      const result = schema.safeParse({ name: 'Bob' })
+      expect(result.success).toBe(true)
+      expect(result.data).not.toHaveProperty('passwordHash')
+      expect(result.data).not.toHaveProperty('id')
+      expect(result.data).not.toHaveProperty('createdAt')
+    })
+
+    it('makes all remaining fields optional (partial)', () => {
+      const schema = PolicyUser.inputSchema('update')
+      const emptyResult = schema.safeParse({})
+      expect(emptyResult.success).toBe(true)
+    })
+
+    it('validates present fields normally', () => {
+      const schema = PolicyUser.inputSchema('update')
+      const invalid = schema.safeParse({ email: 'not-an-email' })
+      expect(invalid.success).toBe(false)
+    })
+
+    it('user omit works with pick and partial in inputSchema("update")', () => {
+      const schema = PolicyUser.inputSchema('update', {
+        pick: ['name', 'email'],
+        omit: ['email'],
+      })
+      const result = schema.safeParse({
+        name: 'Alice',
+      })
+      expect(result.success).toBe(true)
+      expect(result.data).toEqual({
+        name: 'Alice',
+      })
+      expect(result.data).not.toHaveProperty('email')
+    })
+  })
+
+  describe('outputSchema()', () => {
+    it('excludes serverOnly fields', () => {
+      const schema = PolicyUser.outputSchema()
+      const result = schema.safeParse({
+        id: validUuid,
+        name: 'Alice',
+        email: 'alice@example.com',
+        createdAt: new Date(),
+      })
+      expect(result.success).toBe(true)
+      expect(result.data).not.toHaveProperty('passwordHash')
+    })
+
+    it('keeps readOnly fields in output', () => {
+      const schema = PolicyUser.outputSchema()
+      const result = schema.safeParse({
+        id: validUuid,
+        name: 'Alice',
+        email: 'alice@example.com',
+        createdAt: new Date(),
+      })
+      expect(result.success).toBe(true)
+      expect(result.data).toHaveProperty('id')
+      expect(result.data).toHaveProperty('createdAt')
+    })
+
+    it('user omit combines with policy omit', () => {
+      const schema = PolicyUser.outputSchema({ omit: ['email'] })
+      const result = schema.safeParse({
+        id: validUuid,
+        name: 'Alice',
+        createdAt: new Date(),
+      })
+      expect(result.success).toBe(true)
+      expect(result.data).not.toHaveProperty('email')
+      expect(result.data).not.toHaveProperty('passwordHash')
+    })
+
+    it('serverOnly fields are stripped even when explicitly picked', () => {
+      const schema = PolicyUser.outputSchema({ pick: ['name', 'passwordHash'] })
+      const result = schema.safeParse({
+        name: 'Alice',
+        passwordHash: 'hash',
+      })
+      expect(result.success).toBe(true)
+      expect(result.data).not.toHaveProperty('passwordHash')
+      expect(result.data).toHaveProperty('name')
+    })
+
+    it('readOnly fields can be included via pick', () => {
+      const schema = PolicyUser.outputSchema({ pick: ['id', 'name'] })
+      const result = schema.safeParse({
+        id: validUuid,
+        name: 'Alice',
+      })
+      expect(result.success).toBe(true)
+      expect(result.data).toHaveProperty('id')
+      expect(result.data).toHaveProperty('name')
+    })
+
+    it('user omit works independently with pick in outputSchema', () => {
+      const schema = PolicyUser.outputSchema({
+        pick: ['id', 'name', 'email'],
+        omit: ['email'],
+      })
+      const result = schema.safeParse({
+        id: validUuid,
+        name: 'Alice',
+      })
+      expect(result.success).toBe(true)
+      expect(result.data).toEqual({
+        id: validUuid,
+        name: 'Alice',
+      })
+      expect(result.data).not.toHaveProperty('email')
+    })
+
+    it('serverOnly and user omit both apply with pick', () => {
+      const schema = PolicyUser.outputSchema({
+        pick: ['id', 'name', 'email', 'passwordHash'],
+        omit: ['email'],
+      })
+      const result = schema.safeParse({
+        id: validUuid,
+        name: 'Alice',
+      })
+      expect(result.success).toBe(true)
+      expect(result.data).not.toHaveProperty('passwordHash')
+      expect(result.data).not.toHaveProperty('email')
+      expect(result.data).toHaveProperty('id')
+      expect(result.data).toHaveProperty('name')
+    })
+  })
+
+  describe('writeOnly field in outputSchema', () => {
+    const WriteOnlyModel = defineModel('items', {
+      id: t.uuid().primary().readOnly(),
+      name: t.string(),
+      secret: t.string().writeOnly(),
+    })
+
+    it('excludes writeOnly fields from output', () => {
+      const schema = WriteOnlyModel.outputSchema()
+      const result = schema.safeParse({
+        id: validUuid,
+        name: 'Item A',
+      })
+      expect(result.success).toBe(true)
+      expect(result.data).not.toHaveProperty('secret')
+    })
+
+    it('includes writeOnly fields in inputSchema("create")', () => {
+      const schema = WriteOnlyModel.inputSchema('create')
+      const result = schema.safeParse({
+        name: 'Item A',
+        secret: 'my-secret',
+      })
+      expect(result.success).toBe(true)
+      expect(result.data).toHaveProperty('secret')
+    })
+  })
+
+  describe('toResponse()', () => {
+    it('strips serverOnly fields from a DB row', () => {
+      const row = {
+        id: validUuid,
+        name: 'Alice',
+        email: 'alice@example.com',
+        passwordHash: 'hashed123',
+        createdAt: new Date(),
+      }
+      const result = PolicyUser.toResponse(row) as Record<string, unknown>
+      expect(result).not.toHaveProperty('passwordHash')
+      expect(result).toHaveProperty('id')
+      expect(result).toHaveProperty('name')
+      expect(result).toHaveProperty('email')
+      expect(result).toHaveProperty('createdAt')
+    })
+  })
+
+  describe('serverOnly invariant: always stripped regardless of pick/omit', () => {
+    it('inputSchema("create") strips serverOnly even when explicitly picked', () => {
+      const schema = PolicyUser.inputSchema('create', { pick: ['name', 'email', 'passwordHash'] })
+      const result = schema.safeParse({
+        name: 'Alice',
+        email: 'alice@example.com',
+        passwordHash: 'injected',
+      })
+      expect(result.success).toBe(true)
+      expect(result.data).not.toHaveProperty('passwordHash')
+    })
+
+    it('inputSchema("update") strips serverOnly even when explicitly picked', () => {
+      const schema = PolicyUser.inputSchema('update', { pick: ['name', 'passwordHash'] })
+      const result = schema.safeParse({
+        name: 'Alice',
+        passwordHash: 'injected',
+      })
+      expect(result.success).toBe(true)
+      expect(result.data).not.toHaveProperty('passwordHash')
+    })
+
+    it('outputSchema strips serverOnly even when explicitly picked', () => {
+      const schema = PolicyUser.outputSchema({ pick: ['id', 'name', 'email', 'passwordHash'] })
+      const result = schema.safeParse({
+        id: validUuid,
+        name: 'Alice',
+        email: 'alice@example.com',
+        passwordHash: 'hash',
+      })
+      expect(result.success).toBe(true)
+      expect(result.data).not.toHaveProperty('passwordHash')
+    })
+
+    it('outputSchema strips serverOnly even when omit is explicitly empty', () => {
+      const schema = PolicyUser.outputSchema({ omit: [] })
+      const result = schema.safeParse({
+        id: validUuid,
+        name: 'Alice',
+        email: 'alice@example.com',
+        passwordHash: 'hash',
+        createdAt: new Date(),
+      })
+      expect(result.success).toBe(true)
+      expect(result.data).not.toHaveProperty('passwordHash')
     })
   })
 })

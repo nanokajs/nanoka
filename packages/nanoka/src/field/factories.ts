@@ -136,6 +136,33 @@ class StringFieldBuilder<
     const newMods = { ...this.modifiers, max: n } as Mods & { max: number }
     return this.cloneWithModifiers(newMods)
   }
+
+  serverOnly(
+    this: StringFieldBuilder<TS, Mods>,
+  ): StringFieldBuilder<TS, Omit<Mods, 'policy'> & { policy: 'serverOnly' }> {
+    const newMods = { ...this.modifiers, policy: 'serverOnly' as const } as Omit<Mods, 'policy'> & {
+      policy: 'serverOnly'
+    }
+    return this.cloneWithModifiers(newMods)
+  }
+
+  writeOnly(
+    this: StringFieldBuilder<TS, Mods>,
+  ): StringFieldBuilder<TS, Omit<Mods, 'policy'> & { policy: 'writeOnly' }> {
+    const newMods = { ...this.modifiers, policy: 'writeOnly' as const } as Omit<Mods, 'policy'> & {
+      policy: 'writeOnly'
+    }
+    return this.cloneWithModifiers(newMods)
+  }
+
+  readOnly(
+    this: StringFieldBuilder<TS, Mods>,
+  ): StringFieldBuilder<TS, Omit<Mods, 'policy'> & { policy: 'readOnly' }> {
+    const newMods = { ...this.modifiers, policy: 'readOnly' as const } as Omit<Mods, 'policy'> & {
+      policy: 'readOnly'
+    }
+    return this.cloneWithModifiers(newMods)
+  }
 }
 
 // ==================== UuidFieldBuilder ====================
@@ -249,6 +276,33 @@ class UuidFieldBuilder<
    */
   max(this: UuidFieldBuilder<TS, Mods>, n: number): UuidFieldBuilder<TS, Mods & { max: number }> {
     const newMods = { ...this.modifiers, max: n } as Mods & { max: number }
+    return this.cloneWithModifiers(newMods)
+  }
+
+  serverOnly(
+    this: UuidFieldBuilder<TS, Mods>,
+  ): UuidFieldBuilder<TS, Omit<Mods, 'policy'> & { policy: 'serverOnly' }> {
+    const newMods = { ...this.modifiers, policy: 'serverOnly' as const } as Omit<Mods, 'policy'> & {
+      policy: 'serverOnly'
+    }
+    return this.cloneWithModifiers(newMods)
+  }
+
+  writeOnly(
+    this: UuidFieldBuilder<TS, Mods>,
+  ): UuidFieldBuilder<TS, Omit<Mods, 'policy'> & { policy: 'writeOnly' }> {
+    const newMods = { ...this.modifiers, policy: 'writeOnly' as const } as Omit<Mods, 'policy'> & {
+      policy: 'writeOnly'
+    }
+    return this.cloneWithModifiers(newMods)
+  }
+
+  readOnly(
+    this: UuidFieldBuilder<TS, Mods>,
+  ): UuidFieldBuilder<TS, Omit<Mods, 'policy'> & { policy: 'readOnly' }> {
+    const newMods = { ...this.modifiers, policy: 'readOnly' as const } as Omit<Mods, 'policy'> & {
+      policy: 'readOnly'
+    }
     return this.cloneWithModifiers(newMods)
   }
 }
@@ -372,6 +426,33 @@ class NumberFieldBuilder<
     const newMods = { ...this.modifiers, max: n } as Mods & { max: number }
     return this.cloneWithModifiers(newMods)
   }
+
+  serverOnly(
+    this: NumberFieldBuilder<TS, Mods>,
+  ): NumberFieldBuilder<TS, Omit<Mods, 'policy'> & { policy: 'serverOnly' }> {
+    const newMods = { ...this.modifiers, policy: 'serverOnly' as const } as Omit<Mods, 'policy'> & {
+      policy: 'serverOnly'
+    }
+    return this.cloneWithModifiers(newMods)
+  }
+
+  writeOnly(
+    this: NumberFieldBuilder<TS, Mods>,
+  ): NumberFieldBuilder<TS, Omit<Mods, 'policy'> & { policy: 'writeOnly' }> {
+    const newMods = { ...this.modifiers, policy: 'writeOnly' as const } as Omit<Mods, 'policy'> & {
+      policy: 'writeOnly'
+    }
+    return this.cloneWithModifiers(newMods)
+  }
+
+  readOnly(
+    this: NumberFieldBuilder<TS, Mods>,
+  ): NumberFieldBuilder<TS, Omit<Mods, 'policy'> & { policy: 'readOnly' }> {
+    const newMods = { ...this.modifiers, policy: 'readOnly' as const } as Omit<Mods, 'policy'> & {
+      policy: 'readOnly'
+    }
+    return this.cloneWithModifiers(newMods)
+  }
 }
 
 // ==================== IntegerFieldBuilder ====================
@@ -493,6 +574,33 @@ class IntegerFieldBuilder<
     const newMods = { ...this.modifiers, max: n } as Mods & { max: number }
     return this.cloneWithModifiers(newMods)
   }
+
+  serverOnly(
+    this: IntegerFieldBuilder<TS, Mods>,
+  ): IntegerFieldBuilder<TS, Omit<Mods, 'policy'> & { policy: 'serverOnly' }> {
+    const newMods = { ...this.modifiers, policy: 'serverOnly' as const } as Omit<Mods, 'policy'> & {
+      policy: 'serverOnly'
+    }
+    return this.cloneWithModifiers(newMods)
+  }
+
+  writeOnly(
+    this: IntegerFieldBuilder<TS, Mods>,
+  ): IntegerFieldBuilder<TS, Omit<Mods, 'policy'> & { policy: 'writeOnly' }> {
+    const newMods = { ...this.modifiers, policy: 'writeOnly' as const } as Omit<Mods, 'policy'> & {
+      policy: 'writeOnly'
+    }
+    return this.cloneWithModifiers(newMods)
+  }
+
+  readOnly(
+    this: IntegerFieldBuilder<TS, Mods>,
+  ): IntegerFieldBuilder<TS, Omit<Mods, 'policy'> & { policy: 'readOnly' }> {
+    const newMods = { ...this.modifiers, policy: 'readOnly' as const } as Omit<Mods, 'policy'> & {
+      policy: 'readOnly'
+    }
+    return this.cloneWithModifiers(newMods)
+  }
 }
 
 // ==================== BooleanFieldBuilder ====================
@@ -577,6 +685,33 @@ class BooleanFieldBuilder<
   ): BooleanFieldBuilder<TS, Mods & { hasDefault: true }> {
     const newMods = { ...this.modifiers, hasDefault: true, defaultValue: value } as Mods & {
       hasDefault: true
+    }
+    return this.cloneWithModifiers(newMods)
+  }
+
+  serverOnly(
+    this: BooleanFieldBuilder<TS, Mods>,
+  ): BooleanFieldBuilder<TS, Omit<Mods, 'policy'> & { policy: 'serverOnly' }> {
+    const newMods = { ...this.modifiers, policy: 'serverOnly' as const } as Omit<Mods, 'policy'> & {
+      policy: 'serverOnly'
+    }
+    return this.cloneWithModifiers(newMods)
+  }
+
+  writeOnly(
+    this: BooleanFieldBuilder<TS, Mods>,
+  ): BooleanFieldBuilder<TS, Omit<Mods, 'policy'> & { policy: 'writeOnly' }> {
+    const newMods = { ...this.modifiers, policy: 'writeOnly' as const } as Omit<Mods, 'policy'> & {
+      policy: 'writeOnly'
+    }
+    return this.cloneWithModifiers(newMods)
+  }
+
+  readOnly(
+    this: BooleanFieldBuilder<TS, Mods>,
+  ): BooleanFieldBuilder<TS, Omit<Mods, 'policy'> & { policy: 'readOnly' }> {
+    const newMods = { ...this.modifiers, policy: 'readOnly' as const } as Omit<Mods, 'policy'> & {
+      policy: 'readOnly'
     }
     return this.cloneWithModifiers(newMods)
   }
@@ -675,6 +810,33 @@ class TimestampFieldBuilder<
     }
     return this.cloneWithModifiers(newMods)
   }
+
+  serverOnly(
+    this: TimestampFieldBuilder<TS, Mods>,
+  ): TimestampFieldBuilder<TS, Omit<Mods, 'policy'> & { policy: 'serverOnly' }> {
+    const newMods = { ...this.modifiers, policy: 'serverOnly' as const } as Omit<Mods, 'policy'> & {
+      policy: 'serverOnly'
+    }
+    return this.cloneWithModifiers(newMods)
+  }
+
+  writeOnly(
+    this: TimestampFieldBuilder<TS, Mods>,
+  ): TimestampFieldBuilder<TS, Omit<Mods, 'policy'> & { policy: 'writeOnly' }> {
+    const newMods = { ...this.modifiers, policy: 'writeOnly' as const } as Omit<Mods, 'policy'> & {
+      policy: 'writeOnly'
+    }
+    return this.cloneWithModifiers(newMods)
+  }
+
+  readOnly(
+    this: TimestampFieldBuilder<TS, Mods>,
+  ): TimestampFieldBuilder<TS, Omit<Mods, 'policy'> & { policy: 'readOnly' }> {
+    const newMods = { ...this.modifiers, policy: 'readOnly' as const } as Omit<Mods, 'policy'> & {
+      policy: 'readOnly'
+    }
+    return this.cloneWithModifiers(newMods)
+  }
 }
 
 // ==================== JsonFieldBuilder ====================
@@ -682,8 +844,8 @@ class TimestampFieldBuilder<
 /**
  * JSON フィールドビルダー。
  *
- * ⚠️ セキュリティ警告: zod ベースは `z.unknown()` のため、API に晒す際は
- * `validator()` で除外するか、別途検証が必須。
+ * `t.json(zodSchema)` 形式で Zod スキーマを渡すと runtime 検証が走る。
+ * スキーマ省略時は `z.unknown()` で後方互換を維持する。
  */
 class JsonFieldBuilder<
   T = unknown,
@@ -693,9 +855,15 @@ class JsonFieldBuilder<
   ZB extends z.ZodType<TS, z.ZodTypeDef, TS> = z.ZodType<TS, z.ZodTypeDef, TS>,
 > extends BaseFieldBuilder<TS, Mods, ZB> {
   readonly kind = 'json' as const
+  private readonly _zodSchema: z.ZodTypeAny | undefined
+
+  constructor(modifiers?: Mods, zodSchema?: z.ZodTypeAny) {
+    super(modifiers)
+    this._zodSchema = zodSchema
+  }
 
   get zodBase(): ZB {
-    return this.applyModifiersToZod(zLib.unknown()) as ZB
+    return this.applyModifiersToZod(this._zodSchema ?? zLib.unknown()) as ZB
   }
 
   drizzleColumn(name: string): SQLiteColumnBuilderBase {
@@ -728,7 +896,7 @@ class JsonFieldBuilder<
   protected cloneWithModifiers<NewMods extends FieldModifiers>(
     mods: NewMods,
   ): JsonFieldBuilder<T, TS, NewMods> {
-    return new JsonFieldBuilder<T, TS, NewMods>(mods)
+    return new JsonFieldBuilder<T, TS, NewMods>(mods, this._zodSchema)
   }
 
   /**
@@ -738,7 +906,10 @@ class JsonFieldBuilder<
     this: JsonFieldBuilder<T, TS, Mods>,
   ): JsonFieldBuilder<T, TS | undefined, Mods & { optional: true }> {
     const newMods = { ...this.modifiers, optional: true } as Mods & { optional: true }
-    return new JsonFieldBuilder<T, TS | undefined, Mods & { optional: true }>(newMods)
+    return new JsonFieldBuilder<T, TS | undefined, Mods & { optional: true }>(
+      newMods,
+      this._zodSchema,
+    )
   }
 
   /**
@@ -769,9 +940,45 @@ class JsonFieldBuilder<
     }
     return this.cloneWithModifiers(newMods)
   }
+
+  serverOnly(
+    this: JsonFieldBuilder<T, TS, Mods>,
+  ): JsonFieldBuilder<T, TS, Omit<Mods, 'policy'> & { policy: 'serverOnly' }> {
+    const newMods = { ...this.modifiers, policy: 'serverOnly' as const } as Omit<Mods, 'policy'> & {
+      policy: 'serverOnly'
+    }
+    return this.cloneWithModifiers(newMods)
+  }
+
+  writeOnly(
+    this: JsonFieldBuilder<T, TS, Mods>,
+  ): JsonFieldBuilder<T, TS, Omit<Mods, 'policy'> & { policy: 'writeOnly' }> {
+    const newMods = { ...this.modifiers, policy: 'writeOnly' as const } as Omit<Mods, 'policy'> & {
+      policy: 'writeOnly'
+    }
+    return this.cloneWithModifiers(newMods)
+  }
+
+  readOnly(
+    this: JsonFieldBuilder<T, TS, Mods>,
+  ): JsonFieldBuilder<T, TS, Omit<Mods, 'policy'> & { policy: 'readOnly' }> {
+    const newMods = { ...this.modifiers, policy: 'readOnly' as const } as Omit<Mods, 'policy'> & {
+      policy: 'readOnly'
+    }
+    return this.cloneWithModifiers(newMods)
+  }
 }
 
 // ==================== Factory ====================
+
+// biome-ignore lint/complexity/noBannedTypes: {} is used intentionally for the default empty modifiers
+function jsonField<S extends z.ZodTypeAny>(schema: S): JsonFieldBuilder<z.infer<S>, z.infer<S>, {}>
+// biome-ignore lint/complexity/noBannedTypes: {} is used intentionally for the default empty modifiers
+function jsonField<T = unknown>(): JsonFieldBuilder<T, T, {}>
+// biome-ignore lint/complexity/noBannedTypes: {} is used intentionally for the default empty modifiers
+function jsonField<T = unknown>(schema?: z.ZodTypeAny): JsonFieldBuilder<T, T, {}> {
+  return new JsonFieldBuilder<T, T, {}>(undefined, schema)
+}
 
 /**
  * Field DSL factory for building type-safe database fields.
@@ -783,6 +990,7 @@ class JsonFieldBuilder<
  * const ageField = t.integer().min(0).max(150)
  * const createdAtField = t.timestamp().default(() => new Date())
  * const dataField = t.json<{ foo: string }>()
+ * const dataField2 = t.json(z.object({ foo: z.string() }))  // runtime validation
  */
 export const t = {
   string(): StringFieldBuilder<
@@ -840,26 +1048,15 @@ export const t = {
   },
 
   /**
-   * JSON フィールド。任意の JSON 値を受け入れる（Zod 内部表現は `z.unknown()`）。
+   * JSON フィールド。
    *
-   * ⚠️ セキュリティ警告:
-   * このフィールドの zod ベースは `z.unknown()` のため、型パラメータ `T` で
-   * 指定した制約は **コンパイル時のみ** 適用され、validator() 経由でも
-   * runtime バリデーションは行われません。API 入力として晒す場合は:
-   *   - `model.validator(target, { omit: ['<json field name>'] })` で除外する、または
-   *   - ハンドラ側で別途 Zod スキーマを使って手動検証する、
-   * のいずれかを必ず実施してください。型パラメータが `unknown` 以外の値を
-   * runtime で保証することはありません。
+   * `t.json(zodSchema)` 形式で Zod スキーマを渡すと runtime 検証が走る。
+   * スキーマ省略時は `z.unknown()` で後方互換を維持する。
    *
-   * Phase 2 以降で `t.json(zodSchema)` 形式の引数追加を検討中。
+   * `t.json(z.object({ foo: z.string() }))` でオブジェクト形状の runtime 検証が可能。
+   *
+   * @note codegen (`nanoka generate`) は `t.json(zodSchema)` を渡しても `$type<unknown>()` のまま出力する。
+   * Drizzle 型が欲しい場合は生成後に手動で書き換えるか `as` を使うこと。
    */
-  json<T = unknown>(): JsonFieldBuilder<
-    T,
-    T,
-    // biome-ignore lint/complexity/noBannedTypes: {} is used intentionally for the default empty modifiers
-    {}
-  > {
-    // biome-ignore lint/complexity/noBannedTypes: {} is used intentionally for the default empty modifiers
-    return new JsonFieldBuilder<T, T, {}>()
-  },
+  json: jsonField,
 }

@@ -164,6 +164,8 @@ const result = await app.db
   .from(User.table)
   .where(eq(User.table.email, 'foo@example.com'))
   .limit(1)
+// app.db 経由で取得した row は policy 未適用（passwordHash 等を含む完全な DB 行）。
+// API レスポンスに返すときは User.toResponse(row) または z.array(User.outputSchema()).parse(rows) を必ず通すこと。
 ```
 
 ---
@@ -215,11 +217,52 @@ const result = await app.db
 DrizzleのクエリDSLを再発明するのではなく、DBモデルとAPI入力/出力の境界を安全に速く書ける方向へ伸ばす。
 
 #### Phase 2A — API境界
-- [ ] フィールドポリシー（例: `serverOnly()` / `writeOnly()` / `readOnly()`）
-- [ ] 用途別スキーマ（例: `User.inputSchema('create')` / `User.inputSchema('update')` / `User.outputSchema()`）
-- [ ] validator preset（例: `User.validator('json', 'create')`）
-- [ ] 明示的なレスポンス整形（例: `User.outputSchema().parse(row)` または `User.toResponse(row)`）
-- [ ] `t.json(zodSchema)` による JSON フィールドの実行時検証
+- [x] フィールドポリシー（例: `serverOnly()` / `writeOnly()` / `readOnly()`）
+- [x] 用途別スキーマ（例: `User.inputSchema('create')` / `User.inputSchema('update')` / `User.outputSchema()`）
+- [x] validator preset（例: `User.validator('json', 'create')`）
+- [x] 明示的なレスポンス整形（`User.toResponse(row)` および `User.outputSchema().parse(row)` の両方）
+- [x] `t.json(zodSchema)` による JSON フィールドの実行時検証
+
+##### Phase 2A の設計判断メモ
+
+**`writeOnly` の用途と制約（判断 F）**
+
+`writeOnly()` は「DB 列はあるが API output から消す」用途のみ対応する。`password` のような「DB 列を持たない平文入力」は field DSL 内では扱わない（virtual field は M1 範囲外）。
+
+推奨パターン:
+```ts
+import { zValidator } from '@hono/zod-validator'
+
+// handler 内で password → passwordHash 変換
+const CreateUserBody = User.inputSchema('create').extend({ password: z.string().min(8) })
+
+app.post('/users', zValidator('json', CreateUserBody), async (c) => {
+  const { password, ...body } = c.req.valid('json')
+  const passwordHash = await hash(password)
+  const created = await User.create({
+    ...body,
+    id: crypto.randomUUID(),
+    passwordHash,
+    createdAt: new Date(),
+  })
+  // password / passwordHash を絶対に返さない（toResponse が serverOnly を strip）
+  return c.json(User.toResponse(created))
+})
+```
+
+`zValidator` に渡すことで runtime 検証が確実に走る。`User.toResponse(created)` を通すことでレスポンスから `passwordHash` が確実に剥がれる。
+
+注意: `User.inputSchema('create').extend({ ... })` で `passwordHash` のような `serverOnly` フィールドを再注入しないこと。`extend()` で再注入された場合、`inputSchema` 由来の自動 strip 保護は効かない。
+
+**`t.json(zodSchema)` と codegen の関係（判断 E）**
+
+`t.json(zodSchema)` を渡しても、`nanoka generate` が出力する Drizzle schema TS は `$type<unknown>()` のまま。`app.db.select().from(User.table)` 経由で精緻型が欲しい場合は、生成された Drizzle schema TS を手動で `$type<{...}>()` に書き換えるか、ユーザー側で `as` を使う。API 層の zod runtime 検証は `t.json(zodSchema)` で正しく走る。
+
+`t.json(zodSchema)` で外部入力を runtime 検証するときは、Hono の body size limit（`bodyLimit` middleware など）を併用すると、巨大ペイロード起因の CPU 消費を抑えられる。zod 自体は深さ無制限なので、防御層を多重化しておくのが安全。
+
+**レスポンス整形の役割分担（判断 G）**
+
+単体 row のレスポンス整形は `User.toResponse(row)` で convenience wrapper を提供する。配列の場合は `z.array(User.outputSchema()).parse(rows)` で zod schema 合成として書く。これにより「80% automatic, 20% explicit」を維持し、配列変換は明示的に書く設計にする。
 
 #### Phase 2B — 型と互換性
 - [ ] フィールドアクセサAPI（まず `pick` / `omit` / validator 用途から: `User.schema({ pick: f => [f.name] })`）

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { z } from 'zod'
 import { t } from '../factories'
 
 describe('Field: runtime behavior', () => {
@@ -309,6 +310,105 @@ describe('Field: runtime behavior', () => {
       const field = t.json()
       const col = field.drizzleColumn('metadata')
       expect(col).toBeDefined()
+    })
+  })
+
+  describe('t.json(zodSchema)', () => {
+    it('t.json() with no args accepts any value (backward compat)', () => {
+      const field = t.json()
+      const result = field.zodBase.safeParse({ anything: true })
+      expect(result.success).toBe(true)
+    })
+
+    it('t.json(z.object) validates shape at runtime - success', () => {
+      const field = t.json(z.object({ foo: z.string() }))
+      const valid = field.zodBase.safeParse({ foo: 'x' })
+      expect(valid.success).toBe(true)
+    })
+
+    it('t.json(z.object) validates shape at runtime - failure on wrong type', () => {
+      const field = t.json(z.object({ foo: z.string() }))
+      const invalid = field.zodBase.safeParse({ foo: 1 })
+      expect(invalid.success).toBe(false)
+    })
+
+    it('t.json(zodSchema) rejects wrong shape', () => {
+      const field = t.json(z.object({ foo: z.string() }))
+      const invalid = field.zodBase.safeParse({ bar: 'x' })
+      expect(invalid.success).toBe(false)
+    })
+
+    it('t.json(zodSchema) with optional modifier', () => {
+      const field = t.json(z.object({ foo: z.string() })).optional()
+      expect(field.modifiers.optional).toBe(true)
+
+      const undefinedResult = field.zodBase.safeParse(undefined)
+      expect(undefinedResult.success).toBe(true)
+    })
+
+    it('t.json(zodSchema) with default modifier', () => {
+      const field = t.json(z.object({ foo: z.string() })).default(() => ({ foo: 'default' }))
+      expect(field.modifiers.hasDefault).toBe(true)
+
+      const result = field.zodBase.safeParse(undefined)
+      expect(result.success).toBe(true)
+      expect(result.data).toEqual({ foo: 'default' })
+    })
+  })
+
+  describe('field policy', () => {
+    it('t.string().serverOnly() sets policy to serverOnly', () => {
+      const field = t.string().serverOnly()
+      expect(field.modifiers.policy).toBe('serverOnly')
+    })
+
+    it('t.string().writeOnly() sets policy to writeOnly', () => {
+      const field = t.string().writeOnly()
+      expect(field.modifiers.policy).toBe('writeOnly')
+    })
+
+    it('t.string().readOnly() sets policy to readOnly', () => {
+      const field = t.string().readOnly()
+      expect(field.modifiers.policy).toBe('readOnly')
+    })
+
+    it('last policy wins (serverOnly then readOnly = readOnly)', () => {
+      const field = t.string().serverOnly().readOnly()
+      // biome-ignore lint/suspicious/noExplicitAny: TypeScript intersection makes policy: never; runtime is correct
+      expect((field.modifiers as any).policy).toBe('readOnly')
+    })
+
+    it('last policy wins (readOnly then writeOnly = writeOnly)', () => {
+      const field = t.string().readOnly().writeOnly()
+      // biome-ignore lint/suspicious/noExplicitAny: TypeScript intersection makes policy: never; runtime is correct
+      expect((field.modifiers as any).policy).toBe('writeOnly')
+    })
+
+    it('t.uuid().readOnly() works', () => {
+      const field = t.uuid().readOnly()
+      expect(field.modifiers.policy).toBe('readOnly')
+    })
+
+    it('t.timestamp().readOnly() works', () => {
+      const field = t.timestamp().readOnly()
+      expect(field.modifiers.policy).toBe('readOnly')
+    })
+
+    it('t.json(z.object({...})).readOnly() preserves zodSchema validation', () => {
+      const field = t.json(z.object({ foo: z.string() })).readOnly()
+      expect(field.modifiers.policy).toBe('readOnly')
+
+      const valid = field.zodBase.safeParse({ foo: 'x' })
+      expect(valid.success).toBe(true)
+
+      const invalid = field.zodBase.safeParse({ foo: 1 })
+      expect(invalid.success).toBe(false)
+    })
+
+    it('t.string().primary() does not set policy', () => {
+      const field = t.string().primary()
+      // biome-ignore lint/suspicious/noExplicitAny: policy is not in the primary-only Mods type
+      expect((field.modifiers as any).policy).toBeUndefined()
     })
   })
 
