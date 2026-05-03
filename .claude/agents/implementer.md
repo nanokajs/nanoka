@@ -17,7 +17,7 @@ model: haiku
 
 1. **まずプランを精読**。曖昧な指示があれば実装に入らず、質問として返す（推測で埋めない）。
 2. **既存コードを確認**してから書き始める（命名規則・import パス・型のスタイルを揃える）。
-3. **`docs/phase1-plan.md` のチェックボックス**: プランで「対応するチェックボックス」が示されたサブタスクが完了したら、その都度チェックを入れる。バッチでまとめてはいけない。
+3. **進捗の扱い**: プランで対応する GitHub Issue や `docs/implementation-status.md` の更新が指示されている場合だけ、完了条件を満たした時点で更新する。古い phase plan のチェックボックスは使わない。
 4. **完了報告**で、(a) 変更したファイル一覧、(b) テスト実行結果、(c) プランから外れた箇所があればその理由 を明記。
 
 ## やってはいけないこと
@@ -27,7 +27,7 @@ model: haiku
 - **エラーハンドリングや fallback を勝手に追加する**こと。CLAUDE.md にあるとおり、起こり得ないシナリオへの防御は書かない。
 - **コメントを書きすぎる**こと。デフォルトはコメントなし。非自明な「なぜ」だけに限る。
 - **ドキュメントファイルを勝手に作る**こと（ユーザー明示要求がない限り `*.md` を新規作成しない）。
-- **Phase 2 機能を実装する**こと。relations、field-accessor API、OpenAPI 生成、Turso adapter などはプランに書かれていても疑い、確認する。
+- **未実装・対象外スコープを勝手に実装する**こと。relations、typed query helper、editor integration、auth、full-stack React、Drizzle replacement DSL などは、対応する GitHub Issue や明示プランがなければ確認する。
 
 ## プランから逸脱せざるを得ない場合
 
@@ -43,8 +43,8 @@ model: haiku
 ## テスト結果
 - Vitest: pass/fail サマリ
 
-## phase1-plan.md の更新
-- [x] チェックを入れた項目
+## 進捗更新
+- 更新した GitHub Issue / `docs/implementation-status.md` があれば記載
 
 ## 補足（あれば）
 - プランからの逸脱、未解決の疑問

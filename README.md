@@ -25,7 +25,7 @@ packages/nanoka/          # The library (published to npm as "@nanokajs/core")
 packages/create-nanoka-app/ # Scaffold CLI (published as "create-nanoka-app")
 examples/basic/           # Example Cloudflare Workers app demonstrating end-to-end usage
 assets/                   # Repository assets (logo, etc.)
-docs/                     # Design documents, status, backlog, and phase history
+docs/                     # Design documents and current implementation status
 ```
 
 ## Documentation
@@ -35,11 +35,7 @@ docs/                     # Design documents, status, backlog, and phase history
 - [Contributing](CONTRIBUTING.md) — development workflow and manual release process
 - [Implementation status](docs/implementation-status.md) — current shipped / pending split
 - [Design document](docs/nanoka.md) — architecture decisions and design rationale
-- [Backlog](docs/backlog.md) — accepted risks, follow-ups, and remaining candidates
-- [Phase 1 plan](docs/phase1-plan.md) — Phase 1 completion history (M0–M8, done)
-- [Phase 1.5 plan](docs/phase1.5-plan.md) — Phase 1.5 completion history (M1–M5, done)
-- [Phase 2 plan](docs/phase2-plan.md) — Phase 2 completion history (M1–M4, done)
-- [Phase 2後半 plan](docs/phase2後半-plan.md) — Phase 2後半 / Phase 3 mixed implementation history
+- [GitHub Issues](https://github.com/nanokajs/nanoka/issues) — remaining work, follow-ups, and accepted risk tracking
 - [Example app](examples/basic/README.md) — complete CRUD example with deployment steps
 
 ## Current scope

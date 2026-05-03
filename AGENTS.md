@@ -14,20 +14,15 @@ Before adding code, read:
 
 - `docs/implementation-status.md` for the current shipped / pending split.
 - `docs/nanoka.md` for the product and architecture design.
-- `docs/backlog.md` for remaining candidates and accepted risks.
-- The relevant phase document only when touching that historical area:
-  - `docs/phase1-plan.md`
-  - `docs/phase1.5-plan.md`
-  - `docs/phase2-plan.md`
-  - `docs/phase2後半-plan.md`
+- GitHub Issues for remaining candidates, accepted risks, and operational follow-ups.
 
-The phase plan files are mostly historical records, not "resume from first unchecked item" task queues.
+The old phase plan and backlog files were historical records, not "resume from first unchecked item" task queues. Current work starts from `docs/implementation-status.md` and the issue being addressed.
 
 ## Progress tracking
 
 - At session start, read `docs/implementation-status.md` unless the user asks for a specific file or task.
-- If work changes shipped API surface, roadmap, or phase classification, update the matching docs in the same change as the code.
-- If a task completes an item that still lives in `docs/backlog.md`, update that backlog entry only when the completion criteria are actually met.
+- If work changes shipped API surface, roadmap, or scope classification, update `docs/implementation-status.md` in the same change as the code.
+- If a task completes a tracked follow-up, close or update the matching GitHub Issue when the completion criteria are actually met.
 - Do not re-open Phase 1 / Phase 2 checkboxes as active work unless the user explicitly asks to revise history.
 
 ## What Nanoka is
@@ -73,12 +68,12 @@ The schema / validator field-accessor API already exists for `{ pick: f => [f.na
 
 For normal implementation work:
 
-1. Read `docs/implementation-status.md`, `docs/nanoka.md`, `docs/backlog.md`, and the relevant source files.
-2. Identify whether the task touches shipped API, backlog, or historical docs.
+1. Read `docs/implementation-status.md`, `docs/nanoka.md`, the relevant GitHub Issue, and the relevant source files.
+2. Identify whether the task touches shipped API, tracked follow-ups, or historical docs.
 3. Keep changes scoped to the requested task.
 4. Update tests alongside code when behavior or public types change.
 5. Run the narrowest useful verification first, then broader checks when risk warrants it.
-6. Update `docs/backlog.md` / status docs only after the corresponding completion criteria are met.
+6. Update `docs/implementation-status.md` and/or the GitHub Issue only after the corresponding completion criteria are met.
 
 For larger or ambiguous changes, present a short plan before editing. The plan should cover goal, affected files, implementation steps, tests, completion criteria, and deferred scope.
 
@@ -141,4 +136,4 @@ Cloudflare / migration flow:
 - `CLAUDE.md` is the Claude Code version of this guidance; keep both files semantically aligned.
 - `.claude/settings.local.json` command allow rules do not have a direct repository-local Codex equivalent. Codex command permissions are controlled by the active sandbox and approval settings.
 - `.claude/agents/*` map to the workflow and review guidance above. Codex may use built-in agent delegation only when explicitly requested by the user.
-- `.claude/skills/phase1-next/SKILL.md` was migrated into historical Phase 1 workflow. Current work should start from `docs/implementation-status.md`.
+- Historical phase orchestration skills were retired. Current work should start from `docs/implementation-status.md` and GitHub Issues.

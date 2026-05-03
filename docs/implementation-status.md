@@ -1,14 +1,14 @@
 # Implementation Status
 
-2026-05-03 時点の実装整理。Claude Code の作業により Phase 2 後半と Phase 3 の一部が混ざって実装されたため、本ファイルを入口にして現状を把握する。
+2026-05-04 時点の実装整理。このファイルを Nanoka の shipped / pending split の入口にする。
+
+過去の phase plan と backlog は GitHub Issues へ移管済み。これらは履歴ファイルであり、削除しても現在の作業入口としては使わない。
 
 ## 正本
 
-- Phase 1 履歴: `docs/phase1-plan.md`
-- Phase 1.5 履歴: `docs/phase1.5-plan.md`
-- Phase 2 前半 / 1.0.0 中心 API: `docs/phase2-plan.md`
-- Phase 2 後半 / Phase 3 混在実装の履歴: `docs/phase2後半-plan.md`
-- 今後の未実装候補: `docs/backlog.md`
+- Product / architecture design: `docs/nanoka.md`
+- Current shipped / pending split: this file
+- Remaining work and accepted risks: [GitHub Issues](https://github.com/nanokajs/nanoka/issues)
 
 ## 実装済み
 
@@ -33,11 +33,31 @@
 
 ## 未実装として残す
 
-- Relations: `t.hasMany()` / `t.belongsTo()`
-- Typed query helper: `User.where(f => eq(f.email, x)).limit(10)` など
-- VSCode extension
-- Codex / Claude Code plugin
+- Relations: `t.hasMany()` / `t.belongsTo()` — [#14](https://github.com/nanokajs/nanoka/issues/14)
+- Typed query helper: `User.where(f => eq(f.email, x)).limit(10)` など — [#15](https://github.com/nanokajs/nanoka/issues/15)
+- VSCode extension — [#16](https://github.com/nanokajs/nanoka/issues/16)
+- Codex / Claude Code plugin — [#17](https://github.com/nanokajs/nanoka/issues/17)
+- `findMany` offset 上限 — [#18](https://github.com/nanokajs/nanoka/issues/18)
 - Auth / full-stack React / Drizzle replacement DSL は引き続き全 Phase 外
+
+## 運用・リスク追跡
+
+- GitHub repository setup — [#19](https://github.com/nanokajs/nanoka/issues/19)
+- `CONTRIBUTING.md` — [#20](https://github.com/nanokajs/nanoka/issues/20)
+- LICENSE sync check — [#21](https://github.com/nanokajs/nanoka/issues/21)
+- npm README relative links — [#22](https://github.com/nanokajs/nanoka/issues/22)
+- Historical docs cleanup — [#23](https://github.com/nanokajs/nanoka/issues/23)
+- README onboarding parity CI — [#24](https://github.com/nanokajs/nanoka/issues/24)
+- `crud.ts` Biome ignore consistency — [#25](https://github.com/nanokajs/nanoka/issues/25)
+- Publish extensions — [#26](https://github.com/nanokajs/nanoka/issues/26), [#27](https://github.com/nanokajs/nanoka/issues/27), [#28](https://github.com/nanokajs/nanoka/issues/28), [#29](https://github.com/nanokajs/nanoka/issues/29)
+- Accepted risk follow-ups — [#30](https://github.com/nanokajs/nanoka/issues/30), [#31](https://github.com/nanokajs/nanoka/issues/31), [#32](https://github.com/nanokajs/nanoka/issues/32)
+
+## Phase 履歴要約
+
+- Phase 1 completed the MVP: model DSL, schema generation, D1 adapter, CRUD, schema / validator derivation, Hono-compatible router, CLI generation, README, and Workers verification.
+- Phase 1.5 completed public-library operations: env generic typing, sturdier example seeding, CI/CD, onboarding parity, publish automation, and action pinning.
+- Phase 2 completed the stable 1.0.0 API boundary: field policies, input/output schemas, validator presets, response shaping, Zod 3/4 compatibility, create/update input typing, and model-level OpenAPI components.
+- Phase 2後半 / Phase 3 work shipped as 1.x features: route-level OpenAPI, Swagger UI, Turso/libSQL adapter, and `create-nanoka-app`.
 
 ## 注意
 
