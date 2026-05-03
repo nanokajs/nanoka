@@ -16,7 +16,9 @@ exports[`OpenAPI component generation > matches snapshot 1`] = `
         "format": "email",
         "type": "string",
       },
-      "metadata": {},
+      "metadata": {
+        "nullable": true,
+      },
       "name": {
         "maxLength": 100,
         "minLength": 1,
@@ -28,6 +30,7 @@ exports[`OpenAPI component generation > matches snapshot 1`] = `
         "writeOnly": true,
       },
       "profile": {
+        "nullable": true,
         "properties": {
           "count": {
             "type": "integer",
@@ -95,13 +98,16 @@ exports[`OpenAPI component generation > matches snapshot 1`] = `
         "readOnly": true,
         "type": "string",
       },
-      "metadata": {},
+      "metadata": {
+        "nullable": true,
+      },
       "name": {
         "maxLength": 100,
         "minLength": 1,
         "type": "string",
       },
       "profile": {
+        "nullable": true,
         "properties": {
           "count": {
             "type": "integer",
@@ -159,7 +165,9 @@ exports[`OpenAPI component generation > matches snapshot 1`] = `
         "format": "email",
         "type": "string",
       },
-      "metadata": {},
+      "metadata": {
+        "nullable": true,
+      },
       "name": {
         "maxLength": 100,
         "minLength": 1,
@@ -171,6 +179,7 @@ exports[`OpenAPI component generation > matches snapshot 1`] = `
         "writeOnly": true,
       },
       "profile": {
+        "nullable": true,
         "properties": {
           "count": {
             "type": "integer",
