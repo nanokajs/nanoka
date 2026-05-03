@@ -109,14 +109,7 @@ export default {
         { name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } },
       ],
       responses: {
-        '200': {
-          description: 'Deleted count',
-          content: {
-            'application/json': {
-              schema: { type: 'object', properties: { deleted: { type: 'integer' } } },
-            },
-          },
-        },
+        '204': { description: 'User deleted' },
         '404': { description: 'User not found' },
       },
     })
