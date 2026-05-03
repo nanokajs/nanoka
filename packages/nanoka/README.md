@@ -403,12 +403,6 @@ The runtime source of truth for validation remains the Zod schema returned by `i
 
 Route-level OpenAPI is available via explicit route metadata: `app.openapi(metadata)` registers operation details, and `app.generateOpenAPISpec(options)` builds the OpenAPI 3.1 document. Swagger UI is available through `swaggerUI({ url, title? })`.
 
-## Roadmap (1.x)
-
-The following features remain planned for later 1.x releases:
-
-- **VSCode extension**: schema autocomplete and diagnostics
-
 For complex joins, use raw Drizzle via `app.db`. The escape hatch is always open.
 
 ## Workspace structure (for contributors)

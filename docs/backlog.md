@@ -135,7 +135,7 @@ relation / Turso・libSQL adapter / route-level OpenAPI / `create-nanoka-app` / 
 - **Relations** (`t.hasMany()` / `t.belongsTo()`)
 - **型安全なクエリビルダー** (`User.where(f => eq(f.email, x)).limit(10)`)
   - Drizzle 再発明に寄りやすいため優先度を下げる。
-- **VSCode 拡張 / Codex プラグイン**
+- **Codex プラグイン**
 
 ### 3.6 `findMany` の `offset` 上限導入（DoS 緩和）
 

@@ -59,7 +59,7 @@ These remain unimplemented or intentionally out of scope. If a task appears to r
 
 - Relations: `t.hasMany()`, `t.belongsTo()`. — non-goal, Issue #14
 - Typed query helper: `User.where(f => eq(f.email, x)).limit(10)`. — non-goal, Issue #15
-- VSCode extension / Codex or Claude Code plugin.
+- Codex or Claude Code plugin.
 - Auth, full-stack React, or a complex query DSL that replaces Drizzle.
 
 The schema / validator field-accessor API already exists for `{ pick: f => [f.name] }` and `{ omit: f => [f.passwordHash] }`. Keep its `f` object `as const`, not a Proxy. Runtime cost must remain zero.
