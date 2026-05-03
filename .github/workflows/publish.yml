@@ -39,7 +39,7 @@ jobs:
             exit 1
           fi
 
-      - uses: pnpm/action-setup@26f6d4f2c533a43e6b5da0b4a5dd983f98f7b49a # v4.4.0 / v5.0.0 (same commit)
+      - uses: pnpm/action-setup@8912a9102ac27614460f54aedde9e1e7f9aec20d # v4.4.0 / v5.0.0 (same commit)
         with:
           version: 9.15.9
 
