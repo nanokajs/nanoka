@@ -37,6 +37,7 @@ docs/                     # Design documents and current implementation status
 - [Design document](docs/nanoka.md) — architecture decisions and design rationale
 - [GitHub Issues](https://github.com/nanokajs/nanoka/issues) — remaining work, follow-ups, and accepted risk tracking
 - [Example app](examples/basic/README.md) — complete CRUD example with deployment steps
+- [AI coding support (llms.txt)](llms.txt) — machine-readable docs for Claude Code / Cursor / Copilot
 
 ## Current scope
 

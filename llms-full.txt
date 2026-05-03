@@ -1,0 +1,639 @@
+# Nanoka — AI Reference (llms-full.txt)
+
+Self-contained reference for AI coding agents (Claude Code, Cursor, Copilot, etc.) working with Nanoka projects.
+
+## What Nanoka is
+
+Nanoka is a thin wrapper over Hono + Drizzle + Zod targeting Cloudflare Workers + D1, with Turso/libSQL available through the adapter interface. The core thesis is **80% automatic, 20% explicit**: a single model definition is the source of truth for DB schema, TypeScript types, and base validation. API validation is a deliberate derivation—DB shape and API shape can diverge. For example, `passwordHash` may exist in the DB but must not appear in API responses.
+
+## Install
+
+```bash
+pnpm add @nanokajs/core hono drizzle-orm zod
+pnpm add -D drizzle-kit wrangler @cloudflare/workers-types typescript
+```
+
+Add to `tsconfig.json` so Cloudflare Workers types resolve as ambient:
+
+```jsonc
+{
+  "compilerOptions": {
+    "types": ["@cloudflare/workers-types"]
+  }
+}
+```
+
+## Migration flow
+
+Nanoka has no custom migration engine. The flow is:
+
+1. Write model definitions (e.g., `postFields` in `src/models/posts.ts`)
+2. Create `nanoka.config.ts` and run `npx nanoka generate` → produces `drizzle/schema.ts` (Drizzle schema code, not SQL)
+3. Create `drizzle.config.ts` and run `npx drizzle-kit generate` → produces `drizzle/migrations/*.sql` (SQL diffs)
+4. Run `wrangler d1 migrations apply <DATABASE> --local` → applies migrations to D1
+
+Nanoka does not generate SQL or apply migrations. That responsibility stays with drizzle-kit and wrangler.
+
+## Core API
+
+### 4.1 Model definition with `t`
+
+Fields are built using the `t` builder. Export a fields object and table name:
+
+```ts
+import { t } from '@nanokajs/core'
+
+export const userTableName = 'users'
+export const userFields = {
+  id: t.uuid().primary(),
+  name: t.string(),
+  email: t.string().email(),
+  passwordHash: t.string().serverOnly(),
+  age: t.integer().min(0).max(150),
+  active: t.boolean().default(() => true),
+  metadata: t.json(),
+  createdAt: t.timestamp().default(() => new Date()),
+  updatedAt: t.timestamp().default(() => new Date()),
+}
+```
+
+Supported field types:
+- `t.string()` / `t.uuid()` — text
+- `t.integer()` / `t.number()` — numeric
+- `t.boolean()` — boolean
+- `t.timestamp()` — ISO 8601 timestamp
+- `t.json(zodSchema?)` — JSON with optional Zod validation
+- `t.blob()` — binary data
+
+Modifiers:
+- `.primary()` — primary key (required, one per model)
+- `.unique()` — unique constraint
+- `.optional()` — nullable
+- `.default(value)` or `.default(() => value)` — default value (function or constant)
+- `.min(n)` / `.max(n)` — numeric / string length bounds
+- `.email()` — email validation (string-only modifier)
+
+Constraints:
+- Exactly one field must have `.primary()`
+- Primary key must be unique (automatically enforced by `.primary()`)
+
+### 4.2 Field policies
+
+Field policies encode intent directly on the field. They control which fields appear in input/output schemas:
+
+- `.serverOnly()` — never in inputSchema or outputSchema. Use for `passwordHash`, internal counters, etc. This is a security invariant.
+- `.writeOnly()` — in inputSchema, never in outputSchema. Use for fields accepted on write but hidden on read (e.g., `password` input field).
+- `.readOnly()` — never in inputSchema, always in outputSchema. Use for fields computed by the DB (e.g., `createdAt`, `id` in some contexts).
+
+These are mutually exclusive—apply exactly zero or one per field.
+
+```ts
+const fields = {
+  id: t.uuid().primary().readOnly(),
+  passwordHash: t.string().serverOnly(),
+  password: t.string().writeOnly(), // accepted on POST, never exposed
+  email: t.string(), // no policy: in both input and output
+}
+```
+
+### 4.3 `schema()` and `validator()` — two separate concerns
+
+`schema()` returns a standalone Zod schema. Use it anywhere Zod is needed:
+
+```ts
+const CreateUserSchema = User.schema({ omit: ['id', 'createdAt'] })
+const parsed = CreateUserSchema.parse(data) // standalone, not tied to Hono
+```
+
+`validator()` returns a Hono validator. Use it in route handlers:
+
+```ts
+app.post('/users', User.validator('json', { omit: ['passwordHash'] }), handler)
+```
+
+Options apply to both `schema()` and `validator()`:
+- `pick: f => [f.name, f.email]` — include only these fields (field accessor syntax, f is as const)
+- `omit: f => [f.passwordHash]` — exclude these fields
+- `partial: true` — all fields optional
+
+### 4.4 Input and output schemas
+
+**`inputSchema(target, opts?)`**
+
+```ts
+User.inputSchema('create', opts?)  // required: omit id, serverOnly, readOnly
+User.inputSchema('update', opts?)  // required: omit id, serverOnly, readOnly; all fields optional (partial: true by default)
+```
+
+**`outputSchema(opts?)`**
+
+```ts
+User.outputSchema(opts)  // excludes serverOnly and writeOnly
+```
+
+Built-in policy application (no explicit omit needed):
+- `inputSchema('create')` / `inputSchema('update')` automatically exclude serverOnly, readOnly
+- `inputSchema('update')` automatically sets `partial: true` unless you override it
+- `outputSchema()` automatically excludes serverOnly, writeOnly
+
+You can override with explicit options:
+
+```ts
+// Include createdAt in response even though it's normally readOnly
+User.outputSchema({ pick: f => [f.email, f.name, f.createdAt] })
+```
+
+### 4.5 Validator presets
+
+Two built-in presets for common patterns:
+
+```ts
+User.validator('json', 'create')   // short for validator('json', { omit: [id, createdAt, serverOnly, readOnly] })
+User.validator('json', 'update')   // short for validator('json', { omit: [id, createdAt, serverOnly, readOnly], partial: true })
+```
+
+With error hook (optional third argument) to customize error response:
+
+```ts
+app.post(
+  '/users',
+  User.validator('json', 'create', (result, c) => {
+    if (!result.success) return c.json({ error: 'Invalid request' }, 400)
+  }),
+  handler
+)
+```
+
+If no hook is provided, `@hono/zod-validator` returns validation issues in the response (not hardened for production).
+
+### 4.6 Response shaping: `toResponse()` and arrays
+
+Single row:
+```ts
+const user = await User.findOne(id)
+return c.json(User.toResponse(user))
+```
+
+Array of rows:
+```ts
+const users = await User.findMany({ limit: 10 })
+return c.json(z.array(User.outputSchema()).parse(users))
+```
+
+`toResponse()` is a helper equivalent to `outputSchema().parse(row)`.
+
+### 4.7 Field accessor (typo-safe field references)
+
+When using `pick` or `omit`, reference fields by name using the accessor. The `f` object is `as const`—zero runtime cost.
+
+```ts
+// pick syntax: provide field names
+User.schema({ pick: f => [f.name, f.email] })
+
+// omit syntax: exclude specific fields
+User.schema({ omit: f => [f.passwordHash, f.createdAt] })
+
+// Hono validator with accessor
+app.post('/register', User.validator('json', { omit: f => [f.id, f.createdAt] }), handler)
+```
+
+The `f` object is `as const`, not a Proxy. No runtime magic.
+
+### 4.8 CRUD
+
+**`findMany(options)`** — query with pagination (limit is required)
+
+```ts
+const users = await User.findMany({ limit: 20 })
+const page2 = await User.findMany({ limit: 20, offset: 20 })
+const sorted = await User.findMany({ limit: 20, orderBy: 'email' })
+```
+
+Calling `findMany()` without `limit` is a **type error** — the parameter is required. This prevents accidental unbounded queries.
+
+Pagination shape: `{ limit, offset?, orderBy? }`
+
+**`findOne(idOrWhere)`** — fetch single row
+
+```ts
+const user = await User.findOne(userId)  // by primary key
+const user = await User.findOne({ email: 'alice@example.com' })  // by where clause (AND all conditions)
+```
+
+**`create(input)`**
+
+```ts
+const user = await User.create({
+  id: crypto.randomUUID(),
+  email: 'alice@example.com',
+  name: 'Alice',
+  // passwordHash omitted if serverOnly; password accepted if writeOnly
+})
+```
+
+**`update(idOrWhere, data)`** — update single row(s)
+
+```ts
+const updated = await User.update(userId, { email: 'new@example.com' })
+// or by where clause:
+const updated = await User.update({ email: 'old@example.com' }, { email: 'new@example.com' })
+```
+
+**`delete(idOrWhere)`** — delete row(s) by id or where clause
+
+```ts
+await User.delete(userId)
+// or by where clause:
+await User.delete({ email: 'alice@example.com' })
+```
+
+Returns `{ readonly deleted: number }`.
+
+### 4.9 `t.json(zodSchema)`
+
+Store JSON data with optional runtime validation:
+
+```ts
+const fields = {
+  metadata: t.json(z.object({ key: z.string(), value: z.unknown() }).array()),
+}
+```
+
+Storage is JSON text in SQLite. Reading and writing is automatic—parse on read, stringify on write. Runtime validation is applied per the Zod schema if provided.
+
+## Adapter and DB access
+
+### 5.1 Adapters
+
+```ts
+import { d1Adapter } from '@nanokajs/core'
+
+const adapter = d1Adapter(env.DB)
+const app = nanoka(adapter)
+```
+
+For Turso/libSQL:
+
+```ts
+import { tursoAdapter } from '@nanokajs/core/turso'
+import { createClient } from '@libsql/client'
+
+const client = createClient({ url: env.TURSO_DB_URL, authToken: env.TURSO_AUTH_TOKEN })
+const adapter = tursoAdapter(client)
+const app = nanoka(adapter)
+```
+
+### 5.2 Escape hatch: raw Drizzle via `app.db`
+
+When the typed API is not enough, use `app.db` to access raw Drizzle:
+
+```ts
+import { eq } from 'drizzle-orm'
+
+const user = await app.db
+  .select()
+  .from(User.table)
+  .where(eq(User.table.email, 'alice@example.com'))
+  .limit(1)
+  .execute()
+
+const result = await app.db
+  .select()
+  .from(User.table)
+  .innerJoin(Post.table, eq(User.table.id, Post.table.userId))
+  .where(eq(User.table.email, 'alice@example.com'))
+  .execute()
+```
+
+`User.table` is the underlying Drizzle table. Combine with `eq()`, `lt()`, `gt()`, `and()`, `or()`, `inArray()`, `like()` from `drizzle-orm` for complex conditions. SQL injection is prevented by Drizzle's parametrized bindings.
+
+**Important**: `app.db` queries bypass field policies. Data returned from escape hatch must be manually shaped (e.g., with `outputSchema().parse()`).
+
+### 5.3 Batch: D1 batch API directly
+
+For transactions or batched queries, use `app.batch()` (D1's native batch):
+
+```ts
+const results = await app.batch([
+  app.db.insert(User.table).values({ ... }),
+  app.db.update(User.table).set({ ... }).where(...),
+  app.db.delete(User.table).where(...),
+])
+
+const [insertResult, updateResult, deleteResult] = results
+```
+
+Nanoka exposes D1's `batch()` directly. No custom transaction abstraction. Isolation level and rollback behavior match D1 docs.
+
+## Routing (Hono compatibility)
+
+Create a Nanoka app with an adapter and define routes:
+
+```ts
+import { d1Adapter, nanoka } from '@nanokajs/core'
+import { HTTPException } from 'hono/http-exception'
+
+export interface Env {
+  DB: D1Database
+}
+
+export default {
+  async fetch(req: Request, env: Env, ctx: ExecutionContext) {
+    const app = nanoka(d1Adapter(env.DB))
+    const User = app.model('users', userFields)
+
+    app.get('/users/:id', async (c) => {
+      const id = c.req.param('id')
+      const user = await User.findOne(id)
+      if (!user) throw new HTTPException(404, { message: 'Not found' })
+      return c.json(user)
+    })
+
+    app.post(
+      '/users',
+      User.validator('json', 'create', (result, c) => {
+        if (!result.success) return c.json({ error: 'Invalid request' }, 400)
+      }),
+      async (c) => {
+        const body = c.req.valid('json')
+        const user = await User.create(body)
+        return c.json(user, 201)
+      }
+    )
+
+    return app.fetch(req, env, ctx)
+  }
+}
+```
+
+Nanoka apps are Hono instances extended with `model()`, `db`, `batch()`, `openapi()`, and `generateOpenAPISpec()`. All standard Hono middleware and patterns work directly.
+
+## OpenAPI
+
+OpenAPI is documentation/spec generation. Runtime validation source of truth remains Zod + Hono validator.
+
+**Model-level OpenAPI seed**
+
+```ts
+const userComponent = User.toOpenAPIComponent()
+const userSchema = User.toOpenAPISchema('output')
+```
+
+These are documentation helpers, not enforcement sources.
+
+**Route-level OpenAPI**
+
+Register operation metadata with `app.openapi()`. `app.openapi()` is a separate method call (not a chain). Both `path` and `method` are required:
+
+```ts
+app.openapi({
+  path: '/users',
+  method: 'post',
+  tags: ['users'],
+  summary: 'Create a user',
+  responses: {
+    '201': { description: 'User created' },
+    '400': { description: 'Validation error' },
+  }
+})
+
+app.post(
+  '/users',
+  User.validator('json', 'create'),
+  async (c) => {
+    const body = c.req.valid('json')
+    const user = await User.create(body)
+    return c.json(user, 201)
+  }
+)
+```
+
+**Generate OpenAPI 3.1 spec**
+
+```ts
+const spec = app.generateOpenAPISpec({
+  info: {
+    title: 'My API',
+    version: '1.0.0',
+  },
+  servers: [{ url: 'https://api.example.com' }],
+})
+```
+
+**Swagger UI**
+
+```ts
+import { swaggerUI } from '@nanokajs/core'
+
+app.use('/docs', swaggerUI({ url: '/openapi.json', title: 'My API' }))
+
+app.get('/openapi.json', (c) => c.json(app.generateOpenAPISpec({...})))
+```
+
+## Conventions (recommended patterns)
+
+**Hardened validator error responses**
+
+By default, `@hono/zod-validator` returns `issues[]` in the response, which leaks API schema shape (field names, types, constraints). Always use a validator hook to return a fixed error message in production:
+
+```ts
+app.post(
+  '/users',
+  User.validator('json', 'create', (result, c) => {
+    if (!result.success) return c.json({ error: 'Invalid request' }, 400)
+  }),
+  handler
+)
+```
+
+**Never re-inject serverOnly fields via `extend()`**
+
+`extend()` bypasses field policies. Do not use it to re-inject `serverOnly` fields:
+
+```ts
+// ❌ DO NOT DO THIS
+User.schema({ extend: { passwordHash: ... } })
+
+// ✅ instead, compute fields in the handler and use outputSchema().parse()
+const user = await User.findOne(id)
+return c.json(outputSchema().parse({ ...user, someField: computed }))
+```
+
+**Limit Hono body size**
+
+When using `t.json()` or large text fields, limit Hono's body parser:
+
+```ts
+app.use(bodyLimit({ maxSize: 10 * 1024 })) // 10 KB
+```
+
+**DB-only fields must be marked serverOnly()**
+
+Fields that should never appear in API responses must be marked `.serverOnly()`:
+
+```ts
+const fields = {
+  passwordHash: t.string().serverOnly(),
+  internalScore: t.integer().serverOnly(),
+}
+```
+
+**Use toResponse() or outputSchema() to shape DB rows**
+
+Never pass DB rows directly to `c.json()`:
+
+```ts
+// ❌ Wrong: leaks serverOnly fields
+const user = await User.findOne(id)
+return c.json(user)
+
+// ✅ Correct
+const user = await User.findOne(id)
+return c.json(User.toResponse(user))
+```
+
+## Anti-patterns (do not do these)
+
+**Do not call `findMany()` without `limit`**
+
+```ts
+// ❌ Type error
+const users = await User.findMany()
+
+// ✅ Correct
+const users = await User.findMany({ limit: 20 })
+```
+
+**Do not pass DB rows directly to responses**
+
+```ts
+// ❌ Leaks serverOnly fields and passwordHash
+const user = await User.findOne(id)
+return c.json(user)
+
+// ✅ Use toResponse or outputSchema
+return c.json(User.toResponse(user))
+```
+
+**Do not use app.db results directly without field policy filtering**
+
+```ts
+// ❌ Escape hatch bypasses field policies
+const user = await app.db.select().from(User.table).where(eq(...))
+return c.json(user) // leaks serverOnly fields
+
+// ✅ Apply outputSchema
+const user = await app.db.select().from(User.table).where(eq(...))
+return c.json(outputSchema().parse(user))
+```
+
+**Do not create custom transaction abstractions**
+
+```ts
+// ❌ Do not do this
+const transaction = app.transaction()
+await transaction.insert(...)
+await transaction.update(...)
+await transaction.commit()
+
+// ✅ Use app.batch() directly
+const results = await app.batch([
+  app.db.insert(...),
+  app.db.update(...),
+])
+```
+
+**Do not use `nanoka generate` for migration logic**
+
+```bash
+# ❌ nanoka generate does not produce SQL
+npx nanoka generate
+
+# ✅ Full flow
+npx nanoka generate                    # → drizzle/schema.ts
+npx drizzle-kit generate              # → drizzle/migrations/*.sql
+wrangler d1 migrations apply <DB>    # → apply to D1
+```
+
+**Do not bake D1Database types into core paths**
+
+```ts
+// ❌ Type-locking to D1
+import type { D1Database } from '@cloudflare/workers-types'
+type AppEnv = { DB: D1Database }
+
+// ✅ Use Env generic
+export interface Env {
+  DB: D1Database
+}
+
+const app = nanoka<Env>(d1Adapter(env.DB))
+```
+
+**Do not rely on OpenAPI spec as validation enforcement**
+
+OpenAPI is documentation. The source of truth for validation is Zod schema + Hono validator. If OpenAPI and runtime validators diverge, the Zod schema wins.
+
+## Non-goals (out of scope)
+
+- **Relations** (`t.hasMany()` / `t.belongsTo()`) — use `app.db` with Drizzle's `innerJoin` / `leftJoin` instead (Issue #14)
+- **Typed query helper** (`User.where(f => eq(...))` chains) — use `app.db` for complex queries (Issue #15)
+- **VSCode extension** — TypeScript language server + `nanoka generate` CLI are sufficient (Issue #16)
+- **Auth** — out of scope; use Hono middleware
+- **Full-stack React** — out of scope; write your own client
+- **Drizzle replacement DSL** — out of scope; Drizzle is always available via `app.db`
+
+## Minimal end-to-end example
+
+```ts
+import { d1Adapter, nanoka, t } from '@nanokajs/core'
+
+const postFields = {
+  id: t.uuid().primary(),
+  title: t.string().min(1).max(200),
+  body: t.string().min(1),
+  published: t.boolean().default(false),
+  createdAt: t.timestamp().default(() => new Date()),
+}
+
+export interface Env {
+  DB: D1Database
+}
+
+export default {
+  async fetch(req: Request, env: Env, ctx: ExecutionContext) {
+    const app = nanoka(d1Adapter(env.DB))
+    const Post = app.model('posts', postFields)
+
+    app.get('/posts/:id', async (c) => {
+      const post = await Post.findOne(c.req.param('id'))
+      if (!post) return c.notFound()
+      return c.json(post)
+    })
+
+    app.post(
+      '/posts',
+      Post.validator('json', { omit: f => [f.id, f.createdAt] }),
+      async (c) => {
+        const body = c.req.valid('json')
+        const post = await Post.create({
+          ...body,
+          id: crypto.randomUUID(),
+          createdAt: new Date(),
+        })
+        return c.json(post, 201)
+      }
+    )
+
+    return app.fetch(req, env, ctx)
+  }
+}
+```
+
+## Reference links
+
+- **Library README**: https://raw.githubusercontent.com/nanokajs/nanoka/main/packages/nanoka/README.md
+- **Design document**: https://raw.githubusercontent.com/nanokajs/nanoka/main/docs/nanoka.md
+- **Implementation status**: https://raw.githubusercontent.com/nanokajs/nanoka/main/docs/implementation-status.md
+- **Architecture decisions**: https://raw.githubusercontent.com/nanokajs/nanoka/main/docs/nanoka.md
+- **Complete example**: https://raw.githubusercontent.com/nanokajs/nanoka/main/examples/basic/src/index.ts

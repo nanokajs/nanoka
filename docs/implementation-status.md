@@ -31,9 +31,12 @@
 - Turso/libSQL adapter: `tursoAdapter(client)` from `@nanokajs/core/turso`
 - CLI scaffolder package: `create-nanoka-app`
 
+### AI coding support
+
+- `llms.txt` / `llms-full.txt` at repo root, served via GitHub raw URL — [#17](https://github.com/nanokajs/nanoka/issues/17)
+
 ## 未実装として残す（将来候補）
 
-- Codex / Claude Code plugin — [#17](https://github.com/nanokajs/nanoka/issues/17)
 - `findMany` offset 上限 — [#18](https://github.com/nanokajs/nanoka/issues/18)
 
 ## Non-goal（全 Phase 外）

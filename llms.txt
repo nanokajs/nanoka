@@ -1,0 +1,18 @@
+# Nanoka
+
+> Thin wrapper over Hono + Drizzle + Zod for Cloudflare Workers + D1. 80% automatic, 20% explicit.
+
+Nanoka places a single model definition at the center: the model is the source of truth for DB schema, TypeScript types, and base validation. API validation is a deliberate derivation, not an automatic mirror — DB shape and API shape diverge (e.g. `passwordHash` exists in the DB but must not appear in responses). Nanoka targets Cloudflare Workers + D1 first-class, with Turso/libSQL via adapter.
+
+## Documentation
+
+- [llms-full.txt](https://raw.githubusercontent.com/nanokajs/nanoka/main/llms-full.txt): Self-contained AI reference covering core API, conventions, and anti-patterns. Suitable for direct context injection.
+- [Library README](https://raw.githubusercontent.com/nanokajs/nanoka/main/packages/nanoka/README.md): Install, quickstart, and complete API reference.
+- [Architecture design](https://raw.githubusercontent.com/nanokajs/nanoka/main/docs/nanoka.md): Design rationale and load-bearing decisions.
+- [Implementation status](https://raw.githubusercontent.com/nanokajs/nanoka/main/docs/implementation-status.md): Shipped vs pending vs non-goal split.
+- [Working example](https://raw.githubusercontent.com/nanokajs/nanoka/main/examples/basic/src/index.ts): End-to-end CRUD on Cloudflare Workers + D1.
+
+## Optional
+
+- [Contributing guide](https://raw.githubusercontent.com/nanokajs/nanoka/main/CONTRIBUTING.md): Repo workflow.
+- [Scaffold CLI README](https://raw.githubusercontent.com/nanokajs/nanoka/main/packages/create-nanoka-app/README.md): `create-nanoka-app` usage.
