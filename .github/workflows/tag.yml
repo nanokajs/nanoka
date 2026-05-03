@@ -6,6 +6,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 concurrency:
   group: tag-${{ github.sha }}
@@ -26,12 +27,22 @@ jobs:
           echo "value=${VERSION}" >> "$GITHUB_OUTPUT"
 
       - name: Create and push tag if not exists
+        id: create_tag
         run: |
           TAG="v${{ steps.version.outputs.value }}"
           if git tag -l "${TAG}" | grep -q "${TAG}"; then
             echo "Tag ${TAG} already exists, skipping."
+            echo "created=false" >> "$GITHUB_OUTPUT"
           else
             git tag "${TAG}"
             git push origin "${TAG}"
             echo "Created and pushed ${TAG}."
+            echo "created=true" >> "$GITHUB_OUTPUT"
           fi
+
+      - name: Trigger publish workflow
+        if: steps.create_tag.outputs.created == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh workflow run publish.yml --ref "v${{ steps.version.outputs.value }}"
