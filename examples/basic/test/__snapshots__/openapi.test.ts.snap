@@ -1,0 +1,67 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`User OpenAPI component fixture > matches snapshot 1`] = `
+{
+  "create": {
+    "properties": {
+      "email": {
+        "format": "email",
+        "type": "string",
+      },
+      "name": {
+        "maxLength": 100,
+        "minLength": 1,
+        "type": "string",
+      },
+    },
+    "required": [
+      "name",
+      "email",
+    ],
+    "type": "object",
+  },
+  "output": {
+    "properties": {
+      "createdAt": {
+        "format": "date-time",
+        "readOnly": true,
+        "type": "string",
+      },
+      "email": {
+        "format": "email",
+        "type": "string",
+      },
+      "id": {
+        "format": "uuid",
+        "readOnly": true,
+        "type": "string",
+      },
+      "name": {
+        "maxLength": 100,
+        "minLength": 1,
+        "type": "string",
+      },
+    },
+    "required": [
+      "id",
+      "name",
+      "email",
+    ],
+    "type": "object",
+  },
+  "update": {
+    "properties": {
+      "email": {
+        "format": "email",
+        "type": "string",
+      },
+      "name": {
+        "maxLength": 100,
+        "minLength": 1,
+        "type": "string",
+      },
+    },
+    "type": "object",
+  },
+}
+`;

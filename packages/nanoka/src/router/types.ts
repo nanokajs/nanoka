@@ -17,6 +17,7 @@ import type {
   SchemaOptions,
   ValidatorInput,
 } from '../model/types'
+import type { OpenAPIModelComponent, OpenAPISchemaObject, OpenAPIUsage } from '../openapi/types'
 
 /**
  * A model registered in a Nanoka application.
@@ -118,6 +119,10 @@ export interface NanokaModel<Fields extends Record<string, Field<any, any, any>>
    * Parses a DB row through outputSchema and returns the safe response object.
    */
   toResponse(row: RowType<Fields>): unknown
+
+  toOpenAPIComponent(): OpenAPIModelComponent
+
+  toOpenAPISchema(usage: OpenAPIUsage): OpenAPISchemaObject
 
   /**
    * Fetches multiple rows with pagination and optional ordering.

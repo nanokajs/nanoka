@@ -74,6 +74,10 @@ export function nanoka<E extends Env = BlankEnv>(adapter: Adapter): Nanoka<E> {
 
       toResponse: (row) => inner.toResponse(row),
 
+      toOpenAPIComponent: () => inner.toOpenAPIComponent(),
+
+      toOpenAPISchema: (usage) => inner.toOpenAPISchema(usage),
+
       findMany: (options) => inner.findMany(adapter, options),
 
       findOne: (idOrWhere) => inner.findOne(adapter, idOrWhere),

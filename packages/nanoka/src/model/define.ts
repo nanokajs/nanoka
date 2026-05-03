@@ -3,6 +3,8 @@ import type { Env, ValidationTargets } from 'hono'
 import type { z } from 'zod'
 import type { Adapter } from '../adapter/types'
 import type { Field } from '../field/types'
+import { toOpenAPIComponent, toOpenAPISchema } from '../openapi/generate'
+import type { OpenAPIUsage } from '../openapi/types'
 import { createImpl, deleteImpl, findManyImpl, findOneImpl, updateImpl } from './crud'
 import { applySchemaOptions, buildBaseObject, derivePolicyOptions } from './schema'
 import { buildTable } from './table'
@@ -97,6 +99,14 @@ export function defineModel<Fields extends Record<string, Field<any, any, any>>>
 
     toResponse(row: RowType<Fields>): unknown {
       return this.outputSchema().parse(row)
+    },
+
+    toOpenAPIComponent() {
+      return toOpenAPIComponent(fields)
+    },
+
+    toOpenAPISchema(usage: OpenAPIUsage) {
+      return toOpenAPISchema(fields, usage)
     },
 
     findMany(adapter: Adapter, options: FindManyOptions<Fields>): Promise<RowType<Fields>[]> {

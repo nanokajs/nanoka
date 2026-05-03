@@ -1,0 +1,213 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`OpenAPI component generation > matches snapshot 1`] = `
+{
+  "create": {
+    "properties": {
+      "active": {
+        "type": "boolean",
+      },
+      "age": {
+        "maximum": 150,
+        "minimum": 0,
+        "type": "integer",
+      },
+      "email": {
+        "format": "email",
+        "type": "string",
+      },
+      "metadata": {},
+      "name": {
+        "maxLength": 100,
+        "minLength": 1,
+        "type": "string",
+      },
+      "password": {
+        "minLength": 8,
+        "type": "string",
+        "writeOnly": true,
+      },
+      "profile": {
+        "properties": {
+          "count": {
+            "type": "integer",
+          },
+          "flags": {
+            "items": {
+              "type": "boolean",
+            },
+            "type": "array",
+          },
+          "foo": {
+            "type": "string",
+          },
+          "labels": {
+            "additionalProperties": {
+              "type": "string",
+            },
+            "type": "object",
+          },
+          "note": {
+            "nullable": true,
+            "type": "string",
+          },
+        },
+        "required": [
+          "foo",
+          "labels",
+        ],
+        "type": "object",
+      },
+      "score": {
+        "maximum": 1,
+        "minimum": 0,
+        "type": "number",
+      },
+    },
+    "required": [
+      "name",
+      "email",
+      "password",
+    ],
+    "type": "object",
+  },
+  "output": {
+    "properties": {
+      "active": {
+        "type": "boolean",
+      },
+      "age": {
+        "maximum": 150,
+        "minimum": 0,
+        "type": "integer",
+      },
+      "createdAt": {
+        "format": "date-time",
+        "readOnly": true,
+        "type": "string",
+      },
+      "email": {
+        "format": "email",
+        "type": "string",
+      },
+      "id": {
+        "format": "uuid",
+        "readOnly": true,
+        "type": "string",
+      },
+      "metadata": {},
+      "name": {
+        "maxLength": 100,
+        "minLength": 1,
+        "type": "string",
+      },
+      "profile": {
+        "properties": {
+          "count": {
+            "type": "integer",
+          },
+          "flags": {
+            "items": {
+              "type": "boolean",
+            },
+            "type": "array",
+          },
+          "foo": {
+            "type": "string",
+          },
+          "labels": {
+            "additionalProperties": {
+              "type": "string",
+            },
+            "type": "object",
+          },
+          "note": {
+            "nullable": true,
+            "type": "string",
+          },
+        },
+        "required": [
+          "foo",
+          "labels",
+        ],
+        "type": "object",
+      },
+      "score": {
+        "maximum": 1,
+        "minimum": 0,
+        "type": "number",
+      },
+    },
+    "required": [
+      "id",
+      "name",
+      "email",
+    ],
+    "type": "object",
+  },
+  "update": {
+    "properties": {
+      "active": {
+        "type": "boolean",
+      },
+      "age": {
+        "maximum": 150,
+        "minimum": 0,
+        "type": "integer",
+      },
+      "email": {
+        "format": "email",
+        "type": "string",
+      },
+      "metadata": {},
+      "name": {
+        "maxLength": 100,
+        "minLength": 1,
+        "type": "string",
+      },
+      "password": {
+        "minLength": 8,
+        "type": "string",
+        "writeOnly": true,
+      },
+      "profile": {
+        "properties": {
+          "count": {
+            "type": "integer",
+          },
+          "flags": {
+            "items": {
+              "type": "boolean",
+            },
+            "type": "array",
+          },
+          "foo": {
+            "type": "string",
+          },
+          "labels": {
+            "additionalProperties": {
+              "type": "string",
+            },
+            "type": "object",
+          },
+          "note": {
+            "nullable": true,
+            "type": "string",
+          },
+        },
+        "required": [
+          "foo",
+          "labels",
+        ],
+        "type": "object",
+      },
+      "score": {
+        "maximum": 1,
+        "minimum": 0,
+        "type": "number",
+      },
+    },
+    "type": "object",
+  },
+}
+`;

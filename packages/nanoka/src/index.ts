@@ -13,5 +13,6 @@ export type {
   Where,
 } from './model'
 export { defineModel } from './model'
+export type { OpenAPIModelComponent, OpenAPISchemaObject, OpenAPIUsage } from './openapi'
 export type { Nanoka, NanokaModel } from './router'
 export { nanoka } from './router'

@@ -80,15 +80,15 @@ Phase 2 の軸は Drizzle クエリ DSL の再発明ではなく、`passwordHash
 
 `docs/backlog.md` §3.3 由来。M1（フィールドポリシー / 用途別スキーマ）完了後に着手するのが自然。
 
-- [ ] **3.1** モデル単位の JSON Schema / OpenAPI component 生成 API
+- [x] **3.1** モデル単位の JSON Schema / OpenAPI component 生成 API
   - `User.toOpenAPIComponent()` または `User.toJSONSchema()`（命名は着手時に決定）
   - `inputSchema('create')` / `inputSchema('update')` / `outputSchema()` から JSON Schema / OpenAPI 3.x component を生成
   - フィールドポリシー（1.1）が `required` / `readOnly` / `writeOnly` に正しく反映されることを assert
-- [ ] **3.2** OpenAPI source of truth として成立するかの検証
+- [x] **3.2** OpenAPI source of truth として成立するかの検証
   - `examples/basic` の `User` モデルから生成した OpenAPI component を fixture として保存し、スキーマ変更時に diff が出るスナップショットテスト
   - フィールドポリシーの追加 / 変更が OpenAPI に正しく反映されることを保証
   - 設計が破綻する場合は M1 のフィールドポリシー API に差し戻す
-- [ ] **3.3** Hono ルート全体の自動収集 / Swagger UI / route-level OpenAPI は **本マイルストーン対象外**（Phase 3 送り）
+- [x] **3.3** Hono ルート全体の自動収集 / Swagger UI / route-level OpenAPI は **本マイルストーン対象外**（Phase 3 送り）
 
 完了基準: モデル単位で OpenAPI component が生成でき、フィールドポリシーの意味論が JSON Schema 上に正しく現れる。スナップショットテストで回帰検出可能。`docs/nanoka.md`「OpenAPI component 生成で schema 設計が破綻しない」が確認済み。
 
@@ -103,6 +103,7 @@ Phase 2 の軸は Drizzle クエリ DSL の再発明ではなく、`passwordHash
   - `docs/backlog.md` §3 / §4 を全件レビュー
   - 1.0.0 で破壊的変更として取り込みたい項目はこのタイミングで実装
   - 保留分は `docs/backlog.md` 上で 1.x 系候補として整理
+  - M3 security review 持ち越し: OpenAPI の Zod subset 変換は M3 時点では documentation / component seed 用であり、API gateway / client-side validator / route-level request validator の enforcement source として過信しないことを確認する。Phase 3 で route-level OpenAPI / Swagger UI を公開する前に、未対応 Zod 型や refinement の扱い（例: `x-nanoka-zod-unsupported` 明示、strict mode では生成エラー）を `docs/backlog.md` に整理する
 - [ ] **4.3** CHANGELOG.md / リリースノートの整備
   - 0.x 系からの破壊的変更点を明示
   - 安定 API 一覧（フィールドポリシー / inputSchema / outputSchema / validator preset / フィールドアクセサ）を README に反映
@@ -112,6 +113,7 @@ Phase 2 の軸は Drizzle クエリ DSL の再発明ではなく、`passwordHash
 - [ ] **4.5** README の 1.0.0 安定化セクション追記
   - 中心 API の安定宣言
   - 1.x 系で追加予定（relation / Turso・libSQL adapter / `create-nanoka-app` / route-level OpenAPI / VSCode 拡張）を明示
+  - OpenAPI component 生成は Zod の代表的 subset からの documentation / component seed であり、runtime validation の source of truth は引き続き Zod schema であることを明記
 
 完了基準: `docs/nanoka.md` の 1.0.0 リリース判断基準 8 項目すべてに ✓ が付く。`v1.0.0` tag push で publish が走り、`@nanokajs/core@1.0.0` が npm registry に出る。onboarding parity CI が `1.0.0` に対して green。`docs/backlog.md` 上に 1.0.0 ブロッカーがゼロ。
 

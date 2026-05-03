@@ -4,6 +4,7 @@ import type { Env, MiddlewareHandler, ValidationTargets } from 'hono'
 import type { z } from 'zod'
 import type { Adapter } from '../adapter/types'
 import type { Field, FieldPolicy, InferFieldType } from '../field/types'
+import type { OpenAPIModelComponent, OpenAPISchemaObject, OpenAPIUsage } from '../openapi/types'
 
 /**
  * Options for findMany query.
@@ -568,6 +569,10 @@ export interface Model<Fields extends Record<string, Field<any, any, any>>> {
    * Equivalent to `User.outputSchema().parse(row)`.
    */
   toResponse(row: RowType<Fields>): unknown
+
+  toOpenAPIComponent(): OpenAPIModelComponent
+
+  toOpenAPISchema(usage: OpenAPIUsage): OpenAPISchemaObject
 
   /**
    * Fetches multiple rows with pagination and optional ordering.
