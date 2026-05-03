@@ -1,12 +1,7 @@
 import { defineConfig } from '@nanokajs/core/config'
-import { userFields, userTableName } from './src/models/user'
+import { postFields, postTableName } from './src/models/posts'
 
 export default defineConfig({
-  models: [
-    {
-      name: userTableName,
-      fields: userFields,
-    },
-  ],
+  models: [{ name: postTableName, fields: postFields }],
   output: './drizzle/schema.ts',
 })

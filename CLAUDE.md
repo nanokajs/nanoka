@@ -79,6 +79,18 @@ For larger or ambiguous changes, present a short plan before editing. The plan s
 
 Do not invent new design decisions during implementation. If the docs and existing code conflict, stop and surface the conflict.
 
+## Versioning
+
+Any change to `packages/nanoka` or `packages/create-nanoka-app` must include a version bump in the same PR. Both packages share the same version number.
+
+| Change type | Version segment | Examples |
+|---|---|---|
+| Bug fix, docs, template, test, tooling | patch `n.n.x` | Template replacement, README fix, CI config |
+| New feature, new API | minor `n.x.0` | New field type, new adapter, new CLI option |
+| Breaking change to stable API | major `x.0.0` | Removing or renaming a stable API listed in `packages/nanoka/README.md#stable-api-surface-10` |
+
+When in doubt between patch and minor, use minor. When in doubt between minor and major, stop and confirm with the user — a wrong major bump is recoverable, but a missed major bump breaks users silently.
+
 ## Security review triggers
 
 Run or request a security-focused review when a change touches:
