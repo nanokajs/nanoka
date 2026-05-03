@@ -51,7 +51,6 @@ Implemented:
 Still pending or intentionally out of scope:
 
 - Relations (`t.hasMany()` / `t.belongsTo()`)
-- Typed query helper (`User.where(f => eq(f.email, x)).limit(10)`)
 - VSCode extension / Codex or Claude Code plugin
 - Auth, full-stack React, or a query DSL that replaces Drizzle
 

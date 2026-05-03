@@ -114,10 +114,6 @@ User.validator('json', { partial: true })
 // Phase 2：schema / validator のフィールドアクセサ形式
 User.schema({ pick: (f) => [f.name, f.emial] })
 //                                   ^^^^^^ Type error: 'emial' does not exist
-
-// Phase 2後半以降の候補：クエリ側アクセサ
-User.where({ email: 'foo@example.com' })           // MVP（オブジェクト形式）
-User.where(f => eq(f.email, 'foo@example.com'))    // 候補（Drizzle再発明に寄りやすいため後回し）
 ```
 
 内部の `f` はProxyではなく `as const` オブジェクト。ランタイムコストはゼロ。
@@ -178,6 +174,7 @@ const result = await app.db
 - マイグレーションを自動実行しない
 - D1以外のDBをMVP段階で完全サポートしない
 - relationは引き続き non-goal（手書きDrizzleで対応）
+- 型安全なクエリビルダー（`User.where(...)` / `User.where(f => eq(...))`）— 採用しないと決定（Issue #15 参照）
 - フィールドアクセサAPIをMVPに含めない（Phase 2以降）
 
 > **成長戦略**: 薄いラッパーとして始め、使われたらフレームワークに育てる。スコープを広げるタイミングはユーザーの声が判断基準。名乗るのは後でいい。
@@ -298,7 +295,7 @@ relation / Turso・libSQL adapter / route-level OpenAPI / `create-nanoka-app` / 
 
 #### 次に残っている設計候補
 - [x] リレーション定義（`t.hasMany()` / `t.belongsTo()`）— 採用しないと決定（Issue #14 参照）
-- [ ] 型安全なクエリビルダー（`User.where(f => eq(f.email, x)).limit(10)`）※Drizzle再発明に寄りやすいため優先度を下げる
+- [x] 型安全なクエリビルダー（`User.where(f => eq(f.email, x)).limit(10)`）— 採用しないと決定（Issue #15 参照）
 - [ ] VSCode拡張（モデル定義からの補完）
 - [ ] Claude Code / Codex プラグイン（モデル定義・ルート生成・migration手順の補助）
 - [ ] OSSコミュニティ整備
