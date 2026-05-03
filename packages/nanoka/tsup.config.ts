@@ -8,6 +8,7 @@ export default defineConfig({
   },
   format: ['esm'],
   dts: true,
+  external: ['@libsql/client', 'drizzle-orm/libsql'],
   sourcemap: true, // intentional: published to npm for debuggability; no absolute paths leak (relative only)
   clean: true,
   target: 'es2022',

@@ -1,5 +1,5 @@
 export type { Adapter } from './adapter'
-export { d1Adapter } from './adapter'
+export { d1Adapter, tursoAdapter } from './adapter'
 export type { Field, FieldModifiers, FieldPolicy, InferFieldType } from './field'
 export { t } from './field'
 export type {
