@@ -1,0 +1,37 @@
+{
+  "name": "create-nanoka-app",
+  "version": "1.0.0",
+  "description": "Create a new Nanoka (Hono + D1) project",
+  "type": "module",
+  "bin": {
+    "create-nanoka-app": "./dist/index.js"
+  },
+  "files": [
+    "dist",
+    "templates",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsup && node ./scripts/prepend-shebang.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "prepublishOnly": "pnpm build && pnpm typecheck && pnpm test"
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "tsup": "^8.3.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nanokajs/nanoka.git"
+  },
+  "license": "MIT"
+}

@@ -68,21 +68,21 @@ Phase 2C（M3）で確立したモデル単位の component 生成を、route-le
 
 `docs/nanoka.md` Phase 3 "`npx create-nanoka-app`" 由来。`docs/backlog.md §4.7` で整備した onboarding parity CI と連携させることで、scaffold 産出物の parity を自動保証する。
 
-- [ ] **3.1** `packages/create-nanoka-app` の新規パッケージ追加
+- [x] **3.1** `packages/create-nanoka-app` の新規パッケージ追加
   - `pnpm-workspace.yaml` に `packages/create-nanoka-app` を追加
   - `package.json` に `bin: { "create-nanoka-app": "dist/index.js" }` を設定
   - `tsup` でビルド、`pnpm -C packages/create-nanoka-app build` が通ること
-- [ ] **3.2** scaffold テンプレート実装
+- [x] **3.2** scaffold テンプレート実装
   - Hono + D1 + Nanoka の最小構成（`src/index.ts` / `drizzle.config.ts` / `wrangler.toml` / `tsconfig.json`）を `templates/default/` に用意
   - README の Quickstart と完全に一致する構成にする
   - `@nanokajs/core` のバージョン指定は `package.json` から動的に取得
-- [ ] **3.3** CLI 実装（対話 or 非対話）
+- [x] **3.3** CLI 実装（対話 or 非対話）
   - `pnpm create nanoka-app <dir>` / `npx create-nanoka-app <dir>` でプロジェクト生成
   - 最小オプション: `--template default`（現時点は default のみ）
-- [ ] **3.4** onboarding parity CI との連携
+- [x] **3.4** onboarding parity CI との連携
   - `e2e/onboarding/` の既存スクリプトを `create-nanoka-app` 産出物に対して回すよう拡張
   - scaffold 産出物で `tsc --noEmit` / `drizzle-kit generate` が成功することを assert
-- [ ] **3.5** `create-nanoka-app` を npm registry に publish
+- [x] **3.5** `create-nanoka-app` を npm registry に publish
   - `packages/create-nanoka-app/package.json` に publish 設定
   - `publish.yml` / `publish-dry-run.yml` に `create-nanoka-app` を追加
 
