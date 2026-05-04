@@ -1,4 +1,4 @@
-import { and, asc, desc, eq } from 'drizzle-orm'
+import { and, asc, desc, eq, SQL } from 'drizzle-orm'
 import type { SQLiteTableWithColumns } from 'drizzle-orm/sqlite-core'
 import { HTTPException } from 'hono/http-exception'
 import type { Adapter } from '../adapter/types'
@@ -108,7 +108,7 @@ function buildWhereClause(
 }
 
 /**
- * Fetches multiple rows with limit, offset, and optional ordering.
+ * Fetches multiple rows with limit, offset, optional ordering, and optional where clause.
  * @internal
  */
 export async function findManyImpl<
@@ -117,11 +117,12 @@ export async function findManyImpl<
 >(
   adapter: Adapter,
   table: SQLiteTableWithColumns<any>,
-  _fields: Fields,
+  fields: Fields,
   options: {
     limit: unknown
     offset?: unknown
     orderBy?: OrderBy<Fields>
+    where?: Where<Fields> | SQL
   },
 ): Promise<RowType<Fields>[]> {
   const limit = guardLimit(options.limit)
@@ -129,6 +130,22 @@ export async function findManyImpl<
 
   // biome-ignore lint/suspicious/noExplicitAny: drizzle query builder type narrowing
   let query: any = adapter.drizzle.select().from(table).limit(limit).offset(offset)
+
+  // Apply where clause
+  if (options.where !== undefined) {
+    if (options.where instanceof SQL) {
+      query = query.where(options.where)
+    } else {
+      const whereClause = buildWhereClause(
+        table,
+        fields,
+        options.where as Where<Record<string, any>>,
+      )
+      if (whereClause !== null) {
+        query = query.where(whereClause)
+      }
+    }
+  }
 
   // Apply ordering
   if (options.orderBy !== undefined) {

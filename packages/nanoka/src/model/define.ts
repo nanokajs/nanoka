@@ -101,6 +101,11 @@ export function defineModel<Fields extends Record<string, Field<any, any, any>>>
       return this.outputSchema().parse(row)
     },
 
+    toResponseMany(rows: readonly RowType<Fields>[]): unknown[] {
+      const schema = this.outputSchema()
+      return rows.map((row) => schema.parse(row))
+    },
+
     toOpenAPIComponent() {
       return toOpenAPIComponent(fields)
     },

@@ -184,7 +184,7 @@ app.post(
 
 If no hook is provided, `@hono/zod-validator` returns validation issues in the response (not hardened for production).
 
-### 4.6 Response shaping: `toResponse()` and arrays
+### 4.6 Response shaping: `toResponse()`, `toResponseMany()`, and arrays
 
 Single row:
 ```ts
@@ -195,10 +195,10 @@ return c.json(User.toResponse(user))
 Array of rows:
 ```ts
 const users = await User.findMany({ limit: 10 })
-return c.json(z.array(User.outputSchema()).parse(users))
+return c.json(User.toResponseMany(users))
 ```
 
-`toResponse()` is a helper equivalent to `outputSchema().parse(row)`.
+`toResponse()` is a helper equivalent to `outputSchema().parse(row)`. `toResponseMany(rows)` applies the same field policy to an array — prefer it over `rows.map(r => User.toResponse(r))` for efficiency.
 
 ### 4.7 Field accessor (typo-safe field references)
 
@@ -222,14 +222,23 @@ The `f` object is `as const`, not a Proxy. No runtime magic.
 **`findMany(options)`** — query with pagination (limit is required)
 
 ```ts
+import { like, or, eq } from 'drizzle-orm'
+
 const users = await User.findMany({ limit: 20 })
 const page2 = await User.findMany({ limit: 20, offset: 20 })
 const sorted = await User.findMany({ limit: 20, orderBy: 'email' })
+
+// Equality AND (plain object)
+const admins = await User.findMany({ limit: 20, where: { role: 'admin' } })
+
+// Drizzle SQL expression (LIKE, OR, ranges, etc.)
+const matched = await User.findMany({ limit: 20, where: like(User.table.email, '%@example.com') })
+const either = await User.findMany({ limit: 20, where: or(eq(User.table.role, 'admin'), eq(User.table.role, 'mod')) })
 ```
 
 Calling `findMany()` without `limit` is a **type error** — the parameter is required. This prevents accidental unbounded queries.
 
-Pagination shape: `{ limit, offset?, orderBy? }`
+Pagination shape: `{ limit, offset?, orderBy?, where? }`. The `where` field accepts either an equality object or any Drizzle `SQL` expression. Never pass user input to `sql.raw()` — use parametrized Drizzle operators instead.
 
 **`findOne(idOrWhere)`** — fetch single row
 
@@ -325,7 +334,17 @@ const result = await app.db
 
 `User.table` is the underlying Drizzle table. Combine with `eq()`, `lt()`, `gt()`, `and()`, `or()`, `inArray()`, `like()` from `drizzle-orm` for complex conditions. SQL injection is prevented by Drizzle's parametrized bindings.
 
-**Important**: `app.db` queries bypass field policies. Data returned from escape hatch must be manually shaped (e.g., with `outputSchema().parse()`).
+**Important**: `app.db` queries bypass field policies. Always apply `toResponseMany(rows)` (or `toResponse(row)`) to the results — skipping it leaks `serverOnly` fields like `passwordHash`.
+
+```ts
+const rows = await app.db
+  .select()
+  .from(User.table)
+  .innerJoin(Post.table, eq(User.table.id, Post.table.userId))
+  .limit(20)
+
+return c.json(User.toResponseMany(rows))
+```
 
 ### 5.3 Batch: D1 batch API directly
 
@@ -576,12 +595,12 @@ return c.json(User.toResponse(user))
 
 ```ts
 // ❌ Escape hatch bypasses field policies
-const user = await app.db.select().from(User.table).where(eq(...))
-return c.json(user) // leaks serverOnly fields
+const users = await app.db.select().from(User.table).limit(20)
+return c.json(users) // leaks serverOnly fields
 
-// ✅ Apply outputSchema
-const user = await app.db.select().from(User.table).where(eq(...))
-return c.json(outputSchema().parse(user))
+// ✅ Use toResponseMany (or toResponse for a single row)
+const users = await app.db.select().from(User.table).limit(20)
+return c.json(User.toResponseMany(users))
 ```
 
 **Do not create custom transaction abstractions**

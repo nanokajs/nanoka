@@ -1,7 +1,8 @@
+import { like } from 'drizzle-orm'
 import { describe, it } from 'vitest'
 import { t } from '../../field'
 import { defineModel } from '../define'
-import type { CreateInput, FindManyOptions } from '../types'
+import type { CreateInput, FindManyOptions, RowType } from '../types'
 
 describe('CRUD methods: type checking', () => {
   const User = defineModel('users', {
@@ -65,6 +66,27 @@ describe('CRUD methods: type checking', () => {
         limit: 20,
         orderBy: ['name', { column: 'email', direction: 'desc' }],
       }
+      void opts
+    })
+
+    it('allows findMany with where as equality object (regression)', () => {
+      const opts: FindManyOptions<typeof User.fields> = {
+        limit: 20,
+        where: { email: 'alice@example.com' },
+      }
+      void opts
+    })
+
+    it('allows findMany with where as Drizzle SQL expression', () => {
+      const opts: FindManyOptions<typeof User.fields> = {
+        limit: 20,
+        where: like(User.table.email, '%x%'),
+      }
+      void opts
+    })
+
+    it('allows findMany with where omitted', () => {
+      const opts: FindManyOptions<typeof User.fields> = { limit: 20 }
       void opts
     })
   })
@@ -175,6 +197,23 @@ describe('CRUD methods: type checking', () => {
         email: 'alice@example.com',
       }
       void _valid
+    })
+  })
+
+  describe('toResponseMany type constraints', () => {
+    it('accepts readonly array of RowType and returns unknown[]', () => {
+      const row: RowType<typeof User.fields> = {
+        id: '00000000-0000-0000-0000-000000000000',
+        name: 'Alice',
+        email: 'alice@example.com',
+      }
+      const result: unknown[] = User.toResponseMany([row])
+      void result
+    })
+
+    it('accepts empty array', () => {
+      const result: unknown[] = User.toResponseMany([])
+      void result
     })
   })
 

@@ -34,6 +34,8 @@
 - Inline route OpenAPI: `app.post(path, { openapi: {...} }, ...handlers)` — [#38](https://github.com/nanokajs/nanoka/issues/38)
 - `t.uuid().primary().readOnly()` 暗黙 UUID 自動生成 — [#42](https://github.com/nanokajs/nanoka/issues/42)
 - `create-nanoka-app` テンプレートを `wrangler.jsonc` 形式に変換、`.gitignore` 生成を npm publish 対応 — [#46](https://github.com/nanokajs/nanoka/issues/46)
+- `findMany` の `where` に Drizzle SQL 式を渡せるオーバーロード — [#39](https://github.com/nanokajs/nanoka/issues/39)
+- `Model.toResponseMany(rows)` ヘルパ — [#39](https://github.com/nanokajs/nanoka/issues/39)
 
 ### AI coding support
 

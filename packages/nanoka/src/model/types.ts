@@ -1,4 +1,5 @@
 import type { Hook } from '@hono/zod-validator'
+import type { SQL } from 'drizzle-orm'
 import type { AnySQLiteColumn, SQLiteTableWithColumns } from 'drizzle-orm/sqlite-core'
 import type { Env, MiddlewareHandler, ValidationTargets } from 'hono'
 import type { z } from 'zod'
@@ -11,6 +12,7 @@ import type { OpenAPIModelComponent, OpenAPISchemaObject, OpenAPIUsage } from '.
  * `limit` is required (no default).
  * `offset` defaults to 0 if omitted.
  * `orderBy` is optional for column ordering.
+ * `where` accepts either an equality object or a Drizzle SQL expression.
  */
 export interface FindManyOptions<
   // biome-ignore lint/suspicious/noExplicitAny: any is necessary for Field constraint
@@ -19,6 +21,7 @@ export interface FindManyOptions<
   readonly limit: number
   readonly offset?: number
   readonly orderBy?: OrderBy<Fields>
+  readonly where?: Where<Fields> | SQL
 }
 
 /**
@@ -582,6 +585,17 @@ export interface Model<Fields extends Record<string, Field<any, any, any>>> {
    * Equivalent to `User.outputSchema().parse(row)`.
    */
   toResponse(row: RowType<Fields>): unknown
+
+  /**
+   * Parses an array of DB rows through outputSchema and returns safe response objects.
+   * The outputSchema is built once and reused for all rows.
+   * Equivalent to mapping `toResponse` over the array but more efficient.
+   *
+   * @example
+   * const rows = await app.db.select().from(User.table).where(...)
+   * return c.json(User.toResponseMany(rows))
+   */
+  toResponseMany(rows: readonly RowType<Fields>[]): unknown[]
 
   toOpenAPIComponent(): OpenAPIModelComponent
 
