@@ -56,7 +56,12 @@ export async function copyTemplate(
   for (const entry of entries) {
     const srcPath = join(srcDir, entry.name)
     const isTmpl = extname(entry.name) === '.tmpl'
-    const destName = isTmpl ? basename(entry.name, '.tmpl') : entry.name
+    const isGitignore = !entry.isDirectory() && entry.name === 'gitignore'
+    const destName = isGitignore
+      ? '.gitignore'
+      : isTmpl
+        ? basename(entry.name, '.tmpl')
+        : entry.name
     const destPath = join(destDir, destName)
 
     if (entry.isDirectory()) {

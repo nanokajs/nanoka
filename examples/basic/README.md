@@ -117,7 +117,7 @@ pnpm -C examples/basic test
    ```
    Copy the `database_id` from output
 
-2. **Update `wrangler.toml`**
+2. **Update `wrangler.jsonc`**
    Replace the placeholder `database_id` with your actual ID
 
 3. **Apply migrations to remote**
@@ -193,7 +193,7 @@ This is intentional—Nanoka is a thin wrapper, not a black box.
 
 ### Debug error responses
 
-By default, `app.onError` returns `{ error: "Internal Server Error" }` for unhandled errors and never exposes stack traces. To see stack traces during local development, set `DEBUG = "1"` in `wrangler.toml`'s `[vars]` section. **Never enable `DEBUG` in production deployments.**
+By default, `app.onError` returns `{ error: "Internal Server Error" }` for unhandled errors and never exposes stack traces. To see stack traces during local development, set `DEBUG = "1"` in `wrangler.jsonc`'s `[vars]` section. **Never enable `DEBUG` in production deployments.**
 
 - **"no such table: users"**: Migrations haven't been applied. Run `pnpm -C examples/basic db:migrate:local`
 - **UUID validation error (400)**: The route expects a UUID in the path, e.g. `http://localhost:8787/users/550e8400-e29b-41d4-a716-446655440000`
