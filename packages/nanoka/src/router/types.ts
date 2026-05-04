@@ -8,6 +8,7 @@ import type {
   Apply,
   CreateInput,
   FieldsToZodShape,
+  FindAllOptions,
   FindManyOptions,
   IdOrWhere,
   ModelTable,
@@ -139,6 +140,12 @@ export interface NanokaModel<Fields extends Record<string, Field<any, any, any>>
    * `limit` is required (no default) to prevent accidental unbounded queries.
    */
   findMany(options: FindManyOptions<Fields>): Promise<RowType<Fields>[]>
+
+  /**
+   * Fetches all rows without a LIMIT clause.
+   * For batch processing / admin tooling. Apply an app-level size guard when used in request handlers.
+   */
+  findAll(options?: FindAllOptions<Fields>): Promise<RowType<Fields>[]>
 
   /**
    * Fetches a single row by primary key or where clause.

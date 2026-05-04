@@ -115,6 +115,8 @@ export function nanoka<E extends Env = BlankEnv>(adapter: Adapter): Nanoka<E> {
 
       findMany: (options) => inner.findMany(adapter, options),
 
+      findAll: (options) => inner.findAll(adapter, options),
+
       findOne: (idOrWhere) => inner.findOne(adapter, idOrWhere),
 
       create: (data) => inner.create(adapter, data),
