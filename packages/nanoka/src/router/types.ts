@@ -128,6 +128,8 @@ export interface NanokaModel<Fields extends Record<string, Field<any, any, any>>
    */
   toResponse(row: RowType<Fields>): unknown
 
+  toResponseMany(rows: readonly RowType<Fields>[]): unknown[]
+
   toOpenAPIComponent(): OpenAPIModelComponent
 
   toOpenAPISchema(usage: OpenAPIUsage): OpenAPISchemaObject

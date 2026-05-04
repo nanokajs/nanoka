@@ -28,9 +28,9 @@ The following APIs are stable. Breaking changes require a major version bump.
 - **Field policies**: `.serverOnly()` / `.writeOnly()` / `.readOnly()` — `t.uuid().primary().readOnly()` implicitly generates a UUID via `crypto.randomUUID()` when no `.default()` is provided
 - **Schema derivation**: `Model.schema(opts?)` / `Model.inputSchema('create' | 'update', opts?)` / `Model.outputSchema(opts?)`
 - **Validator**: `Model.validator(target, opts | preset, hook?)` — presets: `'create'`, `'update'`
-- **Response shaping**: `Model.toResponse(row)`
+- **Response shaping**: `Model.toResponse(row)` / `Model.toResponseMany(rows)`
 - **Field accessor** (typo-safe): `Model.schema({ pick: f => [f.fieldName] })`
-- **CRUD**: `Model.findMany({ limit, offset?, orderBy? })` / `Model.findOne` / `Model.create` / `Model.update` / `Model.delete`
+- **CRUD**: `Model.findMany({ limit, offset?, orderBy?, where? })` / `Model.findOne` / `Model.create` / `Model.update` / `Model.delete`
 - **Escape hatch**: `app.db` (raw Drizzle) / `app.batch(...)` (D1 batch)
 - **OpenAPI seed**: `Model.toOpenAPIComponent()` / `Model.toOpenAPISchema(usage)`
 - **Router**: `nanoka<E extends Env = BlankEnv>(adapter)`
@@ -309,7 +309,30 @@ const users = await User.findMany({ limit: 20, offset: 10 })
 const users = await User.findMany({ limit: 20, orderBy: 'id' })
 ```
 
-This prevents accidental unbounded queries. Pagination shape: `{ limit, offset?, orderBy? }`.
+This prevents accidental unbounded queries. Pagination shape: `{ limit, offset?, orderBy?, where? }`.
+
+The optional `where` field accepts either an equality object or a Drizzle SQL expression:
+
+```ts
+import { eq, like, or } from 'drizzle-orm'
+
+// Equality AND (plain object form)
+const admins = await User.findMany(adapter, { limit: 20, where: { role: 'admin' } })
+
+// LIKE pattern (Drizzle SQL expression)
+const exampleUsers = await User.findMany(adapter, {
+  limit: 20,
+  where: like(User.table.email, '%@example.com'),
+})
+
+// OR condition
+const specific = await User.findMany(adapter, {
+  limit: 20,
+  where: or(eq(User.table.email, 'alice@example.com'), eq(User.table.email, 'bob@example.com')),
+})
+```
+
+When passing a Drizzle SQL expression, SQL injection prevention follows Drizzle's parametrized binding rules — ensure all user-supplied values are passed as Drizzle operands (e.g., `like(col, value)`) rather than interpolated into raw strings. Never pass user input to `sql.raw()`, which skips parametrization entirely.
 
 ## Escape hatch: raw Drizzle and D1 batch
 
@@ -336,6 +359,26 @@ const result = await app.db
 For relations and N+1 prevention, use `app.db` with Drizzle's `innerJoin` / `leftJoin` directly — this is the recommended long-term approach.
 
 `User.table` is the underlying Drizzle table. Combine with `eq()`, `lt()`, `and()`, `or()` from `drizzle-orm` for complex conditions. SQL injection is prevented by Drizzle's parametrized bindings.
+
+### `toResponseMany` — safe response shaping for `app.db` results
+
+When you query via `app.db` (escape hatch) and get back raw DB rows, use `toResponseMany` to apply field policy (dropping `serverOnly`, `writeOnly` fields) across all rows at once:
+
+```ts
+import { like } from 'drizzle-orm'
+
+app.get('/users/search', async (c) => {
+  const rows = await app.db
+    .select()
+    .from(User.table)
+    .where(like(User.table.email, '%@example.com'))
+    .limit(20)
+
+  return c.json(User.toResponseMany(rows))
+})
+```
+
+`toResponseMany` builds the `outputSchema` once and maps `parse` over all rows—equivalent to `rows.map(row => User.toResponse(row))` but without rebuilding the schema per element.
 
 ### `app.batch()` — D1 batch API directly
 

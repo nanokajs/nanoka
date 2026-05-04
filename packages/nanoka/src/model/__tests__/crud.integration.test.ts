@@ -1,5 +1,5 @@
 import type { D1Database } from '@cloudflare/workers-types'
-import { sql } from 'drizzle-orm'
+import { eq, like, or, sql } from 'drizzle-orm'
 import { HTTPException } from 'hono/http-exception'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { d1Adapter } from '../../adapter/d1'
@@ -300,5 +300,138 @@ describe('CRUD operations: vitest-pool-workers D1 integration', () => {
         User.findMany(adapter, { limit: 20, orderBy: 'toString' as any } as any),
       ).rejects.toThrow(HTTPException)
     })
+  })
+})
+
+describe('findMany SQL where + toResponseMany', () => {
+  const WhereUser = defineModel('where_users', {
+    id: t.uuid().primary(),
+    name: t.string(),
+    email: t.string().email(),
+  })
+
+  const SecureUser = defineModel('secure_users', {
+    id: t.uuid().primary(),
+    name: t.string(),
+    email: t.string().email(),
+    passwordHash: t.string().serverOnly(),
+  })
+
+  beforeEach(async () => {
+    const { env } = await import('cloudflare:test')
+    const adapter = d1Adapter(env.DB)
+
+    await adapter.drizzle.run(sql`DROP TABLE IF EXISTS where_users`)
+    await adapter.drizzle.run(
+      sql`
+        CREATE TABLE where_users (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          email TEXT NOT NULL
+        )
+      `,
+    )
+
+    await adapter.drizzle.run(sql`DROP TABLE IF EXISTS secure_users`)
+    await adapter.drizzle.run(
+      sql`
+        CREATE TABLE secure_users (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          email TEXT NOT NULL,
+          passwordHash TEXT NOT NULL
+        )
+      `,
+    )
+  })
+
+  it('where: { email } equality AND still works (regression)', async () => {
+    const { env } = await import('cloudflare:test')
+    const adapter = d1Adapter(env.DB)
+
+    await WhereUser.create(adapter, { id: 'wu-1', name: 'Alice', email: 'alice@example.com' })
+    await WhereUser.create(adapter, { id: 'wu-2', name: 'Bob', email: 'bob@example.com' })
+
+    const rows = await WhereUser.findMany(adapter, {
+      limit: 20,
+      where: { email: 'alice@example.com' },
+    })
+
+    expect(rows.length).toBe(1)
+    expect(rows[0]!.name).toBe('Alice')
+  })
+
+  it('where: like() fetches multiple matching rows', async () => {
+    const { env } = await import('cloudflare:test')
+    const adapter = d1Adapter(env.DB)
+
+    await WhereUser.create(adapter, { id: 'wu-3', name: 'Charlie', email: 'charlie@example.com' })
+    await WhereUser.create(adapter, { id: 'wu-4', name: 'Diana', email: 'diana@example.com' })
+    await WhereUser.create(adapter, { id: 'wu-5', name: 'External', email: 'external@other.org' })
+
+    const rows = await WhereUser.findMany(adapter, {
+      limit: 20,
+      where: like(WhereUser.table.email, '%@example.com'),
+    })
+
+    expect(rows.length).toBe(2)
+    const emails = rows.map((r) => r.email).sort()
+    expect(emails).toEqual(['charlie@example.com', 'diana@example.com'])
+  })
+
+  it('where: or(eq(), eq()) performs OR search', async () => {
+    const { env } = await import('cloudflare:test')
+    const adapter = d1Adapter(env.DB)
+
+    await WhereUser.create(adapter, { id: 'wu-6', name: 'Eve', email: 'eve@example.com' })
+    await WhereUser.create(adapter, { id: 'wu-7', name: 'Frank', email: 'frank@example.com' })
+    await WhereUser.create(adapter, { id: 'wu-8', name: 'Grace', email: 'grace@example.com' })
+
+    const rows = await WhereUser.findMany(adapter, {
+      limit: 20,
+      where: or(
+        eq(WhereUser.table.email, 'eve@example.com'),
+        eq(WhereUser.table.email, 'grace@example.com'),
+      ),
+    })
+
+    expect(rows.length).toBe(2)
+    const names = rows.map((r) => r.name).sort()
+    expect(names).toEqual(['Eve', 'Grace'])
+  })
+
+  it('toResponseMany removes serverOnly fields', async () => {
+    const { env } = await import('cloudflare:test')
+    const adapter = d1Adapter(env.DB)
+
+    // Insert directly via escape hatch because serverOnly fields are excluded from CreateInput
+    await adapter.drizzle
+      .insert(SecureUser.table)
+      // biome-ignore lint/suspicious/noExplicitAny: inserting serverOnly field directly via escape hatch
+      .values([
+        {
+          id: '11111111-1111-1111-1111-111111111111',
+          name: 'Heidi',
+          email: 'heidi@example.com',
+          passwordHash: 'secret9',
+        } as any,
+        {
+          id: '22222222-2222-2222-2222-222222222222',
+          name: 'Ivan',
+          email: 'ivan@example.com',
+          passwordHash: 'secret10',
+        } as any,
+      ])
+      .run()
+
+    const rows = await SecureUser.findMany(adapter, { limit: 20 })
+    const responses = SecureUser.toResponseMany(rows)
+
+    expect(responses.length).toBe(2)
+    for (const resp of responses) {
+      expect(resp).not.toHaveProperty('passwordHash')
+      expect(resp).toHaveProperty('name')
+      expect(resp).toHaveProperty('email')
+    }
   })
 })
