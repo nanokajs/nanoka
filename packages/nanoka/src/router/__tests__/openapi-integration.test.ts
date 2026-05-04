@@ -75,6 +75,98 @@ describe('app.openapi() integration', () => {
     expect(spec.paths['/b']).toBeDefined()
   })
 
+  it('inline { openapi } option registers metadata via app.post()', () => {
+    const adapter = createMockAdapter()
+    const app = nanoka(adapter)
+
+    app.post(
+      '/users',
+      {
+        openapi: {
+          summary: 'Create user',
+          responses: { '201': { description: 'Created' } },
+        },
+      },
+      async (c) => c.json({ ok: true }, 201),
+    )
+
+    const spec = app.generateOpenAPISpec({ info: { title: 'T', version: '0' } })
+    const usersPath = spec.paths['/users'] as Record<string, unknown>
+    expect(usersPath).toBeDefined()
+    const op = usersPath.post as Record<string, unknown>
+    expect(op).toBeDefined()
+    expect(op.summary).toBe('Create user')
+  })
+
+  it('inline { openapi } and standalone app.openapi() coexist in the same spec', () => {
+    const adapter = createMockAdapter()
+    const app = nanoka(adapter)
+
+    app.openapi({
+      path: '/users',
+      method: 'get',
+      summary: 'List users',
+      responses: { '200': { description: 'OK' } },
+    })
+
+    app.post(
+      '/users',
+      {
+        openapi: {
+          summary: 'Create user',
+          responses: { '201': { description: 'Created' } },
+        },
+      },
+      async (c) => c.json({ ok: true }, 201),
+    )
+
+    const spec = app.generateOpenAPISpec({ info: { title: 'T', version: '0' } })
+    const usersPath = spec.paths['/users'] as Record<string, unknown>
+    expect(usersPath.get).toBeDefined()
+    expect(usersPath.post).toBeDefined()
+    const postOp = usersPath.post as Record<string, unknown>
+    expect(postOp.summary).toBe('Create user')
+    const getOp = usersPath.get as Record<string, unknown>
+    expect(getOp.summary).toBe('List users')
+  })
+
+  it('inline { openapi } works alongside a validator middleware', async () => {
+    const adapter = createMockAdapter()
+    const app = nanoka(adapter)
+
+    const User = app.model('users', {
+      id: t.uuid().primary().readOnly(),
+      name: t.string(),
+    })
+
+    app.post(
+      '/users',
+      {
+        openapi: {
+          summary: 'Create user',
+          responses: { '201': { description: 'Created' } },
+        },
+      },
+      User.validator('json', 'create') as import('hono').MiddlewareHandler,
+      async (c) => {
+        // biome-ignore lint/suspicious/noExplicitAny: inline openapi overload uses H[] which loses validator type inference
+        const body = (c.req.valid as (target: 'json') => any)('json')
+        return c.json(body, 201)
+      },
+    )
+
+    const spec = app.generateOpenAPISpec({ info: { title: 'T', version: '0' } })
+    const usersPath = spec.paths['/users'] as Record<string, unknown>
+    expect(usersPath.post).toBeDefined()
+
+    const res = await app.request('/users', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ name: 'Alice' }),
+    })
+    expect(res.status).toBe(201)
+  })
+
   it('strict mode throws when schema contains unsupported Zod types', () => {
     const adapter = createMockAdapter()
     const app = nanoka(adapter)

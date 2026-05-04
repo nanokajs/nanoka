@@ -1,11 +1,11 @@
 import { Hono } from 'hono'
-import type { BlankEnv, Env } from 'hono/types'
+import type { BlankEnv, Env, H } from 'hono/types'
 import type { Adapter } from '../adapter/types'
 import type { Field } from '../field/types'
 import { defineModel } from '../model/define'
 import { buildOpenAPIDocument } from '../openapi/route'
-import type { OpenAPIRouteMetadata } from '../openapi/types'
-import type { Nanoka, NanokaModel } from './types'
+import type { HttpMethod, OpenAPIRouteMetadata } from '../openapi/types'
+import type { Nanoka, NanokaModel, RouteOpenAPIOption } from './types'
 
 /**
  * Creates a Nanoka application instance with the given database adapter.
@@ -44,6 +44,29 @@ export function nanoka<E extends Env = BlankEnv>(adapter: Adapter): Nanoka<E> {
   }
 
   app.generateOpenAPISpec = (options) => buildOpenAPIDocument(openapiRoutes, options)
+
+  function wrapWithOpenAPI(method: HttpMethod) {
+    // biome-ignore lint/suspicious/noExplicitAny: original Hono method is typed as HandlerInterface which needs any at call site
+    const original = (app as any)[method].bind(app)
+    // biome-ignore lint/suspicious/noExplicitAny: overload bridge — type safety is provided by the Nanoka interface overload
+    ;(app as any)[method] = (path: string, second: RouteOpenAPIOption | H, ...rest: H[]) => {
+      if (
+        second !== null &&
+        typeof second === 'object' &&
+        !Array.isArray(second) &&
+        typeof (second as RouteOpenAPIOption).openapi === 'object'
+      ) {
+        const { openapi } = second as RouteOpenAPIOption
+        openapiRoutes.push({ ...openapi, path, method })
+        return original(path, ...rest)
+      }
+      return original(path, second, ...rest)
+    }
+  }
+
+  for (const method of ['get', 'post', 'put', 'patch', 'delete'] as const) {
+    wrapWithOpenAPI(method)
+  }
 
   // biome-ignore lint/suspicious/noExplicitAny: any is necessary for Field generic constraint
   app.model = function model<Fields extends Record<string, Field<any, any, any>>>(

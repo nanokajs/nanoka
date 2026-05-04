@@ -24,7 +24,8 @@ export type {
   OpenAPISchemaObject,
   OpenAPISpecOptions,
   OpenAPIUsage,
+  RouteOpenAPIMetadata,
 } from './openapi'
 export { swaggerUI } from './openapi'
-export type { Nanoka, NanokaModel } from './router'
+export type { Nanoka, NanokaModel, RouteOpenAPIOption } from './router'
 export { nanoka } from './router'

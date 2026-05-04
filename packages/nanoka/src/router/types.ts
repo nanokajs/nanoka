@@ -1,6 +1,6 @@
 import type { Hook } from '@hono/zod-validator'
 import type { Hono, MiddlewareHandler } from 'hono'
-import type { BlankEnv, Env } from 'hono/types'
+import type { BlankEnv, Env, H, HandlerInterface } from 'hono/types'
 import type { z } from 'zod'
 import type { Adapter } from '../adapter/types'
 import type { Field } from '../field/types'
@@ -24,6 +24,7 @@ import type {
   OpenAPISchemaObject,
   OpenAPISpecOptions,
   OpenAPIUsage,
+  RouteOpenAPIMetadata,
 } from '../openapi/types'
 
 /**
@@ -165,6 +166,14 @@ export interface NanokaModel<Fields extends Record<string, Field<any, any, any>>
 }
 
 /**
+ * Inline OpenAPI metadata option accepted as the second argument to
+ * app.get/post/put/patch/delete when registering a route with OpenAPI.
+ */
+export interface RouteOpenAPIOption {
+  readonly openapi: RouteOpenAPIMetadata
+}
+
+/**
  * Nanoka application: a Hono instance extended with model registration,
  * adapter binding, and escape hatches for raw Drizzle and batch operations.
  */
@@ -206,4 +215,19 @@ export interface Nanoka<E extends Env = BlankEnv> extends Hono<E> {
    * Builds the full OpenAPI 3.1 document from all registered openapi() metadata.
    */
   generateOpenAPISpec(options: OpenAPISpecOptions): OpenAPIDocument
+
+  // Overloads that accept inline { openapi } metadata as the second argument.
+  // Known limitation: handler context `c.req.valid` loses its inferred type
+  // in this form because the rest parameters use the generic H[] signature.
+  // Use app.openapi() + separate route definition when handler type inference matters.
+  get: ((path: string, meta: RouteOpenAPIOption, ...handlers: H[]) => this) &
+    HandlerInterface<E, 'get', import('hono/types').BlankSchema, '/'>
+  post: ((path: string, meta: RouteOpenAPIOption, ...handlers: H[]) => this) &
+    HandlerInterface<E, 'post', import('hono/types').BlankSchema, '/'>
+  put: ((path: string, meta: RouteOpenAPIOption, ...handlers: H[]) => this) &
+    HandlerInterface<E, 'put', import('hono/types').BlankSchema, '/'>
+  patch: ((path: string, meta: RouteOpenAPIOption, ...handlers: H[]) => this) &
+    HandlerInterface<E, 'patch', import('hono/types').BlankSchema, '/'>
+  delete: ((path: string, meta: RouteOpenAPIOption, ...handlers: H[]) => this) &
+    HandlerInterface<E, 'delete', import('hono/types').BlankSchema, '/'>
 }

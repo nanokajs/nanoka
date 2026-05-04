@@ -296,6 +296,7 @@ relation / Turso・libSQL adapter / route-level OpenAPI / `create-nanoka-app` / 
 
 #### 1.x 追加済み（Phase 2 後半 / Phase 3 が混在して実装されたもの）
 - [x] route-level OpenAPI: `app.openapi(metadata)` / `app.generateOpenAPISpec(options)`
+- [x] inline route OpenAPI: `app.post(path, { openapi: {...} }, ...handlers)` — `path` / `method` を省略できる短縮形（Known limitation: `c.req.valid` の型推論が失われる）
 - [x] Swagger UI middleware: `swaggerUI({ url, title? })`
 - [x] Turso / libSQL adapter: `tursoAdapter(client)`（`@nanokajs/core/turso` export）
 - [x] CLIスキャフォールダ: `create-nanoka-app`

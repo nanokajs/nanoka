@@ -45,6 +45,8 @@ export interface OpenAPIRouteMetadata {
   readonly responses: Record<string, OpenAPIResponseSpec>
 }
 
+export type RouteOpenAPIMetadata = Omit<OpenAPIRouteMetadata, 'path' | 'method'>
+
 export interface OpenAPISpecOptions {
   readonly info: {
     readonly title: string

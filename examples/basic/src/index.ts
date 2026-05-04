@@ -35,141 +35,149 @@ export default {
       return c.json(body, status)
     })
 
-    // OpenAPI metadata registration
-    app.openapi({
-      path: '/users',
-      method: 'post',
-      summary: 'Create user',
-      requestBody: {
-        required: true,
-        content: { 'application/json': { schema: User.toOpenAPISchema('create') } },
-      },
-      responses: {
-        '201': {
-          description: 'Created user',
-          content: { 'application/json': { schema: User.toOpenAPISchema('output') } },
+    // Known limitation: routes using inline { openapi } lose c.req.valid type inference
+    // (H[] variadic overload). Cast explicitly below. Use app.openapi() + separate route
+    // definition if full handler type safety is required.
+
+    // POST /users - Create user
+    app.post(
+      '/users',
+      {
+        openapi: {
+          summary: 'Create user',
+          requestBody: {
+            required: true,
+            content: { 'application/json': { schema: User.toOpenAPISchema('create') } },
+          },
+          responses: {
+            '201': {
+              description: 'Created user',
+              content: { 'application/json': { schema: User.toOpenAPISchema('output') } },
+            },
+            '400': { description: 'Validation error' },
+          },
         },
-        '400': { description: 'Validation error' },
       },
-    })
-    app.openapi({
-      path: '/users',
-      method: 'get',
-      summary: 'List users',
-      responses: {
-        '200': {
-          description: 'List of users',
-          content: {
-            'application/json': {
-              schema: { type: 'array', items: User.toOpenAPISchema('output') },
+      User.validator('json', 'create'),
+      async (c) => {
+        // biome-ignore lint/suspicious/noExplicitAny: known limitation, see above
+        const body = (c.req.valid as (target: 'json') => any)('json')
+        const id = crypto.randomUUID()
+        // SECURITY: demo-only — the email is reversible, NEVER use in production.
+        // Replace with a real password hash (bcrypt, argon2, scrypt) or accept a
+        // pre-hashed value from the client and verify the algorithm.
+        const passwordHash = `demo-${body.email}`
+        const createdAt = new Date()
+
+        // app.db 経由の行は policy 未適用（passwordHash を含む完全な DB 行）。必ず User.toResponse() を通すこと。
+        const rows = await app.db
+          .insert(User.table)
+          .values({ ...body, id, passwordHash, createdAt })
+          .returning()
+        const created = rows[0] as import('@nanokajs/core').RowType<typeof User.fields>
+
+        return c.json(User.toResponse(created), 201)
+      },
+    )
+
+    // GET /users - List users
+    app.get(
+      '/users',
+      {
+        openapi: {
+          summary: 'List users',
+          responses: {
+            '200': {
+              description: 'List of users',
+              content: {
+                'application/json': {
+                  schema: { type: 'array', items: User.toOpenAPISchema('output') },
+                },
+              },
             },
           },
         },
       },
-    })
-    app.openapi({
-      path: '/users/:id',
-      method: 'get',
-      summary: 'Get user by ID',
-      params: [
-        { name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } },
-      ],
-      responses: {
-        '200': {
-          description: 'User found',
-          content: { 'application/json': { schema: User.toOpenAPISchema('output') } },
-        },
-        '404': { description: 'User not found' },
+      async (c) => {
+        const querySchema = z.object({
+          limit: z.coerce.number().int().min(1).max(100).default(20),
+          offset: z.coerce.number().int().min(0).default(0),
+        })
+
+        const queryResult = querySchema.safeParse(c.req.query())
+        if (!queryResult.success) {
+          throw new HTTPException(400, { message: 'Invalid query parameters' })
+        }
+
+        const { limit, offset } = queryResult.data
+        const users = await User.findMany({ limit, offset, orderBy: 'id' })
+        const result = z.array(User.outputSchema()).parse(users)
+        return c.json(result)
       },
-    })
-    app.openapi({
-      path: '/users/:id',
-      method: 'patch',
-      summary: 'Update user',
-      params: [
-        { name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } },
-      ],
-      requestBody: {
-        required: true,
-        content: { 'application/json': { schema: User.toOpenAPISchema('update') } },
-      },
-      responses: {
-        '200': {
-          description: 'Updated user',
-          content: { 'application/json': { schema: User.toOpenAPISchema('output') } },
-        },
-        '404': { description: 'User not found' },
-      },
-    })
-    app.openapi({
-      path: '/users/:id',
-      method: 'delete',
-      summary: 'Delete user',
-      params: [
-        { name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } },
-      ],
-      responses: {
-        '204': { description: 'User deleted' },
-        '404': { description: 'User not found' },
-      },
-    })
-
-    // POST /users - Create user
-    app.post('/users', User.validator('json', 'create'), async (c) => {
-      const body = c.req.valid('json')
-      const id = crypto.randomUUID()
-      // SECURITY: demo-only — the email is reversible, NEVER use in production.
-      // Replace with a real password hash (bcrypt, argon2, scrypt) or accept a
-      // pre-hashed value from the client and verify the algorithm.
-      const passwordHash = `demo-${body.email}`
-      const createdAt = new Date()
-
-      // app.db 経由の行は policy 未適用（passwordHash を含む完全な DB 行）。必ず User.toResponse() を通すこと。
-      const rows = await app.db
-        .insert(User.table)
-        .values({ ...body, id, passwordHash, createdAt })
-        .returning()
-      const created = rows[0] as import('@nanokajs/core').RowType<typeof User.fields>
-
-      return c.json(User.toResponse(created), 201)
-    })
-
-    // GET /users - List users
-    app.get('/users', async (c) => {
-      const querySchema = z.object({
-        limit: z.coerce.number().int().min(1).max(100).default(20),
-        offset: z.coerce.number().int().min(0).default(0),
-      })
-
-      const queryResult = querySchema.safeParse(c.req.query())
-      if (!queryResult.success) {
-        throw new HTTPException(400, { message: 'Invalid query parameters' })
-      }
-
-      const { limit, offset } = queryResult.data
-      const users = await User.findMany({ limit, offset, orderBy: 'id' })
-      const result = z.array(User.outputSchema()).parse(users)
-      return c.json(result)
-    })
+    )
 
     // GET /users/:id - Get single user
-    app.get('/users/:id', User.validator('param', { pick: ['id'] }), async (c) => {
-      const { id } = c.req.valid('param')
-      const user = await User.findOne(id)
-      if (!user) {
-        throw new HTTPException(404, { message: 'User not found' })
-      }
-      return c.json(User.toResponse(user))
-    })
+    app.get(
+      '/users/:id',
+      {
+        openapi: {
+          summary: 'Get user by ID',
+          params: [
+            { name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } },
+          ],
+          responses: {
+            '200': {
+              description: 'User found',
+              content: { 'application/json': { schema: User.toOpenAPISchema('output') } },
+            },
+            '404': { description: 'User not found' },
+          },
+        },
+      },
+      User.validator('param', { pick: ['id'] }) as import('hono').MiddlewareHandler,
+      async (c) => {
+        // biome-ignore lint/suspicious/noExplicitAny: known limitation, see above
+        const { id } = (c.req.valid as (target: 'param') => any)('param')
+        const user = await User.findOne(id)
+        if (!user) {
+          throw new HTTPException(404, { message: 'User not found' })
+        }
+        return c.json(User.toResponse(user))
+      },
+    )
 
     // PATCH /users/:id - Update user
     app.patch(
       '/users/:id',
-      User.validator('param', { pick: ['id'] }),
-      User.validator('json', { partial: true, pick: ['name', 'email'] }),
+      {
+        openapi: {
+          summary: 'Update user',
+          params: [
+            { name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } },
+          ],
+          requestBody: {
+            required: true,
+            content: { 'application/json': { schema: User.toOpenAPISchema('update') } },
+          },
+          responses: {
+            '200': {
+              description: 'Updated user',
+              content: { 'application/json': { schema: User.toOpenAPISchema('output') } },
+            },
+            '404': { description: 'User not found' },
+          },
+        },
+      },
+      User.validator('param', { pick: ['id'] }) as import('hono').MiddlewareHandler,
+      User.validator('json', {
+        partial: true,
+        pick: ['name', 'email'],
+      }) as import('hono').MiddlewareHandler,
       async (c) => {
-        const { id } = c.req.valid('param')
-        const body = c.req.valid('json')
+        // biome-ignore lint/suspicious/noExplicitAny: known limitation, see above
+        const { id } = (c.req.valid as (target: 'param') => any)('param')
+        // biome-ignore lint/suspicious/noExplicitAny: known limitation, see above
+        const body = (c.req.valid as (target: 'json') => any)('json')
         const updated = await User.update(id, body)
         if (!updated) {
           throw new HTTPException(404, { message: 'User not found' })
@@ -179,14 +187,31 @@ export default {
     )
 
     // DELETE /users/:id - Delete user
-    app.delete('/users/:id', User.validator('param', { pick: ['id'] }), async (c) => {
-      const { id } = c.req.valid('param')
-      const result = await User.delete(id)
-      if (result.deleted === 0) {
-        throw new HTTPException(404, { message: 'User not found' })
-      }
-      return c.body(null, 204)
-    })
+    app.delete(
+      '/users/:id',
+      {
+        openapi: {
+          summary: 'Delete user',
+          params: [
+            { name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } },
+          ],
+          responses: {
+            '204': { description: 'User deleted' },
+            '404': { description: 'User not found' },
+          },
+        },
+      },
+      User.validator('param', { pick: ['id'] }) as import('hono').MiddlewareHandler,
+      async (c) => {
+        // biome-ignore lint/suspicious/noExplicitAny: known limitation, see above
+        const { id } = (c.req.valid as (target: 'param') => any)('param')
+        const result = await User.delete(id)
+        if (result.deleted === 0) {
+          throw new HTTPException(404, { message: 'User not found' })
+        }
+        return c.body(null, 204)
+      },
+    )
 
     app.get('/openapi.json', (c) =>
       c.json(

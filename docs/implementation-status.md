@@ -31,6 +31,7 @@
 - Turso/libSQL adapter: `tursoAdapter(client)` from `@nanokajs/core/turso`
 - CLI scaffolder package: `create-nanoka-app`
 - Unified migration workflow: `nanoka generate --apply --db <name>` — [#41](https://github.com/nanokajs/nanoka/issues/41)
+- Inline route OpenAPI: `app.post(path, { openapi: {...} }, ...handlers)` — [#38](https://github.com/nanokajs/nanoka/issues/38)
 
 ### AI coding support
 
