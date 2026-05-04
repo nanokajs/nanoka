@@ -25,14 +25,32 @@ Add to `tsconfig.json` so Cloudflare Workers types resolve as ambient:
 
 ## Migration flow
 
-Nanoka has no custom migration engine. The flow is:
+Nanoka has no custom migration engine. SQL generation and application stay with drizzle-kit and wrangler.
+
+**One-command flow (recommended):**
+
+```bash
+# drizzle.config.ts が存在すれば drizzle-kit generate まで自動実行
+npx nanoka generate
+
+# schema 生成 → drizzle-kit generate → wrangler apply を一括実行
+npx nanoka generate --apply --db <DATABASE>
+
+# 本番 D1 への適用
+npx nanoka generate --apply --db <DATABASE> --remote
+
+# drizzle-kit の自動実行をスキップしたい場合
+npx nanoka generate --no-migrate
+```
+
+**Manual step-by-step flow:**
 
 1. Write model definitions (e.g., `postFields` in `src/models/posts.ts`)
-2. Create `nanoka.config.ts` and run `npx nanoka generate` → produces `drizzle/schema.ts` (Drizzle schema code, not SQL)
-3. Create `drizzle.config.ts` and run `npx drizzle-kit generate` → produces `drizzle/migrations/*.sql` (SQL diffs)
+2. Create `nanoka.config.ts` and run `npx nanoka generate` → produces `drizzle/schema.ts`
+3. Create `drizzle.config.ts` and run `npx drizzle-kit generate` → produces `drizzle/migrations/*.sql`
 4. Run `wrangler d1 migrations apply <DATABASE> --local` → applies migrations to D1
 
-Nanoka does not generate SQL or apply migrations. That responsibility stays with drizzle-kit and wrangler.
+`nanoka generate` automatically runs `drizzle-kit generate` when `drizzle.config.ts` is detected. SQL generation and migration application are delegated to drizzle-kit and wrangler respectively — Nanoka does not reimplement them.
 
 ## Core API
 
@@ -543,13 +561,13 @@ const results = await app.batch([
 ])
 ```
 
-**Do not use `nanoka generate` for migration logic**
+**`nanoka generate` does not produce SQL itself — it delegates to drizzle-kit**
 
 ```bash
-# ❌ nanoka generate does not produce SQL
-npx nanoka generate
+# ✅ One-command full pipeline (drizzle.config.ts 検出時に drizzle-kit も自動実行)
+npx nanoka generate --apply --db <DB>
 
-# ✅ Full flow
+# ✅ Manual step-by-step (同等の結果)
 npx nanoka generate                    # → drizzle/schema.ts
 npx drizzle-kit generate              # → drizzle/migrations/*.sql
 wrangler d1 migrations apply <DB>    # → apply to D1

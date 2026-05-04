@@ -136,8 +136,14 @@ const f = { id: 'id', name: 'name', email: 'email' } as const
 ```
 # Nanokaがやること
 nanoka generate        # モデル定義 → Drizzleスキーマファイルを生成
+                       # drizzle.config.ts が存在すれば drizzle-kit generate も自動実行
 
-# 既存ツールに委ねること
+# ワンコマンドで全パイプライン実行（--apply フラグ）
+nanoka generate --apply --db <DATABASE>
+#   → schema 生成 + drizzle-kit generate + wrangler d1 migrations apply --local
+# リモートに適用する場合: nanoka generate --apply --db <DATABASE> --remote
+
+# 既存ツールに委ねること（--apply を使わない場合）
 drizzle-kit generate   # スキーマ差分からSQLを生成
 wrangler d1 migrations apply --local / --remote  # 適用
 ```

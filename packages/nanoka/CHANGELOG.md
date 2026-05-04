@@ -5,6 +5,17 @@ All notable changes to `@nanokajs/core` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] — 2026-05-04
+
+### Added
+
+- Unified migration workflow: `nanoka generate` now automatically runs `drizzle-kit generate` when `drizzle.config.ts` (or `.js` / `.mjs`) is detected in the working directory.
+- `--apply --db <name>` flag: runs the full pipeline (schema generation → `drizzle-kit generate` → `wrangler d1 migrations apply --local`) in one command.
+- `--remote` flag: used with `--apply` to apply migrations remotely instead of locally.
+- `--no-migrate` flag: skips `drizzle-kit generate`, running schema generation only.
+- `--package-manager <pm>` flag: controls how sub-commands are invoked (`npx` default, `pnpm`, `npm`, `yarn`, `bun`).
+- `NanokaConfig.migrate` field: optional config for `drizzleConfig`, `database`, and `packageManager` — can supply `--db` and `--package-manager` defaults via `nanoka.config.ts`.
+
 ## [1.0.2] — 2026-05-03
 
 ### Added

@@ -30,6 +30,7 @@
 - Swagger UI middleware: `swaggerUI({ url, title? })`
 - Turso/libSQL adapter: `tursoAdapter(client)` from `@nanokajs/core/turso`
 - CLI scaffolder package: `create-nanoka-app`
+- Unified migration workflow: `nanoka generate --apply --db <name>` — [#41](https://github.com/nanokajs/nanoka/issues/41)
 
 ### AI coding support
 
