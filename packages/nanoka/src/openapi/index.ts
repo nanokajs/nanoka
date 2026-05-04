@@ -12,4 +12,5 @@ export type {
   OpenAPISchemaObject,
   OpenAPISpecOptions,
   OpenAPIUsage,
+  RouteOpenAPIMetadata,
 } from './types'

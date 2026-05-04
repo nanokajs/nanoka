@@ -384,7 +384,7 @@ export default {
 }
 ```
 
-Nanoka apps are Hono instances extended with `model()`, `db`, `batch()`, `openapi()`, and `generateOpenAPISpec()`. All standard Hono middleware and patterns work directly.
+Nanoka apps are Hono instances extended with `model()`, `db`, `batch()`, `openapi()`, `generateOpenAPISpec()`, and inline `{ openapi }` route metadata. All standard Hono middleware and patterns work directly.
 
 ## OpenAPI
 
@@ -401,7 +401,46 @@ These are documentation helpers, not enforcement sources.
 
 **Route-level OpenAPI**
 
-Register operation metadata with `app.openapi()`. `app.openapi()` is a separate method call (not a chain). Both `path` and `method` are required:
+Two equivalent ways to register route-level OpenAPI metadata:
+
+**Option 1: inline `{ openapi }` as the second argument (concise)**
+
+Pass `{ openapi: RouteOpenAPIMetadata }` as the second argument to `app.get/post/put/patch/delete`. `path` and `method` are inferred from the call site.
+
+Known limitation: `c.req.valid` loses its narrowed type in the handler because the overload uses a generic `H[]` rest-parameter. Cast explicitly or use Option 2 when handler type inference matters.
+
+```ts
+app.post(
+  '/users',
+  {
+    openapi: {
+      summary: 'Create a user',
+      requestBody: {
+        required: true,
+        content: { 'application/json': { schema: User.toOpenAPISchema('create') } },
+      },
+      responses: {
+        '201': {
+          description: 'User created',
+          content: { 'application/json': { schema: User.toOpenAPISchema('output') } },
+        },
+        '400': { description: 'Validation error' },
+      },
+    },
+  },
+  User.validator('json', 'create') as import('hono').MiddlewareHandler,
+  async (c) => {
+    // c.req.valid loses inferred type with inline { openapi } — cast explicitly
+    const body = (c.req.valid as (target: 'json') => any)('json')
+    const user = await User.create(body)
+    return c.json(user, 201)
+  },
+)
+```
+
+**Option 2: standalone `app.openapi()` call (full type inference preserved)**
+
+`app.openapi()` is a separate method call (not a chain). Both `path` and `method` are required. Prefer this when `c.req.valid` type inference in the handler matters:
 
 ```ts
 app.openapi({
