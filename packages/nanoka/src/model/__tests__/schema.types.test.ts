@@ -3,7 +3,7 @@ import { describe, it } from 'vitest'
 import type { z } from 'zod'
 import { t } from '../../field'
 import { defineModel } from '../define'
-import type { CreateInput, PolicyOmitKeys } from '../types'
+import type { CreateInput } from '../types'
 
 describe('Model: schema() type inference', () => {
   const User = defineModel('users', {

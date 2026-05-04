@@ -1,4 +1,8 @@
-import { type AnySQLiteColumn, type SQLiteTableWithColumns, sqliteTable } from 'drizzle-orm/sqlite-core'
+import {
+  type AnySQLiteColumn,
+  type SQLiteTableWithColumns,
+  sqliteTable,
+} from 'drizzle-orm/sqlite-core'
 import type { Field } from '../field/types'
 
 // biome-ignore lint/suspicious/noExplicitAny: any is necessary for Field constraint
