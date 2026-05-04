@@ -1,5 +1,5 @@
 import { and, asc, desc, eq } from 'drizzle-orm'
-import type { SQLiteTable } from 'drizzle-orm/sqlite-core'
+import type { SQLiteTableWithColumns } from 'drizzle-orm/sqlite-core'
 import { HTTPException } from 'hono/http-exception'
 import type { Adapter } from '../adapter/types'
 import type { Field } from '../field/types'
@@ -79,7 +79,7 @@ function findPrimaryKey(
  * @internal
  */
 function buildWhereClause(
-  table: SQLiteTable,
+  table: SQLiteTableWithColumns<any>,
   fields: Record<string, Field<any, any, any>>,
   where: Where<Record<string, any>>,
 ): ReturnType<typeof and> | null {
@@ -116,7 +116,7 @@ export async function findManyImpl<
   Fields extends Record<string, Field<any, any, any>>,
 >(
   adapter: Adapter,
-  table: SQLiteTable,
+  table: SQLiteTableWithColumns<any>,
   _fields: Fields,
   options: {
     limit: unknown
@@ -174,7 +174,7 @@ export async function findManyImpl<
  */
 export async function findOneImpl<Fields extends Record<string, Field<any, any, any>>>(
   adapter: Adapter,
-  table: SQLiteTable,
+  table: SQLiteTableWithColumns<any>,
   fields: Fields,
   idOrWhere: IdOrWhere<Fields>,
 ): Promise<RowType<Fields> | null> {
@@ -207,7 +207,7 @@ export async function findOneImpl<Fields extends Record<string, Field<any, any, 
  */
 export async function createImpl<Fields extends Record<string, Field<any, any, any>>>(
   adapter: Adapter,
-  table: SQLiteTable,
+  table: SQLiteTableWithColumns<any>,
   data: CreateInput<Fields>,
 ): Promise<RowType<Fields>> {
   const rows = await (adapter.drizzle
@@ -223,7 +223,7 @@ export async function createImpl<Fields extends Record<string, Field<any, any, a
  */
 export async function updateImpl<Fields extends Record<string, Field<any, any, any>>>(
   adapter: Adapter,
-  table: SQLiteTable,
+  table: SQLiteTableWithColumns<any>,
   fields: Fields,
   idOrWhere: IdOrWhere<Fields>,
   data: Partial<RowType<Fields>>,
@@ -260,7 +260,7 @@ export async function updateImpl<Fields extends Record<string, Field<any, any, a
  */
 export async function deleteImpl<Fields extends Record<string, Field<any, any, any>>>(
   adapter: Adapter,
-  table: SQLiteTable,
+  table: SQLiteTableWithColumns<any>,
   fields: Fields,
   idOrWhere: IdOrWhere<Fields>,
 ): Promise<{ readonly deleted: number }> {

@@ -1,5 +1,5 @@
 import type { Hook } from '@hono/zod-validator'
-import type { SQLiteTable } from 'drizzle-orm/sqlite-core'
+import type { SQLiteTableWithColumns } from 'drizzle-orm/sqlite-core'
 import type { Env, MiddlewareHandler, ValidationTargets } from 'hono'
 import type { z } from 'zod'
 import type { Adapter } from '../adapter/types'
@@ -437,7 +437,7 @@ export type { Hook }
 export interface Model<Fields extends Record<string, Field<any, any, any>>> {
   readonly fields: Fields
   readonly tableName: string
-  readonly table: SQLiteTable
+  readonly table: SQLiteTableWithColumns<any>
 
   /**
    * Returns a Zod schema derived from this model's fields.

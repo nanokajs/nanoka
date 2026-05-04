@@ -1,4 +1,4 @@
-import { type SQLiteTable, sqliteTable } from 'drizzle-orm/sqlite-core'
+import { type SQLiteTableWithColumns, sqliteTable } from 'drizzle-orm/sqlite-core'
 import type { Field } from '../field/types'
 
 /**
@@ -9,7 +9,7 @@ import type { Field } from '../field/types'
 export function buildTable(
   tableName: string,
   fields: Record<string, Field<any, any, any>>,
-): SQLiteTable {
+): SQLiteTableWithColumns<any> {
   const columns: Record<string, any> = {}
   for (const [key, field] of Object.entries(fields)) {
     columns[key] = field.drizzleColumn(key)
