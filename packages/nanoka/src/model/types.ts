@@ -1,5 +1,5 @@
 import type { Hook } from '@hono/zod-validator'
-import type { SQLiteTableWithColumns } from 'drizzle-orm/sqlite-core'
+import type { AnySQLiteColumn, SQLiteTableWithColumns } from 'drizzle-orm/sqlite-core'
 import type { Env, MiddlewareHandler, ValidationTargets } from 'hono'
 import type { z } from 'zod'
 import type { Adapter } from '../adapter/types'
@@ -62,6 +62,19 @@ export type RowType<
 > = {
   [K in keyof Fields]: InferFieldType<Fields[K]>
 }
+
+/**
+ * Drizzle table type with columns typed to match the model's Fields.
+ * Allows type-safe column access via Model.table.fieldName.
+ */
+// biome-ignore lint/suspicious/noExplicitAny: any is necessary for Field constraint
+export type ModelTable<Fields extends Record<string, Field<any, any, any>>> =
+  SQLiteTableWithColumns<{
+    name: string
+    schema: undefined
+    columns: { [K in keyof Fields]: AnySQLiteColumn }
+    dialect: 'sqlite'
+  }>
 
 /**
  * @internal
@@ -437,7 +450,7 @@ export type { Hook }
 export interface Model<Fields extends Record<string, Field<any, any, any>>> {
   readonly fields: Fields
   readonly tableName: string
-  readonly table: SQLiteTableWithColumns<any>
+  readonly table: ModelTable<Fields>
 
   /**
    * Returns a Zod schema derived from this model's fields.

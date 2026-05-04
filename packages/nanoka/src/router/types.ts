@@ -1,5 +1,4 @@
 import type { Hook } from '@hono/zod-validator'
-import type { SQLiteTableWithColumns } from 'drizzle-orm/sqlite-core'
 import type { Hono, MiddlewareHandler } from 'hono'
 import type { BlankEnv, Env } from 'hono/types'
 import type { z } from 'zod'
@@ -11,6 +10,7 @@ import type {
   FieldsToZodShape,
   FindManyOptions,
   IdOrWhere,
+  ModelTable,
   ModelValidatorReturn,
   PolicyOmitKeys,
   RowType,
@@ -37,7 +37,7 @@ import type {
 export interface NanokaModel<Fields extends Record<string, Field<any, any, any>>> {
   readonly fields: Fields
   readonly tableName: string
-  readonly table: SQLiteTableWithColumns<any>
+  readonly table: ModelTable<Fields>
 
   /**
    * Returns a Zod schema derived from this model's fields.
