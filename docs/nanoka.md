@@ -243,12 +243,7 @@ const CreateUserBody = User.inputSchema('create').extend({ password: z.string().
 app.post('/users', zValidator('json', CreateUserBody), async (c) => {
   const { password, ...body } = c.req.valid('json')
   const passwordHash = await hash(password)
-  const created = await User.create({
-    ...body,
-    id: crypto.randomUUID(),
-    passwordHash,
-    createdAt: new Date(),
-  })
+  const created = await User.create({ ...body, passwordHash })
   // password / passwordHash を絶対に返さない（toResponse が serverOnly を strip）
   return c.json(User.toResponse(created))
 })

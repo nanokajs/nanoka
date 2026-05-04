@@ -242,9 +242,9 @@ const user = await User.findOne({ email: 'alice@example.com' })  // by where cla
 
 ```ts
 const user = await User.create({
-  id: crypto.randomUUID(),
   email: 'alice@example.com',
   name: 'Alice',
+  // id omitted — auto-generated if t.uuid().primary().readOnly()
   // passwordHash omitted if serverOnly; password accepted if writeOnly
 })
 ```
@@ -673,11 +673,7 @@ export default {
       Post.validator('json', { omit: f => [f.id, f.createdAt] }),
       async (c) => {
         const body = c.req.valid('json')
-        const post = await Post.create({
-          ...body,
-          id: crypto.randomUUID(),
-          createdAt: new Date(),
-        })
+        const post = await Post.create({ ...body, id: crypto.randomUUID(), createdAt: new Date() })
         return c.json(post, 201)
       }
     )

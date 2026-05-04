@@ -158,7 +158,7 @@ Routes use `User.validator('json', { omit: ['passwordHash', 'createdAt', 'id'] }
 ```typescript
 app.post('/users', User.validator('json', { omit: ['passwordHash', 'createdAt', 'id'] }), async (c) => {
   const body = c.req.valid('json')  // passwordHash, createdAt, id already filtered out
-  const created = await User.create({ ...body, id: crypto.randomUUID(), passwordHash: 'demo-...' })
+  const created = await User.create({ ...body, passwordHash: 'demo-...' })  // id and createdAt auto-generated
   return c.json(User.schema({ omit: ['passwordHash'] }).parse(created), 201)
 })
 ```

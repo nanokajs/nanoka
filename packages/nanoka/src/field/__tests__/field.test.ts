@@ -149,6 +149,40 @@ describe('Field: runtime behavior', () => {
       // biome-ignore lint/suspicious/noExplicitAny: Testing that email method doesn't exist
       expect(typeof (field as any).email).toBe('undefined')
     })
+
+    it('t.uuid().primary().readOnly() drizzleColumn has hasDefault: true', () => {
+      const field = t.uuid().primary().readOnly()
+      const col = field.drizzleColumn('id')
+      // biome-ignore lint/suspicious/noExplicitAny: Accessing drizzle internal config
+      expect((col as any).config?.hasDefault).toBe(true)
+    })
+
+    it('t.uuid().primary() without readOnly does not set hasDefault', () => {
+      const field = t.uuid().primary()
+      const col = field.drizzleColumn('id')
+      // biome-ignore lint/suspicious/noExplicitAny: Accessing drizzle internal config
+      expect((col as any).config?.hasDefault).toBe(false)
+    })
+
+    it('t.uuid().readOnly() without primary does not set hasDefault', () => {
+      const field = t.uuid().readOnly()
+      const col = field.drizzleColumn('id')
+      // biome-ignore lint/suspicious/noExplicitAny: Accessing drizzle internal config
+      expect((col as any).config?.hasDefault).toBe(false)
+    })
+
+    it('t.uuid().primary().readOnly().default() uses user default over implicit default', () => {
+      const field = t
+        .uuid()
+        .primary()
+        .readOnly()
+        .default(() => 'fixed-id')
+      const col = field.drizzleColumn('id')
+      // biome-ignore lint/suspicious/noExplicitAny: Accessing drizzle internal config
+      expect((col as any).config?.hasDefault).toBe(true)
+      // biome-ignore lint/suspicious/noExplicitAny: Accessing drizzle internal config
+      expect((col as any).config?.defaultFn()).toBe('fixed-id')
+    })
   })
 
   describe('number field', () => {

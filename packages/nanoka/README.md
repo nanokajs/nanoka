@@ -25,7 +25,7 @@ The following APIs are stable. Breaking changes require a major version bump.
 
 - **Field DSL**: `t.string()` / `t.uuid()` / `t.integer()` / `t.number()` / `t.boolean()` / `t.timestamp()` / `t.json(zodSchema?)`
 - **Field modifiers**: `.primary()` / `.unique()` / `.optional()` / `.default(fn)` / `.min(n)` / `.max(n)` / `.email()`
-- **Field policies**: `.serverOnly()` / `.writeOnly()` / `.readOnly()`
+- **Field policies**: `.serverOnly()` / `.writeOnly()` / `.readOnly()` — `t.uuid().primary().readOnly()` implicitly generates a UUID via `crypto.randomUUID()` when no `.default()` is provided
 - **Schema derivation**: `Model.schema(opts?)` / `Model.inputSchema('create' | 'update', opts?)` / `Model.outputSchema(opts?)`
 - **Validator**: `Model.validator(target, opts | preset, hook?)` — presets: `'create'`, `'update'`
 - **Response shaping**: `Model.toResponse(row)`
@@ -184,11 +184,7 @@ export default {
       Post.validator('json', { omit: ['id', 'createdAt'] }),
       async (c) => {
         const body = c.req.valid('json')
-        const created = await Post.create({
-          ...body,
-          id: crypto.randomUUID(),
-          createdAt: new Date(),
-        })
+        const created = await Post.create({ ...body, id: crypto.randomUUID() })
         return c.json(created, 201)
       }
     )
