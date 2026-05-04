@@ -22,25 +22,19 @@ This example demonstrates the full workflow from model definition to working API
    pnpm -C packages/nanoka build
    ```
 
-3. **Generate Drizzle schema** (from user model)
+3. **Generate schema and apply migrations** (unified pipeline)
    ```bash
-   pnpm -C examples/basic generate
+   pnpm -C examples/basic generate:all
    ```
-   ✓ Creates `drizzle/schema.ts` from `src/models/user.ts`
+   ✓ Runs `nanoka generate` (creates `drizzle/schema.ts`) + `drizzle-kit generate` (SQL migrations) + `wrangler d1 migrations apply --local` in sequence.
 
-4. **Generate SQL migrations**
+   Alternatively, run each step individually:
    ```bash
-   pnpm -C examples/basic db:generate
+   pnpm -C examples/basic generate        # creates drizzle/schema.ts + runs drizzle-kit generate
+   pnpm -C examples/basic db:migrate:local  # applies migrations to local D1
    ```
-   ✓ Creates `drizzle/migrations/0000_*.sql` from Drizzle schema
 
-5. **Apply migrations locally**
-   ```bash
-   pnpm -C examples/basic db:migrate:local
-   ```
-   ✓ Creates SQLite database in `.wrangler/state/v3/d1/`
-
-6. **Start development server**
+4. **Start development server**
    ```bash
    pnpm -C examples/basic dev
    ```

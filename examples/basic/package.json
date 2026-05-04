@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "wrangler dev",
     "generate": "nanoka generate",
+    "generate:all": "nanoka generate --apply --db nanoka-basic",
     "db:generate": "drizzle-kit generate",
     "db:migrate:local": "wrangler d1 migrations apply nanoka-basic --local",
     "db:migrate:remote": "wrangler d1 migrations apply nanoka-basic --remote",

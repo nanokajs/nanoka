@@ -133,8 +133,21 @@ Peer dependency ranges: `hono ^4.0.0`, `drizzle-orm ^0.45.0`, `zod ^3.23.0 || ^4
    })
    ```
 
-   Then:
+   **Option A: unified pipeline (recommended)**
    ```bash
+   npx nanoka generate --apply --db <DATABASE>
+   ```
+   When `drizzle.config.ts` is present, `nanoka generate` automatically runs `drizzle-kit generate`. Adding `--apply --db <DATABASE>` also runs `wrangler d1 migrations apply --local`.
+
+   **Option B: step by step**
+   ```bash
+   npx nanoka generate           # schema generation + drizzle-kit generate (auto when drizzle.config.ts exists)
+   npx wrangler d1 migrations apply <DATABASE> --local
+   ```
+
+   **Option C: schema generation only**
+   ```bash
+   npx nanoka generate --no-migrate   # skips drizzle-kit
    npx drizzle-kit generate
    npx wrangler d1 migrations apply <DATABASE> --local
    ```
