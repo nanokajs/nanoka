@@ -5,13 +5,14 @@ import type { Adapter } from '../adapter/types'
 import type { Field } from '../field/types'
 import { toOpenAPIComponent, toOpenAPISchema } from '../openapi/generate'
 import type { OpenAPIUsage } from '../openapi/types'
-import { createImpl, deleteImpl, findManyImpl, findOneImpl, updateImpl } from './crud'
+import { createImpl, deleteImpl, findAllImpl, findManyImpl, findOneImpl, updateImpl } from './crud'
 import { applySchemaOptions, buildBaseObject, derivePolicyOptions } from './schema'
 import { buildTable } from './table'
 import type {
   Apply,
   CreateInput,
   FieldsToZodShape,
+  FindAllOptions,
   FindManyOptions,
   IdOrWhere,
   Model,
@@ -116,6 +117,10 @@ export function defineModel<Fields extends Record<string, Field<any, any, any>>>
 
     findMany(adapter: Adapter, options: FindManyOptions<Fields>): Promise<RowType<Fields>[]> {
       return findManyImpl(adapter, table, fields, options)
+    },
+
+    findAll(adapter: Adapter, options?: FindAllOptions<Fields>): Promise<RowType<Fields>[]> {
+      return findAllImpl(adapter, table, fields, options)
     },
 
     findOne(adapter: Adapter, idOrWhere: IdOrWhere<Fields>): Promise<RowType<Fields> | null> {

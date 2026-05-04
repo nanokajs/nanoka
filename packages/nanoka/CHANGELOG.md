@@ -5,6 +5,43 @@ All notable changes to `@nanokajs/core` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] — 2026-05-05
+
+### Added
+
+- `Model.findAll(adapter, options?)` — fetches all rows without a LIMIT clause. Options support `offset`, `orderBy`, and `where` (plain object or Drizzle SQL expression). For batch processing / admin tooling; apply an app-level size guard when used in request handlers.
+- `FindAllOptions<Fields>` type exported from `@nanokajs/core`.
+
+### Changed
+
+- `findMany` no longer enforces a `MAX_LIMIT = 100` runtime cap. Calling `findMany(adapter, { limit: 1000 })` now executes normally. The type-level requirement that `limit` is a required parameter is unchanged.
+
+## [1.5.0] — 2026-05-04
+
+### Added
+
+- `findMany` の `where` に Drizzle SQL 式（`like`、`or`、`gt` 等）を渡せるオーバーロードを追加。plain object（等価 AND）と `SQL` 式の両方を受け付ける。
+- `Model.toResponseMany(rows)` — row 配列に field policy を一括適用するヘルパ。
+
+## [1.4.0] — 2026-05-04
+
+### Changed
+
+- `create-nanoka-app` のテンプレートを `wrangler.toml` から `wrangler.jsonc` 形式に変換。
+- `.gitignore` の生成を npm publish 対応に修正（`node_modules` 等が正しく除外される）。
+
+## [1.3.0] — 2026-05-04
+
+### Added
+
+- `t.uuid().primary().readOnly()` に暗黙 UUID 自動生成を追加。`create` 呼び出し時に id を省略すると自動的に `crypto.randomUUID()` が設定される。
+
+## [1.2.0] — 2026-05-04
+
+### Added
+
+- route 定義に inline `{ openapi: {...} }` を渡せる短縮 API を追加。`app.post(path, { openapi: metadata }, ...handlers)` の形式で OpenAPI メタデータをルートと同じ場所に記述できる。
+
 ## [1.1.0] — 2026-05-04
 
 ### Added

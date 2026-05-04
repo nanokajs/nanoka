@@ -3,9 +3,7 @@ import type { SQLiteTableWithColumns } from 'drizzle-orm/sqlite-core'
 import { HTTPException } from 'hono/http-exception'
 import type { Adapter } from '../adapter/types'
 import type { Field } from '../field/types'
-import type { CreateInput, IdOrWhere, OrderBy, RowType, Where } from './types'
-
-const MAX_LIMIT = 100
+import type { CreateInput, FindAllOptions, IdOrWhere, OrderBy, RowType, Where } from './types'
 
 /**
  * Validates and guards limit/offset parameters.
@@ -18,9 +16,6 @@ function guardLimit(limit: unknown): number {
   const n = limit as number
   if (n < 0) {
     throw new HTTPException(400, { message: 'limit must be >= 0' })
-  }
-  if (n > MAX_LIMIT) {
-    throw new HTTPException(400, { message: `limit must be <= ${MAX_LIMIT}` })
   }
   return n
 }
@@ -170,8 +165,86 @@ export async function findManyImpl<
         throw new HTTPException(400, { message: 'invalid orderBy format' })
       }
 
-      // Runtime guard against identifier injection
-      if (!Object.hasOwn(table, column)) {
+      // Runtime guard against identifier injection (both fields and table to match where-clause guard)
+      if (!Object.hasOwn(fields, column) || !Object.hasOwn(table, column)) {
+        throw new HTTPException(400, { message: 'invalid field in orderBy' })
+      }
+
+      // biome-ignore lint/suspicious/noExplicitAny: table column access is runtime-guarded by hasOwn
+      const col = (table as unknown as Record<string, any>)[column]
+      query = query.orderBy(direction === 'asc' ? asc(col) : desc(col))
+    }
+  }
+
+  const rows = await query
+  return rows
+}
+
+/**
+ * Fetches all rows without a LIMIT clause.
+ * For batch processing / admin tooling. Apply an app-level size guard when used in request handlers.
+ * @internal
+ */
+export async function findAllImpl<
+  // biome-ignore lint/suspicious/noExplicitAny: any is necessary for Field constraint
+  Fields extends Record<string, Field<any, any, any>>,
+>(
+  adapter: Adapter,
+  table: SQLiteTableWithColumns<any>,
+  fields: Fields,
+  options?: FindAllOptions<Fields>,
+): Promise<RowType<Fields>[]> {
+  const offset = options?.offset !== undefined ? guardOffset(options.offset) : undefined
+
+  // SQLite requires LIMIT when OFFSET is used.
+  // Number.MAX_SAFE_INTEGER is used as a sentinel "no practical limit" value when offset is specified.
+  // biome-ignore lint/suspicious/noExplicitAny: drizzle query builder type narrowing
+  let query: any =
+    offset !== undefined
+      ? adapter.drizzle.select().from(table).limit(Number.MAX_SAFE_INTEGER).offset(offset)
+      : adapter.drizzle.select().from(table)
+
+  // Apply where clause
+  if (options?.where !== undefined) {
+    if (options.where instanceof SQL) {
+      query = query.where(options.where)
+    } else {
+      const whereClause = buildWhereClause(
+        table,
+        fields,
+        options.where as Where<Record<string, any>>,
+      )
+      if (whereClause !== null) {
+        query = query.where(whereClause)
+      }
+    }
+  }
+
+  // Apply ordering
+  if (options?.orderBy !== undefined) {
+    const orderByList = Array.isArray(options.orderBy) ? options.orderBy : [options.orderBy]
+
+    for (const orderByItem of orderByList) {
+      let column: string
+      let direction: 'asc' | 'desc' = 'asc'
+
+      if (typeof orderByItem === 'string') {
+        column = orderByItem
+      } else if (
+        typeof orderByItem === 'object' &&
+        orderByItem !== null &&
+        'column' in orderByItem
+      ) {
+        column = orderByItem.column
+        if (orderByItem.direction) {
+          direction = orderByItem.direction
+        }
+      } else {
+        throw new HTTPException(400, { message: 'invalid orderBy format' })
+      }
+
+      // Runtime guard against identifier injection (both fields and table to match where-clause guard)
+      if (!Object.hasOwn(fields, column) || !Object.hasOwn(table, column)) {
         throw new HTTPException(400, { message: 'invalid field in orderBy' })
       }
 

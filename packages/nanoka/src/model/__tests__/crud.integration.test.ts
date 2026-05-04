@@ -256,11 +256,14 @@ describe('CRUD operations: vitest-pool-workers D1 integration', () => {
       await expect(User.findMany(adapter, { limit: NaN } as any)).rejects.toThrow(HTTPException)
     })
 
-    it('12. reject limit > MAX_LIMIT (100)', async () => {
+    it('12. limit: 1000 does not throw (MAX_LIMIT cap removed)', async () => {
       const { env } = await import('cloudflare:test')
       const adapter = d1Adapter(env.DB)
 
-      await expect(User.findMany(adapter, { limit: 1000 })).rejects.toThrow(HTTPException)
+      await User.create(adapter, { id: 'uuid-12', name: 'Test', email: 'test12@example.com' })
+
+      const rows = await User.findMany(adapter, { limit: 1000 })
+      expect(rows.length).toBeGreaterThanOrEqual(1)
     })
 
     it('13. reject delete with empty where clause', async () => {
@@ -433,5 +436,134 @@ describe('findMany SQL where + toResponseMany', () => {
       expect(resp).toHaveProperty('name')
       expect(resp).toHaveProperty('email')
     }
+  })
+})
+
+describe('findAll', () => {
+  const AllUser = defineModel('all_users', {
+    id: t.uuid().primary(),
+    name: t.string(),
+    email: t.string().email(),
+  })
+
+  beforeEach(async () => {
+    const { env } = await import('cloudflare:test')
+    const adapter = d1Adapter(env.DB)
+
+    await adapter.drizzle.run(sql`DROP TABLE IF EXISTS all_users`)
+    await adapter.drizzle.run(
+      sql`
+        CREATE TABLE all_users (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          email TEXT NOT NULL
+        )
+      `,
+    )
+
+    await AllUser.create(adapter, { id: 'all-1', name: 'Alice', email: 'alice@example.com' })
+    await AllUser.create(adapter, { id: 'all-2', name: 'Bob', email: 'bob@example.com' })
+    await AllUser.create(adapter, { id: 'all-3', name: 'Charlie', email: 'charlie@example.com' })
+  })
+
+  it('returns all rows without arguments', async () => {
+    const { env } = await import('cloudflare:test')
+    const adapter = d1Adapter(env.DB)
+
+    const rows = await AllUser.findAll(adapter)
+    expect(rows.length).toBe(3)
+  })
+
+  it('returns all rows with empty options object', async () => {
+    const { env } = await import('cloudflare:test')
+    const adapter = d1Adapter(env.DB)
+
+    const rows = await AllUser.findAll(adapter, {})
+    expect(rows.length).toBe(3)
+  })
+
+  it('offset reduces returned rows', async () => {
+    const { env } = await import('cloudflare:test')
+    const adapter = d1Adapter(env.DB)
+
+    const rows = await AllUser.findAll(adapter, { offset: 1, orderBy: 'id' })
+    expect(rows.length).toBe(2)
+    expect(rows[0]!.id).toBe('all-2')
+    expect(rows[1]!.id).toBe('all-3')
+  })
+
+  it('orderBy asc sorts correctly', async () => {
+    const { env } = await import('cloudflare:test')
+    const adapter = d1Adapter(env.DB)
+
+    const rows = await AllUser.findAll(adapter, { orderBy: 'name' })
+    expect(rows.map((r) => r.name)).toEqual(['Alice', 'Bob', 'Charlie'])
+  })
+
+  it('orderBy desc sorts correctly', async () => {
+    const { env } = await import('cloudflare:test')
+    const adapter = d1Adapter(env.DB)
+
+    const rows = await AllUser.findAll(adapter, { orderBy: { column: 'name', direction: 'desc' } })
+    expect(rows.map((r) => r.name)).toEqual(['Charlie', 'Bob', 'Alice'])
+  })
+
+  it('orderBy as array sorts by multiple columns', async () => {
+    const { env } = await import('cloudflare:test')
+    const adapter = d1Adapter(env.DB)
+
+    const rows = await AllUser.findAll(adapter, {
+      orderBy: ['name', { column: 'id', direction: 'asc' }],
+    })
+    expect(rows.map((r) => r.name)).toEqual(['Alice', 'Bob', 'Charlie'])
+  })
+
+  it('where plain object filters rows', async () => {
+    const { env } = await import('cloudflare:test')
+    const adapter = d1Adapter(env.DB)
+
+    const rows = await AllUser.findAll(adapter, { where: { email: 'alice@example.com' } })
+    expect(rows.length).toBe(1)
+    expect(rows[0]!.name).toBe('Alice')
+  })
+
+  it('where Drizzle SQL expression (like) filters rows', async () => {
+    const { env } = await import('cloudflare:test')
+    const adapter = d1Adapter(env.DB)
+
+    const rows = await AllUser.findAll(adapter, {
+      where: like(AllUser.table.email, '%@example.com'),
+    })
+    expect(rows.length).toBe(3)
+  })
+
+  it('rejects invalid orderBy column name (identifier injection guard)', async () => {
+    const { env } = await import('cloudflare:test')
+    const adapter = d1Adapter(env.DB)
+
+    await expect(
+      // biome-ignore lint/suspicious/noExplicitAny: intentional invalid orderBy for guard test
+      AllUser.findAll(adapter, { orderBy: 'evil; drop' as any }),
+    ).rejects.toThrow(HTTPException)
+  })
+
+  it('rejects negative offset', async () => {
+    const { env } = await import('cloudflare:test')
+    const adapter = d1Adapter(env.DB)
+
+    await expect(
+      // biome-ignore lint/suspicious/noExplicitAny: intentional invalid offset for guard test
+      AllUser.findAll(adapter, { offset: -1 as any }),
+    ).rejects.toThrow(HTTPException)
+  })
+
+  it('rejects non-integer offset', async () => {
+    const { env } = await import('cloudflare:test')
+    const adapter = d1Adapter(env.DB)
+
+    await expect(
+      // biome-ignore lint/suspicious/noExplicitAny: intentional invalid offset for guard test
+      AllUser.findAll(adapter, { offset: 1.5 as any }),
+    ).rejects.toThrow(HTTPException)
   })
 })

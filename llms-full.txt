@@ -219,26 +219,38 @@ The `f` object is `as const`, not a Proxy. No runtime magic.
 
 ### 4.8 CRUD
 
-**`findMany(options)`** — query with pagination (limit is required)
+**`findMany(adapter, options)`** — query with pagination (limit is required)
 
 ```ts
 import { like, or, eq } from 'drizzle-orm'
 
-const users = await User.findMany({ limit: 20 })
-const page2 = await User.findMany({ limit: 20, offset: 20 })
-const sorted = await User.findMany({ limit: 20, orderBy: 'email' })
+const users = await User.findMany(adapter, { limit: 20 })
+const page2 = await User.findMany(adapter, { limit: 20, offset: 20 })
+const sorted = await User.findMany(adapter, { limit: 20, orderBy: 'email' })
 
 // Equality AND (plain object)
-const admins = await User.findMany({ limit: 20, where: { role: 'admin' } })
+const admins = await User.findMany(adapter, { limit: 20, where: { role: 'admin' } })
 
 // Drizzle SQL expression (LIKE, OR, ranges, etc.)
-const matched = await User.findMany({ limit: 20, where: like(User.table.email, '%@example.com') })
-const either = await User.findMany({ limit: 20, where: or(eq(User.table.role, 'admin'), eq(User.table.role, 'mod')) })
+const matched = await User.findMany(adapter, { limit: 20, where: like(User.table.email, '%@example.com') })
+const either = await User.findMany(adapter, { limit: 20, where: or(eq(User.table.role, 'admin'), eq(User.table.role, 'mod')) })
 ```
 
 Calling `findMany()` without `limit` is a **type error** — the parameter is required. This prevents accidental unbounded queries.
 
 Pagination shape: `{ limit, offset?, orderBy?, where? }`. The `where` field accepts either an equality object or any Drizzle `SQL` expression. Never pass user input to `sql.raw()` — use parametrized Drizzle operators instead.
+
+**`findAll(options?)`** — fetch all rows without LIMIT
+
+```ts
+// All rows (no limit)
+const users = await User.findAll(adapter)
+
+// With filtering and ordering
+const admins = await User.findAll(adapter, { orderBy: 'name', where: { role: 'admin' } })
+```
+
+Options: `{ offset?, orderBy?, where? }`. No `limit` parameter. Issues no LIMIT clause to the database. For batch processing / admin tooling. Apply an app-level size guard when used in request handlers.
 
 **`findOne(idOrWhere)`** — fetch single row
 
@@ -574,10 +586,29 @@ return c.json(User.toResponse(user))
 
 ```ts
 // ❌ Type error
-const users = await User.findMany()
+const users = await User.findMany(adapter)
 
 // ✅ Correct
-const users = await User.findMany({ limit: 20 })
+const users = await User.findMany(adapter, { limit: 20 })
+```
+
+**Do not use `findAll()` in request handlers without an app-level size guard**
+
+```ts
+// ❌ Unbounded query in a request handler — may return millions of rows
+app.get('/users', async (c) => {
+  const users = await User.findAll(adapter)
+  return c.json(users)
+})
+
+// ✅ Use findMany with limit for request handlers
+app.get('/users', async (c) => {
+  const users = await User.findMany(adapter, { limit: 100 })
+  return c.json(users)
+})
+
+// ✅ findAll is appropriate for batch jobs / admin scripts
+const allUsers = await User.findAll(adapter)
 ```
 
 **Do not pass DB rows directly to responses**

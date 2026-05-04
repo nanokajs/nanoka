@@ -30,7 +30,7 @@ The following APIs are stable. Breaking changes require a major version bump.
 - **Validator**: `Model.validator(target, opts | preset, hook?)` — presets: `'create'`, `'update'`
 - **Response shaping**: `Model.toResponse(row)` / `Model.toResponseMany(rows)`
 - **Field accessor** (typo-safe): `Model.schema({ pick: f => [f.fieldName] })`
-- **CRUD**: `Model.findMany({ limit, offset?, orderBy?, where? })` / `Model.findOne` / `Model.create` / `Model.update` / `Model.delete`
+- **CRUD**: `Model.findMany({ limit, offset?, orderBy?, where? })` / `Model.findAll(options?)` / `Model.findOne` / `Model.create` / `Model.update` / `Model.delete`
 - **Escape hatch**: `app.db` (raw Drizzle) / `app.batch(...)` (D1 batch)
 - **OpenAPI seed**: `Model.toOpenAPIComponent()` / `Model.toOpenAPISchema(usage)`
 - **Router**: `nanoka<E extends Env = BlankEnv>(adapter)`
@@ -333,6 +333,25 @@ const specific = await User.findMany(adapter, {
 ```
 
 When passing a Drizzle SQL expression, SQL injection prevention follows Drizzle's parametrized binding rules — ensure all user-supplied values are passed as Drizzle operands (e.g., `like(col, value)`) rather than interpolated into raw strings. Never pass user input to `sql.raw()`, which skips parametrization entirely.
+
+### `findAll` — unbounded fetch (no LIMIT)
+
+`findAll` issues no LIMIT clause and returns every row. Use it for batch processing, admin tooling, or export pipelines where you intentionally want all records.
+
+```ts
+// Fetch all users (no limit)
+const users = await User.findAll(adapter)
+
+// With filtering and ordering
+const admins = await User.findAll(adapter, { orderBy: 'name', where: { role: 'admin' } })
+
+// Apply toResponseMany to strip serverOnly fields
+return c.json(User.toResponseMany(users))
+```
+
+`findAll` accepts `offset`, `orderBy`, and `where` — the same semantics as `findMany`. It does **not** accept `limit`.
+
+**Warning:** `findAll` issues no LIMIT to the database. For request handlers, enforce an app-level size guard or use `findMany` with an explicit `limit` instead.
 
 ## Escape hatch: raw Drizzle and D1 batch
 
