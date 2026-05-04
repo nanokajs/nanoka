@@ -22,16 +22,43 @@ test('scaffold creates package.json with correct name', async () => {
   expect(pkg.dependencies['@nanokajs/core']).not.toContain('{{')
 })
 
-test('scaffold creates wrangler.toml with packageName substituted', async () => {
+test('scaffold creates wrangler.jsonc with packageName substituted', async () => {
   const tmp = await makeTmpDir()
   const targetDir = join(tmp, 'my-app')
 
   await scaffold({ targetDir, template: 'default', force: false })
 
-  const content = await readFile(join(targetDir, 'wrangler.toml'), 'utf-8')
-  expect(content).toContain('name = "my-app"')
-  expect(content).toContain('database_name = "my-app"')
+  const content = await readFile(join(targetDir, 'wrangler.jsonc'), 'utf-8')
+  expect(content).toContain('"name": "my-app"')
+  expect(content).toContain('"database_name": "my-app"')
   expect(content).not.toContain('{{packageName}}')
+  // Strip line comments and verify valid JSON
+  const stripped = content
+    .split('\n')
+    .filter((line) => !line.trimStart().startsWith('//'))
+    .join('\n')
+  expect(() => JSON.parse(stripped)).not.toThrow()
+})
+
+test('scaffold creates .gitignore', async () => {
+  const tmp = await makeTmpDir()
+  const targetDir = join(tmp, 'my-app')
+
+  await scaffold({ targetDir, template: 'default', force: false })
+
+  const content = await readFile(join(targetDir, '.gitignore'), 'utf-8')
+  expect(content).toContain('node_modules')
+  expect(content).toContain('.wrangler')
+  expect(content).toContain('.dev.vars')
+})
+
+test('scaffold does not leave gitignore (without dot) in output', async () => {
+  const tmp = await makeTmpDir()
+  const targetDir = join(tmp, 'my-app')
+
+  await scaffold({ targetDir, template: 'default', force: false })
+
+  await expect(access(join(targetDir, 'gitignore'))).rejects.toThrow()
 })
 
 test('scaffold creates src/index.ts', async () => {

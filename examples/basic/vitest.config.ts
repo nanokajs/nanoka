@@ -8,7 +8,7 @@ export default defineWorkersConfig(async () => {
       include: ['test/**/*.test.ts'],
       poolOptions: {
         workers: {
-          wrangler: { configPath: './wrangler.toml' },
+          wrangler: { configPath: './wrangler.jsonc' },
           miniflare: {
             compatibilityDate: '2025-04-01',
             compatibilityFlags: ['nodejs_compat'],
