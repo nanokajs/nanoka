@@ -32,6 +32,7 @@
 - CLI scaffolder package: `create-nanoka-app`
 - Unified migration workflow: `nanoka generate --apply --db <name>` — [#41](https://github.com/nanokajs/nanoka/issues/41)
 - Inline route OpenAPI: `app.post(path, { openapi: {...} }, ...handlers)` — [#38](https://github.com/nanokajs/nanoka/issues/38)
+- `t.uuid().primary().readOnly()` 暗黙 UUID 自動生成 — [#42](https://github.com/nanokajs/nanoka/issues/42)
 
 ### AI coding support
 

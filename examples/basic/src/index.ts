@@ -62,19 +62,12 @@ export default {
       async (c) => {
         // biome-ignore lint/suspicious/noExplicitAny: known limitation, see above
         const body = (c.req.valid as (target: 'json') => any)('json')
-        const id = crypto.randomUUID()
         // SECURITY: demo-only — the email is reversible, NEVER use in production.
         // Replace with a real password hash (bcrypt, argon2, scrypt) or accept a
         // pre-hashed value from the client and verify the algorithm.
         const passwordHash = `demo-${body.email}`
-        const createdAt = new Date()
 
-        // app.db 経由の行は policy 未適用（passwordHash を含む完全な DB 行）。必ず User.toResponse() を通すこと。
-        const rows = await app.db
-          .insert(User.table)
-          .values({ ...body, id, passwordHash, createdAt })
-          .returning()
-        const created = rows[0] as import('@nanokajs/core').RowType<typeof User.fields>
+        const created = await User.create({ ...body, passwordHash })
 
         return c.json(User.toResponse(created), 201)
       },

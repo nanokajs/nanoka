@@ -12,6 +12,55 @@ declare module 'cloudflare:test' {
   }
 }
 
+describe('readOnly primary UUID auto-generation', () => {
+  const AutoModel = defineModel('auto_users', {
+    id: t.uuid().primary().readOnly(),
+    name: t.string(),
+    createdAt: t
+      .timestamp()
+      .readOnly()
+      .default(() => new Date()),
+  })
+
+  beforeEach(async () => {
+    const { env } = await import('cloudflare:test')
+    const adapter = d1Adapter(env.DB)
+
+    await adapter.drizzle.run(sql`DROP TABLE IF EXISTS auto_users`)
+    await adapter.drizzle.run(
+      sql`
+        CREATE TABLE auto_users (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          createdAt INTEGER NOT NULL
+        )
+      `,
+    )
+  })
+
+  it('create fills id (UUID) and createdAt (Date) automatically', async () => {
+    const { env } = await import('cloudflare:test')
+    const adapter = d1Adapter(env.DB)
+
+    const created = await AutoModel.create(adapter, { name: 'Alice' })
+
+    expect(typeof created.id).toBe('string')
+    expect(created.id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/)
+    expect(created.createdAt instanceof Date).toBe(true)
+    expect(created.name).toBe('Alice')
+  })
+
+  it('two consecutive creates produce unique UUIDs', async () => {
+    const { env } = await import('cloudflare:test')
+    const adapter = d1Adapter(env.DB)
+
+    const first = await AutoModel.create(adapter, { name: 'Bob' })
+    const second = await AutoModel.create(adapter, { name: 'Carol' })
+
+    expect(first.id).not.toBe(second.id)
+  })
+})
+
 describe('CRUD operations: vitest-pool-workers D1 integration', () => {
   const User = defineModel('users', {
     id: t.uuid().primary(),

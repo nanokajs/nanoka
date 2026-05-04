@@ -204,6 +204,13 @@ class UuidFieldBuilder<
     if (this.modifiers.unique) {
       col = col.unique()
     }
+    if (
+      this.modifiers.primary === true &&
+      this.modifiers.policy === 'readOnly' &&
+      !this.modifiers.hasDefault
+    ) {
+      col = col.$defaultFn(() => crypto.randomUUID())
+    }
     if (this.modifiers.hasDefault) {
       const defaultValue = this.modifiers.defaultValue
       if (typeof defaultValue === 'function') {
