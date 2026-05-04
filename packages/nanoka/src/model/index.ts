@@ -2,6 +2,7 @@ export type { OpenAPIModelComponent, OpenAPISchemaObject, OpenAPIUsage } from '.
 export { defineModel } from './define'
 export type {
   CreateInput,
+  FindAllOptions,
   FindManyOptions,
   IdOrWhere,
   Model,

@@ -25,6 +25,20 @@ export interface FindManyOptions<
 }
 
 /**
+ * Options for findAll query.
+ * No `limit` — issues no LIMIT clause. For batch processing / admin tooling.
+ * Apply an app-level size guard when used in request handlers.
+ */
+export interface FindAllOptions<
+  // biome-ignore lint/suspicious/noExplicitAny: any is necessary for Field constraint
+  Fields extends Record<string, Field<any, any, any>>,
+> {
+  readonly offset?: number
+  readonly orderBy?: OrderBy<Fields>
+  readonly where?: Where<Fields> | SQL
+}
+
+/**
  * Order-by specification: single field, or field with direction, or array of multiple.
  */
 export type OrderBy<
@@ -612,6 +626,16 @@ export interface Model<Fields extends Record<string, Field<any, any, any>>> {
    * const sorted = await User.findMany(adapter, { limit: 10, orderBy: 'name' })
    */
   findMany(adapter: Adapter, options: FindManyOptions<Fields>): Promise<RowType<Fields>[]>
+
+  /**
+   * Fetches all rows without a LIMIT clause.
+   * For batch processing / admin tooling. Apply an app-level size guard when used in request handlers.
+   *
+   * @example
+   * const users = await User.findAll(adapter)
+   * const admins = await User.findAll(adapter, { orderBy: 'name', where: { role: 'admin' } })
+   */
+  findAll(adapter: Adapter, options?: FindAllOptions<Fields>): Promise<RowType<Fields>[]>
 
   /**
    * Fetches a single row by primary key or where clause.

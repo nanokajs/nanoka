@@ -1,8 +1,9 @@
 import { like } from 'drizzle-orm'
 import { describe, it } from 'vitest'
+import type { Adapter } from '../../adapter/types'
 import { t } from '../../field'
 import { defineModel } from '../define'
-import type { CreateInput, FindManyOptions, RowType } from '../types'
+import type { CreateInput, FindAllOptions, FindManyOptions, RowType } from '../types'
 
 describe('CRUD methods: type checking', () => {
   const User = defineModel('users', {
@@ -88,6 +89,52 @@ describe('CRUD methods: type checking', () => {
     it('allows findMany with where omitted', () => {
       const opts: FindManyOptions<typeof User.fields> = { limit: 20 }
       void opts
+    })
+  })
+
+  describe('findAll type constraints', () => {
+    it('allows findAll with no options (options omitted)', () => {
+      // biome-ignore lint/suspicious/noExplicitAny: intentional adapter stub
+      User.findAll({} as any)
+    })
+
+    it('allows findAll with offset', () => {
+      const opts: FindAllOptions<typeof User.fields> = { offset: 10 }
+      void opts
+    })
+
+    it('allows findAll with orderBy as string', () => {
+      const opts: FindAllOptions<typeof User.fields> = { orderBy: 'name' }
+      void opts
+    })
+
+    it('rejects findAll with nonexistent orderBy field', () => {
+      // @ts-expect-error - 'nonexistent' is not a field
+      const opts: FindAllOptions<typeof User.fields> = { orderBy: 'nonexistent' }
+      void opts
+    })
+
+    it('allows findAll with where as equality object', () => {
+      const opts: FindAllOptions<typeof User.fields> = { where: { email: 'x@example.com' } }
+      void opts
+    })
+
+    it('allows findAll with where as Drizzle SQL expression', () => {
+      const opts: FindAllOptions<typeof User.fields> = {
+        where: like(User.table.email, '%x%'),
+      }
+      void opts
+    })
+
+    it('rejects findAll options that include limit (limit must not be in FindAllOptions)', () => {
+      // @ts-expect-error - limit is not a property of FindAllOptions
+      const opts: FindAllOptions<typeof User.fields> = { limit: 20 }
+      void opts
+    })
+
+    it('findAll return type is Promise<RowType<Fields>[]>', async () => {
+      const result: Promise<RowType<typeof User.fields>[]> = User.findAll({} as Adapter)
+      void result
     })
   })
 

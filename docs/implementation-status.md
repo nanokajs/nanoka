@@ -36,6 +36,7 @@
 - `create-nanoka-app` テンプレートを `wrangler.jsonc` 形式に変換、`.gitignore` 生成を npm publish 対応 — [#46](https://github.com/nanokajs/nanoka/issues/46)
 - `findMany` の `where` に Drizzle SQL 式を渡せるオーバーロード — [#39](https://github.com/nanokajs/nanoka/issues/39)
 - `Model.toResponseMany(rows)` ヘルパ — [#39](https://github.com/nanokajs/nanoka/issues/39)
+- `Model.findAll(adapter, options?)` — LIMIT なし全件取得。`findMany` の `MAX_LIMIT = 100` ランタイムキャップを廃止 — [#49](https://github.com/nanokajs/nanoka/issues/49)
 
 ### AI coding support
 

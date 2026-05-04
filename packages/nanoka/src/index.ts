@@ -4,6 +4,7 @@ export type { Field, FieldModifiers, FieldPolicy, InferFieldType } from './field
 export { t } from './field'
 export type {
   CreateInput,
+  FindAllOptions,
   FindManyOptions,
   IdOrWhere,
   Model,
