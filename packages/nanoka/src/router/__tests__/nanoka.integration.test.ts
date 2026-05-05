@@ -288,7 +288,7 @@ describe('nanoka() integration with D1', () => {
 
       // Call findAll with optional orderBy argument
       const orderedUsers = await User.findAll({ orderBy: 'id' })
-      expect(orderedUsers.map(u => u.id)).toEqual([userId1, userId2])
+      expect(orderedUsers.map((u) => u.id)).toEqual([userId1, userId2])
 
       // Call findAll with where filter
       const filtered = await User.findAll({ where: { name: 'User One' } })
