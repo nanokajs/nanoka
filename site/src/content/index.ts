@@ -1,6 +1,8 @@
 export const contentEn = `\
 # Nanoka
 
+<p class="intro-logo"><img src="/images/nanoka-logo.png" alt="Nanoka logo" width="160" height="160"></p>
+
 > **Stable 1.0.0** — Thin wrapper over Hono + Drizzle + Zod for Cloudflare Workers + D1.
 
 Nanoka eliminates the wiring ceremony between Hono, Drizzle, and Zod.
@@ -75,6 +77,8 @@ Prisma 7.0 resolved the bundle-size problem and is now Workers-compatible. Nanok
 
 export const contentJa = `\
 # Nanoka
+
+<p class="intro-logo"><img src="/images/nanoka-logo.png" alt="Nanoka logo" width="160" height="160"></p>
 
 > **Stable 1.0.0** — Cloudflare Workers + D1 向け Hono + Drizzle + Zod 薄ラッパー
 

@@ -184,6 +184,17 @@ article {
   min-width: 0;
 }
 
+.intro-logo {
+  margin: 0 0 1.25rem;
+}
+
+.intro-logo img {
+  display: block;
+  width: 160px;
+  height: 160px;
+  object-fit: contain;
+}
+
 article h1 {
   font-size: 2rem;
   font-weight: 700;
@@ -411,6 +422,11 @@ article hr {
 
   .content {
     padding: 1.5rem 0.875rem 2.25rem;
+  }
+
+  .intro-logo img {
+    width: 128px;
+    height: 128px;
   }
 }
 
