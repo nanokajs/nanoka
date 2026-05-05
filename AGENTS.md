@@ -71,9 +71,10 @@ For normal implementation work:
 1. Read `docs/implementation-status.md`, `docs/nanoka.md`, the relevant GitHub Issue, and the relevant source files.
 2. Identify whether the task touches shipped API, tracked follow-ups, or historical docs.
 3. Keep changes scoped to the requested task.
-4. Update tests alongside code when behavior or public types change.
-5. Run the narrowest useful verification first, then broader checks when risk warrants it.
-6. Update `docs/implementation-status.md` and/or the GitHub Issue only after the corresponding completion criteria are met.
+4. When adding or removing a CRUD method on the model API, update both layers in the same change: the raw `Model<Fields>` interface in `packages/nanoka/src/model/types.ts` and the bound `NanokaModel<Fields>` interface in `packages/nanoka/src/router/types.ts`, plus the wire-up in `packages/nanoka/src/router/nanoka.ts`. The two-layer split (adapter-first raw API vs. adapter-bound app API) is intentional, and forgetting the router layer makes the new method unreachable from `app.model(...)`.
+5. Update tests alongside code when behavior or public types change.
+6. Run the narrowest useful verification first, then broader checks when risk warrants it.
+7. Update `docs/implementation-status.md` and/or the GitHub Issue only after the corresponding completion criteria are met.
 
 For larger or ambiguous changes, present a short plan before editing. The plan should cover goal, affected files, implementation steps, tests, completion criteria, and deferred scope.
 
