@@ -41,20 +41,28 @@ export function renderLayout(opts: {
   const { currentPath, title, description, bodyHtml } = opts
   const descTag =
     description !== undefined
-      ? `\n  <meta name="description" content="${escapeHtml(description)}">`
+      ? `\n  <meta name="description" content="${escapeHtml(description)}">\n  <meta property="og:description" content="${escapeHtml(description)}">`
       : ''
+  const ogTitle = `${escapeHtml(title)} — Nanoka`
   return `<!doctype html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${escapeHtml(title)} — Nanoka</title>${descTag}
+  <title>${ogTitle}</title>${descTag}
+  <meta property="og:title" content="${ogTitle}">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Nanoka">
+  <meta name="twitter:card" content="summary">
+  <link rel="stylesheet" href="/styles.css">
   <link rel="stylesheet" href="/highlight.css">
 </head>
 <body>
+  <input type="checkbox" id="sidebar-toggle" class="sidebar-toggle-input">
   <div class="layout">
     <header class="site-header">
       <a href="/" class="site-logo">Nanoka</a>
+      <label for="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle navigation"><span></span><span></span><span></span></label>
     </header>
     <div class="layout-body">
       ${renderSidebar(currentPath)}
@@ -62,6 +70,7 @@ export function renderLayout(opts: {
         <article>${bodyHtml}</article>
       </main>
     </div>
+    <label for="sidebar-toggle" class="sidebar-backdrop" aria-hidden="true"></label>
     <footer class="site-footer">
       <p>&copy; Nanoka contributors</p>
     </footer>
