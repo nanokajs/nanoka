@@ -28,9 +28,7 @@ html {
 }
 
 body {
-  background:
-    linear-gradient(180deg, #effafa 0, var(--color-bg) 18rem),
-    var(--color-bg);
+  background: linear-gradient(180deg, #effafa 0, var(--color-bg) 18rem), var(--color-bg);
   color: var(--color-text);
   font-family:
     -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", sans-serif;
