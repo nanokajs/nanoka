@@ -49,6 +49,7 @@
 - Markdown レンダリング・シンタックスハイライト（marked + marked-highlight + highlight.js、Atom One Dark CSS） — [#58](https://github.com/nanokajs/nanoka/issues/58)
 - スタイリング・レスポンシブ対応（CSS-only ドロワー、タイポグラフィ、OGP メタタグ） — [#59](https://github.com/nanokajs/nanoka/issues/59)
 - コンテンツ執筆（Introduction / Getting Started / Core Concepts）+ 言語トグル機構（EN/JA） — [#60](https://github.com/nanokajs/nanoka/issues/60)
+- API Reference コンテンツ執筆（Field Types / Field Policies / Schema & Validator / CRUD Methods / Response Shaping / OpenAPI / Escape Hatch / Adapters） — [#61](https://github.com/nanokajs/nanoka/issues/61)
 
 ## 未実装として残す（将来候補）
 
