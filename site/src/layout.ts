@@ -64,7 +64,10 @@ export function renderLayout(opts: {
   <input type="checkbox" id="sidebar-toggle" class="sidebar-toggle-input">
   <div class="layout">
     <header class="site-header">
-      <a href="/" class="site-logo">Nanoka</a>
+      <a href="/" class="site-logo">
+        <img src="/images/nanoka-logo.png" alt="" class="site-logo-mark" width="32" height="32">
+        <span class="site-logo-text">Nanoka</span>
+      </a>
       <div class="${langToggleClass}" role="group" aria-label="Language">
         <button type="button" class="lang-btn" data-lang="en" aria-pressed="true">EN</button>
         <button type="button" class="lang-btn" data-lang="ja" aria-pressed="false">JA</button>
