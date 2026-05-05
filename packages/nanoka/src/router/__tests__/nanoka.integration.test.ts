@@ -293,7 +293,8 @@ describe('nanoka() integration with D1', () => {
       // Call findAll with where filter
       const filtered = await User.findAll({ where: { name: 'User One' } })
       expect(filtered).toHaveLength(1)
-      expect(filtered[0].id).toBe(userId1)
+      // biome-ignore lint/style/noNonNullAssertion: length checked above
+      expect(filtered[0]!.id).toBe(userId1)
     })
   })
 
