@@ -57,6 +57,7 @@ export function renderLayout(opts: {
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Nanoka">
   <meta name="twitter:card" content="summary">
+  <link rel="icon" type="image/png" href="/favicon.png">
   <link rel="stylesheet" href="/styles.css">
   <link rel="stylesheet" href="/highlight.css">
 </head>

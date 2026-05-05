@@ -185,6 +185,8 @@ article {
 }
 
 .intro-logo {
+  display: flex;
+  justify-content: center;
   margin: 0 0 1.25rem;
 }
 
