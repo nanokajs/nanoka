@@ -42,6 +42,11 @@
 
 - `llms.txt` / `llms-full.txt` at repo root, served via GitHub raw URL — [#17](https://github.com/nanokajs/nanoka/issues/17)
 
+### docs-site
+
+- プロジェクト基盤セットアップ（Cloudflare Workers + Hono scaffold） — [#56](https://github.com/nanokajs/nanoka/issues/56)
+- レイアウト・ルーティング実装（HTML レイアウト / サイドバーナビ / ページレジストリ） — [#57](https://github.com/nanokajs/nanoka/issues/57)
+
 ## 未実装として残す（将来候補）
 
 - `findMany` offset 上限 — [#18](https://github.com/nanokajs/nanoka/issues/18)
