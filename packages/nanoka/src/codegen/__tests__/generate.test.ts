@@ -197,4 +197,23 @@ describe('generateDrizzleSchema', () => {
     const result = generateDrizzleSchema(models)
     expect(result).toMatchSnapshot()
   })
+
+  it('omits relation fields from generated schema', () => {
+    const PostModel = { fields: { id: t.integer(), title: t.string() }, tableName: 'posts' }
+    const models: ModelDef[] = [
+      {
+        name: 'users',
+        fields: {
+          id: t.uuid().primary(),
+          name: t.string(),
+          posts: t.hasMany(PostModel, { foreignKey: 'userId' }),
+        },
+      },
+    ]
+
+    const result = generateDrizzleSchema(models)
+    expect(result).not.toContain('posts')
+    expect(result).toContain('id')
+    expect(result).toContain('name')
+  })
 })

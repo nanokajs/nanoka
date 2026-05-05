@@ -13,6 +13,7 @@ import type {
   IdOrWhere,
   ModelTable,
   ModelValidatorReturn,
+  NonRelationKeys,
   PolicyOmitKeys,
   RowType,
   SchemaOptions,
@@ -45,7 +46,7 @@ export interface NanokaModel<Fields extends Record<string, Field<any, any, any>>
    * Returns a Zod schema derived from this model's fields.
    * Supports pick, omit, and partial transformations.
    */
-  schema<Opts extends SchemaOptions<keyof Fields & string> | undefined = undefined>(
+  schema<Opts extends SchemaOptions<NonRelationKeys<Fields> & string> | undefined = undefined>(
     opts?: Opts,
   ): Apply<FieldsToZodShape<Fields>, Opts>
 
@@ -102,7 +103,7 @@ export interface NanokaModel<Fields extends Record<string, Field<any, any, any>>
   >
   validator<
     Target extends keyof import('hono').ValidationTargets,
-    Opts extends SchemaOptions<keyof Fields & string> | undefined = undefined,
+    Opts extends SchemaOptions<NonRelationKeys<Fields> & string> | undefined = undefined,
     E extends Env = Env,
     P extends string = string,
   >(
@@ -116,13 +117,13 @@ export interface NanokaModel<Fields extends Record<string, Field<any, any, any>>
    */
   inputSchema(
     usage: 'create' | 'update',
-    opts?: SchemaOptions<keyof Fields & string>,
+    opts?: SchemaOptions<NonRelationKeys<Fields> & string>,
   ): z.ZodObject<z.ZodRawShape>
 
   /**
    * Returns a Zod schema for API output, with policy-based field exclusions applied.
    */
-  outputSchema(opts?: SchemaOptions<keyof Fields & string>): z.ZodObject<z.ZodRawShape>
+  outputSchema(opts?: SchemaOptions<NonRelationKeys<Fields> & string>): z.ZodObject<z.ZodRawShape>
 
   /**
    * Parses a DB row through outputSchema and returns the safe response object.

@@ -85,7 +85,7 @@ export function nanoka<E extends Env = BlankEnv>(adapter: Adapter): Nanoka<E> {
       validator: (
         ...args: [
           keyof import('hono').ValidationTargets,
-          ('create' | 'update' | import('../model/types').SchemaOptions<keyof Fields & string>)?,
+          ('create' | 'update' | import('../model/types').SchemaOptions<import('../model/types').NonRelationKeys<Fields> & string>)?,
           import('@hono/zod-validator').Hook<
             // biome-ignore lint/suspicious/noExplicitAny: Hook<T> is contravariant in T; any is required to bridge overload implementations
             any,

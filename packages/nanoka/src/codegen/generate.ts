@@ -17,6 +17,8 @@ function detectImports(
     for (const field of Object.values(model.fields)) {
       const kind = field.kind
 
+      if (kind === 'relation') continue
+
       if (kind === 'string' || kind === 'uuid' || kind === 'json') {
         imports.text = true
       } else if (kind === 'number') {
@@ -26,7 +28,8 @@ function detectImports(
       }
     }
 
-    if (Object.values(model.fields).length > 0) {
+    const nonRelationFields = Object.values(model.fields).filter((f) => f.kind !== 'relation')
+    if (nonRelationFields.length > 0) {
       imports.sqliteTable = true
     }
   }
@@ -64,7 +67,10 @@ export function generateDrizzleSchema(models: readonly ModelDef[]): string {
     const fieldLines: string[] = []
 
     for (const [fieldName, field] of Object.entries(model.fields)) {
-      fieldLines.push(renderField(fieldName, field))
+      const rendered = renderField(fieldName, field)
+      if (rendered !== null) {
+        fieldLines.push(rendered)
+      }
     }
 
     const fieldsStr = fieldLines.length > 0 ? fieldLines.join('\n') : ''

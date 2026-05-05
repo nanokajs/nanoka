@@ -196,4 +196,21 @@ describe('OpenAPI component generation', () => {
   it('matches snapshot', () => {
     expect(User.toOpenAPIComponent()).toMatchSnapshot()
   })
+
+  it('omits relation fields from OpenAPI schema', () => {
+    const PostModel = { fields: { id: t.integer(), title: t.string() }, tableName: 'posts' }
+    const UserWithRelation = defineModel('users', {
+      id: t.uuid().primary().readOnly(),
+      name: t.string(),
+      posts: t.hasMany(PostModel, { foreignKey: 'userId' }),
+    })
+
+    const component = UserWithRelation.toOpenAPIComponent()
+
+    expect(component.create.properties).not.toHaveProperty('posts')
+    expect(component.update.properties).not.toHaveProperty('posts')
+    expect(component.output.properties).not.toHaveProperty('posts')
+    expect(component.output.properties).toHaveProperty('id')
+    expect(component.output.properties).toHaveProperty('name')
+  })
 })

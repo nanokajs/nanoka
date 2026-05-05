@@ -8,6 +8,16 @@ import type { Field, FieldPolicy, InferFieldType } from '../field/types'
 import type { OpenAPIModelComponent, OpenAPISchemaObject, OpenAPIUsage } from '../openapi/types'
 
 /**
+ * @internal
+ * Extracts keys of non-relation fields from a Fields record.
+ * Relation fields (kind: 'relation') are excluded from DB column types, RowType, etc.
+ */
+// biome-ignore lint/suspicious/noExplicitAny: any is necessary for Field constraint
+export type NonRelationKeys<Fields extends Record<string, Field<any, any, any>>> = {
+  [K in keyof Fields]: Fields[K] extends { kind: 'relation' } ? never : K
+}[keyof Fields]
+
+/**
  * Options for findMany query.
  * `limit` is required (no default).
  * `offset` defaults to 0 if omitted.
@@ -45,11 +55,11 @@ export type OrderBy<
   // biome-ignore lint/suspicious/noExplicitAny: any is necessary for Field constraint
   Fields extends Record<string, Field<any, any, any>>,
 > =
-  | (keyof Fields & string)
-  | { readonly column: keyof Fields & string; readonly direction?: 'asc' | 'desc' }
+  | (NonRelationKeys<Fields> & string)
+  | { readonly column: NonRelationKeys<Fields> & string; readonly direction?: 'asc' | 'desc' }
   | ReadonlyArray<
-      | (keyof Fields & string)
-      | { readonly column: keyof Fields & string; readonly direction?: 'asc' | 'desc' }
+      | (NonRelationKeys<Fields> & string)
+      | { readonly column: NonRelationKeys<Fields> & string; readonly direction?: 'asc' | 'desc' }
     >
 
 /**
@@ -59,7 +69,7 @@ export type Where<
   // biome-ignore lint/suspicious/noExplicitAny: any is necessary for Field constraint
   Fields extends Record<string, Field<any, any, any>>,
 > = {
-  readonly [K in keyof Fields]?: InferFieldType<Fields[K]>
+  readonly [K in NonRelationKeys<Fields>]?: InferFieldType<Fields[K]>
 }
 
 /**
@@ -71,17 +81,17 @@ export type IdOrWhere<
 > = string | number | Where<Fields>
 
 /**
- * Row type: full record type from fields.
+ * Row type: full record type from fields, excluding relation fields.
  */
 export type RowType<
   // biome-ignore lint/suspicious/noExplicitAny: any is necessary for Field constraint
   Fields extends Record<string, Field<any, any, any>>,
 > = {
-  [K in keyof Fields]: InferFieldType<Fields[K]>
+  [K in NonRelationKeys<Fields>]: InferFieldType<Fields[K]>
 }
 
 /**
- * Drizzle table type with columns typed to match the model's Fields.
+ * Drizzle table type with columns typed to match the model's Fields (excluding relation fields).
  * Allows type-safe column access via Model.table.fieldName.
  */
 // biome-ignore lint/suspicious/noExplicitAny: any is necessary for Field constraint
@@ -89,7 +99,7 @@ export type ModelTable<Fields extends Record<string, Field<any, any, any>>> =
   SQLiteTableWithColumns<{
     name: string
     schema: undefined
-    columns: { [K in keyof Fields]: AnySQLiteColumn }
+    columns: { [K in NonRelationKeys<Fields>]: AnySQLiteColumn }
     dialect: 'sqlite'
   }>
 
@@ -192,18 +202,19 @@ type IsRequired<F extends Field<any, any, any>> =
  * - all other fields are required
  * - `serverOnly` fields are completely excluded (cannot be passed even internally)
  * - `writeOnly` fields are included as required (they are input fields by design)
+ * - relation fields are completely excluded (no DB column)
  */
 export type CreateInput<
   // biome-ignore lint/suspicious/noExplicitAny: any is necessary for Field constraint
   Fields extends Record<string, Field<any, any, any>>,
 > = {
-  [K in keyof Fields as IsRequired<Fields[K]> extends true
+  [K in NonRelationKeys<Fields> as IsRequired<Fields[K]> extends true
     ? K extends ServerOnlyKeys<Fields>
       ? never
       : K
     : never]: InferFieldType<Fields[K]>
 } & {
-  [K in keyof Fields as IsRequired<Fields[K]> extends true
+  [K in NonRelationKeys<Fields> as IsRequired<Fields[K]> extends true
     ? never
     : K extends ServerOnlyKeys<Fields>
       ? never
@@ -234,20 +245,26 @@ export function resolveSchemaOptionKeys<K extends string>(
 /**
  * @internal
  * Builds a frozen field accessor object for use in schema/validator options.
- * Each key maps to itself, providing typo detection at type level.
+ * Relation fields are excluded so that `omit: f => [f.posts]` is a type error.
+ * Each non-relation key maps to itself, providing typo detection at type level.
  */
-export function buildFieldAccessor<Fields extends Record<string, unknown>>(
+// biome-ignore lint/suspicious/noExplicitAny: any is necessary for Field constraint
+export function buildFieldAccessor<Fields extends Record<string, Field<any, any, any>>>(
   fields: Fields,
-): { readonly [K in keyof Fields]: K } {
+): { readonly [K in NonRelationKeys<Fields>]: K } {
   const acc: Record<string, string> = {}
-  for (const k of Object.keys(fields)) acc[k] = k
-  return Object.freeze(acc) as { readonly [K in keyof Fields]: K }
+  for (const [k, field] of Object.entries(fields)) {
+    if (field.kind === 'relation') continue
+    acc[k] = k
+  }
+  return Object.freeze(acc) as { readonly [K in NonRelationKeys<Fields>]: K }
 }
 
 /**
  * @internal
  * Extracts a Zod shape from fields for the Apply type.
- * Each field's zodBase becomes a property in the shape.
+ * Only non-relation fields are included (relation fields have zodBase: ZodNever
+ * and are skipped at runtime in buildBaseObject).
  * Indexed access ensures concrete Zod types are preserved (not `any`).
  */
 export type FieldsToZodShape<
@@ -257,7 +274,7 @@ export type FieldsToZodShape<
     Field<any, any, any>
   >,
 > = {
-  [K in keyof Fields]: Fields[K]['zodBase']
+  [K in NonRelationKeys<Fields>]: Fields[K]['zodBase']
 }
 
 /**
@@ -442,7 +459,7 @@ export type ModelValidatorReturn<
   // biome-ignore lint/suspicious/noExplicitAny: any is necessary for Field constraint
   Fields extends Record<string, Field<any, any, any>>,
   Target extends keyof ValidationTargets,
-  Opts extends SchemaOptions<keyof Fields & string> | undefined,
+  Opts extends SchemaOptions<NonRelationKeys<Fields> & string> | undefined,
 > = MiddlewareHandler<
   any,
   string,
@@ -477,7 +494,7 @@ export interface Model<Fields extends Record<string, Field<any, any, any>>> {
    * const CreateSchema = User.schema({ omit: ['passwordHash'] })
    * const UpdateSchema = User.schema({ partial: true, pick: ['name', 'email'] })
    */
-  schema<Opts extends SchemaOptions<keyof Fields & string> | undefined>(
+  schema<Opts extends SchemaOptions<NonRelationKeys<Fields> & string> | undefined>(
     opts?: Opts,
   ): Apply<FieldsToZodShape<Fields>, Opts>
 
@@ -542,7 +559,7 @@ export interface Model<Fields extends Record<string, Field<any, any, any>>> {
   >
   validator<
     Target extends keyof ValidationTargets,
-    Opts extends SchemaOptions<keyof Fields & string> | undefined,
+    Opts extends SchemaOptions<NonRelationKeys<Fields> & string> | undefined,
     E extends Env = Env,
     P extends string = string,
   >(
@@ -558,7 +575,7 @@ export interface Model<Fields extends Record<string, Field<any, any, any>>> {
    *
    * The return type precisely reflects policy-derived omissions using PolicyOmitKeys.
    */
-  inputSchema<Opts extends SchemaOptions<keyof Fields & string> | undefined = undefined>(
+  inputSchema<Opts extends SchemaOptions<NonRelationKeys<Fields> & string> | undefined = undefined>(
     usage: 'create',
     opts?: Opts,
   ): z.ZodObject<
@@ -567,7 +584,7 @@ export interface Model<Fields extends Record<string, Field<any, any, any>>> {
       Opts
     >
   >
-  inputSchema<Opts extends SchemaOptions<keyof Fields & string> | undefined = undefined>(
+  inputSchema<Opts extends SchemaOptions<NonRelationKeys<Fields> & string> | undefined = undefined>(
     usage: 'update',
     opts?: Opts,
   ): z.ZodObject<
@@ -578,7 +595,7 @@ export interface Model<Fields extends Record<string, Field<any, any, any>>> {
   >
   inputSchema(
     usage: 'create' | 'update',
-    opts?: SchemaOptions<keyof Fields & string>,
+    opts?: SchemaOptions<NonRelationKeys<Fields> & string>,
   ): z.ZodObject<z.ZodRawShape>
 
   /**
@@ -588,7 +605,7 @@ export interface Model<Fields extends Record<string, Field<any, any, any>>> {
    *
    * The return type precisely reflects policy-derived omissions using PolicyOmitKeys.
    */
-  outputSchema<Opts extends SchemaOptions<keyof Fields & string> | undefined = undefined>(
+  outputSchema<Opts extends SchemaOptions<NonRelationKeys<Fields> & string> | undefined = undefined>(
     opts?: Opts,
   ): z.ZodObject<
     ApplyShape<Omit<FieldsToZodShape<Fields>, PolicyOmitKeys<Fields, 'output'> & string>, Opts>
