@@ -252,6 +252,50 @@ describe('nanoka() integration with D1', () => {
       const shouldBeNull = await User.findOne(userId)
       expect(shouldBeNull).toBeNull()
     })
+
+    it('findAll returns all rows via app.model()', async () => {
+      const { env } = await import('cloudflare:test')
+      const app = nanoka(d1Adapter(env.DB))
+
+      const User = app.model('users', {
+        id: t.uuid().primary(),
+        name: t.string(),
+        email: t.string().email(),
+        passwordHash: t.string(),
+      })
+
+      // Create two users
+      const userId1 = '550e8400-e29b-41d4-a716-446655440007'
+      const userId2 = '550e8400-e29b-41d4-a716-446655440008'
+
+      await User.create({
+        id: userId1,
+        name: 'User One',
+        email: 'user1@example.com',
+        passwordHash: 'hashed1',
+      })
+
+      await User.create({
+        id: userId2,
+        name: 'User Two',
+        email: 'user2@example.com',
+        passwordHash: 'hashed2',
+      })
+
+      // Call findAll without arguments
+      const allUsers = await User.findAll()
+      expect(allUsers).toHaveLength(2)
+
+      // Call findAll with optional orderBy argument
+      const orderedUsers = await User.findAll({ orderBy: 'id' })
+      expect(orderedUsers.map((u) => u.id)).toEqual([userId1, userId2])
+
+      // Call findAll with where filter
+      const filtered = await User.findAll({ where: { name: 'User One' } })
+      expect(filtered).toHaveLength(1)
+      // biome-ignore lint/style/noNonNullAssertion: length checked above
+      expect(filtered[0]!.id).toBe(userId1)
+    })
   })
 
   describe('validator field type safety', () => {
