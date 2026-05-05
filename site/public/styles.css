@@ -1,17 +1,18 @@
 :root {
-  --color-bg: #1e1e1e;
-  --color-surface: #282c34;
-  --color-border: #3e4451;
-  --color-text: #e0e0e0;
-  --color-muted: #9aa0a6;
-  --color-accent: #61afef;
-  --color-accent-hover: #82c0ff;
-  --color-code-bg: #2c313a;
-  --color-quote-border: #5c6370;
+  --color-bg: #f7fbfb;
+  --color-surface: #ffffff;
+  --color-surface-raised: #eef7f6;
+  --color-border: #d7e5e2;
+  --color-text: #203032;
+  --color-muted: #64787b;
+  --color-accent: #178b8b;
+  --color-accent-hover: #0f6f73;
+  --color-code-bg: #e8f2f0;
+  --color-quote-border: #92cbc5;
 
-  --sidebar-width: 240px;
-  --header-height: 56px;
-  --content-max-width: 760px;
+  --sidebar-width: 260px;
+  --header-height: 64px;
+  --content-max-width: 840px;
 
   --font-mono: "Monaco", "Menlo", "Ubuntu Mono", monospace;
 }
@@ -27,7 +28,7 @@ html {
 }
 
 body {
-  background-color: var(--color-bg);
+  background: linear-gradient(180deg, #effafa 0, var(--color-bg) 18rem), var(--color-bg);
   color: var(--color-text);
   font-family:
     -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", sans-serif;
@@ -45,21 +46,41 @@ body {
   position: sticky;
   top: 0;
   z-index: 200;
-  background-color: var(--color-surface);
+  background-color: rgba(255, 255, 255, 0.92);
   border-bottom: 1px solid var(--color-border);
-  height: var(--header-height);
+  backdrop-filter: blur(14px);
+  min-height: var(--header-height);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 1.5rem;
+  gap: 1rem;
+  padding: 0 1.75rem;
 }
 
 .site-logo {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 1 auto;
+  gap: 0.65rem;
+  min-width: 0;
   font-size: 1.25rem;
   font-weight: 700;
   color: var(--color-text);
   text-decoration: none;
   transition: color 0.15s ease;
+}
+
+.site-logo-mark {
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  object-fit: contain;
+}
+
+.site-logo-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .site-logo:hover {
@@ -77,9 +98,9 @@ body {
   top: var(--header-height);
   height: calc(100vh - var(--header-height));
   overflow-y: auto;
-  background-color: var(--color-surface);
+  background-color: rgba(255, 255, 255, 0.78);
   border-right: 1px solid var(--color-border);
-  padding: 1rem 0;
+  padding: 1.25rem 0;
 }
 
 .sidebar ul {
@@ -95,9 +116,10 @@ body {
 
 .sidebar a {
   display: block;
-  padding: 0.5rem 1.5rem;
+  padding: 0.55rem 1.5rem;
   color: var(--color-text);
   text-decoration: none;
+  border-left: 3px solid transparent;
   transition:
     color 0.15s ease,
     background-color 0.15s ease;
@@ -106,14 +128,13 @@ body {
 .sidebar a[aria-current="page"],
 .sidebar a.active {
   color: var(--color-accent);
-  background-color: rgba(97, 175, 239, 0.1);
+  background-color: rgba(23, 139, 139, 0.1);
   border-left: 3px solid var(--color-accent);
-  padding-left: calc(1.5rem - 3px);
 }
 
 .sidebar a:hover {
   color: var(--color-accent);
-  background-color: rgba(97, 175, 239, 0.05);
+  background-color: rgba(23, 139, 139, 0.06);
 }
 
 .nav-group {
@@ -139,19 +160,16 @@ body {
   padding-left: 2rem;
 }
 
-.nav-group ul li a[aria-current="page"],
-.nav-group ul li a.active {
-  padding-left: calc(2rem - 3px);
-}
-
 .content {
-  padding: 2rem;
+  min-width: 0;
+  padding: 2.5rem 2rem 3rem;
   max-width: var(--content-max-width);
   width: 100%;
+  margin: 0 auto;
 }
 
 .site-footer {
-  background-color: var(--color-surface);
+  background-color: #f1f8f7;
   border-top: 1px solid var(--color-border);
   padding: 1.5rem;
   text-align: center;
@@ -160,12 +178,30 @@ body {
   margin-top: auto;
 }
 
+article {
+  min-width: 0;
+}
+
+.intro-logo {
+  display: flex;
+  justify-content: center;
+  margin: 0 0 1.25rem;
+}
+
+.intro-logo img {
+  display: block;
+  width: 160px;
+  height: 160px;
+  object-fit: contain;
+}
+
 article h1 {
-  font-size: 1.8rem;
+  font-size: 2rem;
   font-weight: 700;
-  margin: 0 0 1rem;
+  line-height: 1.25;
+  margin: 0 0 1.25rem;
   border-bottom: 1px solid var(--color-border);
-  padding-bottom: 0.5rem;
+  padding-bottom: 0.75rem;
 }
 
 article h2 {
@@ -193,7 +229,9 @@ article p {
 
 article a {
   color: var(--color-accent);
-  text-decoration: none;
+  text-decoration: underline;
+  text-decoration-color: rgba(23, 139, 139, 0.35);
+  text-underline-offset: 0.18em;
   transition: color 0.15s ease;
 }
 
@@ -212,7 +250,9 @@ article code {
 }
 
 article pre {
-  background-color: var(--color-surface);
+  max-width: 100%;
+  background-color: #152527;
+  border: 1px solid var(--color-border);
   border-radius: 6px;
   padding: 1rem;
   overflow-x: auto;
@@ -223,19 +263,23 @@ article pre {
 article pre code {
   background-color: transparent;
   padding: 0;
-  color: inherit;
+  color: #e7f4f2;
 }
 
 article blockquote {
   border-left: 4px solid var(--color-quote-border);
   margin: 0 0 1rem;
   padding: 0.5rem 1rem;
-  color: var(--color-muted);
+  background-color: rgba(255, 255, 255, 0.58);
+  color: #53696c;
 }
 
 article table {
   border-collapse: collapse;
-  width: 100%;
+  display: block;
+  max-width: 100%;
+  width: max-content;
+  overflow-x: auto;
   margin: 0 0 1rem;
 }
 
@@ -247,7 +291,7 @@ article td {
 }
 
 article th {
-  background-color: var(--color-surface);
+  background-color: var(--color-surface-raised);
   font-weight: 600;
 }
 
@@ -275,6 +319,9 @@ article hr {
   display: none;
   align-items: center;
   justify-content: center;
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
   cursor: pointer;
   background: none;
   border: none;
@@ -292,7 +339,7 @@ article hr {
   width: 20px;
   height: 2px;
   background-color: currentColor;
-  margin: 4px 0;
+  margin: 3px 0;
 }
 
 .sidebar-backdrop {
@@ -300,7 +347,7 @@ article hr {
   position: fixed;
   inset: 0;
   top: var(--header-height);
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(32, 48, 50, 0.28);
   z-index: 99;
 }
 
@@ -310,6 +357,11 @@ article hr {
 }
 
 @media (max-width: 768px) {
+  .site-header {
+    padding: 0 1rem;
+    gap: 0.75rem;
+  }
+
   .layout-body {
     grid-template-columns: 1fr;
   }
@@ -339,7 +391,42 @@ article hr {
   }
 
   .content {
-    padding: 1.5rem 1rem;
+    padding: 1.75rem 1rem 2.5rem;
+  }
+
+  article h1 {
+    font-size: 1.65rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .site-header {
+    padding: 0 0.75rem;
+    gap: 0.5rem;
+  }
+
+  .site-logo {
+    gap: 0.5rem;
+    font-size: 1.05rem;
+  }
+
+  .site-logo-mark {
+    width: 28px;
+    height: 28px;
+    flex-basis: 28px;
+  }
+
+  .lang-btn {
+    padding: 0.18rem 0.4rem;
+  }
+
+  .content {
+    padding: 1.5rem 0.875rem 2.25rem;
+  }
+
+  .intro-logo img {
+    width: 128px;
+    height: 128px;
   }
 }
 
@@ -354,6 +441,8 @@ article hr {
   display: inline-flex;
   gap: 0;
   align-items: center;
+  flex: 0 0 auto;
+  margin-left: auto;
 }
 .lang-toggle--hidden {
   display: none;

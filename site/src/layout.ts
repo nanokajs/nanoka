@@ -57,6 +57,7 @@ export function renderLayout(opts: {
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Nanoka">
   <meta name="twitter:card" content="summary">
+  <link rel="icon" type="image/png" href="/favicon.png">
   <link rel="stylesheet" href="/styles.css">
   <link rel="stylesheet" href="/highlight.css">
 </head>
@@ -64,7 +65,10 @@ export function renderLayout(opts: {
   <input type="checkbox" id="sidebar-toggle" class="sidebar-toggle-input">
   <div class="layout">
     <header class="site-header">
-      <a href="/" class="site-logo">Nanoka</a>
+      <a href="/" class="site-logo">
+        <img src="/images/nanoka-logo.png" alt="" class="site-logo-mark" width="32" height="32">
+        <span class="site-logo-text">Nanoka</span>
+      </a>
       <div class="${langToggleClass}" role="group" aria-label="Language">
         <button type="button" class="lang-btn" data-lang="en" aria-pressed="true">EN</button>
         <button type="button" class="lang-btn" data-lang="ja" aria-pressed="false">JA</button>
