@@ -1,3 +1,11 @@
+import { contentEn as conceptsEn, contentJa as conceptsJa } from './content/concepts'
+import {
+  contentEn as gettingStartedEn,
+  contentJa as gettingStartedJa,
+} from './content/getting-started'
+import { contentEn as indexEn, contentJa as indexJa } from './content/index'
+import { renderMarkdown } from './markdown'
+
 type DocSection = 'top' | 'api' | 'guides' | 'cli'
 
 interface DocPage {
@@ -6,6 +14,7 @@ interface DocPage {
   section: DocSection
   description?: string
   content: string
+  contentJa?: string
 }
 
 interface NavGroup {
@@ -16,25 +25,40 @@ interface NavGroup {
 
 const PLACEHOLDER = '<p>This page is under construction.</p>'
 
+const indexHtml = renderMarkdown(indexEn)
+const indexHtmlJa = renderMarkdown(indexJa)
+const gettingStartedHtml = renderMarkdown(gettingStartedEn)
+const gettingStartedHtmlJa = renderMarkdown(gettingStartedJa)
+const conceptsHtml = renderMarkdown(conceptsEn)
+const conceptsHtmlJa = renderMarkdown(conceptsJa)
+
 // 15 pages total
 export const docPages: readonly DocPage[] = [
   {
     path: '/',
     title: 'Introduction',
     section: 'top',
-    content: PLACEHOLDER,
+    description: 'Nanoka — Thin wrapper over Hono + Drizzle + Zod for Cloudflare Workers + D1.',
+    content: indexHtml,
+    contentJa: indexHtmlJa,
   },
   {
     path: '/getting-started',
     title: 'Getting Started',
     section: 'top',
-    content: PLACEHOLDER,
+    description:
+      'Get started with Nanoka in minutes. Install, define a model, generate migrations, and run your first API.',
+    content: gettingStartedHtml,
+    contentJa: gettingStartedHtmlJa,
   },
   {
     path: '/concepts',
     title: 'Core Concepts',
     section: 'top',
-    content: PLACEHOLDER,
+    description:
+      'Core concepts behind Nanoka: 80% automatic, 20% explicit, field policies, and the model-centric design.',
+    content: conceptsHtml,
+    contentJa: conceptsHtmlJa,
   },
   {
     path: '/api/field-types',

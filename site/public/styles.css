@@ -348,3 +348,35 @@ article hr {
     transition: none;
   }
 }
+
+/* Language toggle */
+.lang-toggle {
+  display: inline-flex;
+  gap: 0;
+  align-items: center;
+}
+.lang-toggle--hidden {
+  display: none;
+}
+.lang-btn {
+  padding: 0.2rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-muted);
+  cursor: pointer;
+  line-height: 1.5;
+}
+.lang-btn:first-child {
+  border-radius: 4px 0 0 4px;
+}
+.lang-btn:last-child {
+  border-radius: 0 4px 4px 0;
+  border-left: none;
+}
+.lang-btn[aria-pressed="true"] {
+  background: var(--color-accent);
+  color: #fff;
+  border-color: var(--color-accent);
+}

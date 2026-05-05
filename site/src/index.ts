@@ -17,6 +17,7 @@ for (const page of docPages) {
         title: page.title,
         description: page.description,
         bodyHtml: page.content,
+        bodyHtmlJa: page.contentJa,
       }),
     ),
   )

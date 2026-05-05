@@ -37,13 +37,16 @@ export function renderLayout(opts: {
   title: string
   description?: string
   bodyHtml: string
+  bodyHtmlJa?: string
 }): string {
-  const { currentPath, title, description, bodyHtml } = opts
+  const { currentPath, title, description, bodyHtml, bodyHtmlJa } = opts
   const descTag =
     description !== undefined
       ? `\n  <meta name="description" content="${escapeHtml(description)}">\n  <meta property="og:description" content="${escapeHtml(description)}">`
       : ''
   const ogTitle = `${escapeHtml(title)} — Nanoka`
+  const langToggleClass = bodyHtmlJa ? 'lang-toggle' : 'lang-toggle lang-toggle--hidden'
+  const jaDiv = bodyHtmlJa ? `<div class="lang-ja" lang="ja" hidden>${bodyHtmlJa}</div>` : ''
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -62,12 +65,19 @@ export function renderLayout(opts: {
   <div class="layout">
     <header class="site-header">
       <a href="/" class="site-logo">Nanoka</a>
+      <div class="${langToggleClass}" role="group" aria-label="Language">
+        <button type="button" class="lang-btn" data-lang="en" aria-pressed="true">EN</button>
+        <button type="button" class="lang-btn" data-lang="ja" aria-pressed="false">JA</button>
+      </div>
       <label for="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle navigation"><span></span><span></span><span></span></label>
     </header>
     <div class="layout-body">
       ${renderSidebar(currentPath)}
       <main class="content">
-        <article>${bodyHtml}</article>
+        <article>
+          <div class="lang-en" lang="en">${bodyHtml}</div>
+          ${jaDiv}
+        </article>
       </main>
     </div>
     <label for="sidebar-toggle" class="sidebar-backdrop" aria-hidden="true"></label>
@@ -75,6 +85,30 @@ export function renderLayout(opts: {
       <p>&copy; Nanoka contributors</p>
     </footer>
   </div>
+<script>
+(function() {
+  var saved = localStorage.getItem('nanoka-lang') || 'en';
+  var enDiv = document.querySelector('.lang-en');
+  var jaDiv = document.querySelector('.lang-ja');
+  var btns = document.querySelectorAll('.lang-btn');
+  function applyLang(lang) {
+    document.documentElement.lang = lang;
+    if (enDiv) enDiv.hidden = (lang !== 'en');
+    if (jaDiv) jaDiv.hidden = (lang !== 'ja');
+    btns.forEach(function(b) {
+      b.setAttribute('aria-pressed', b.dataset.lang === lang ? 'true' : 'false');
+    });
+  }
+  if (jaDiv) { applyLang(saved); }
+  btns.forEach(function(b) {
+    b.addEventListener('click', function() {
+      var lang = b.dataset.lang;
+      localStorage.setItem('nanoka-lang', lang);
+      applyLang(lang);
+    });
+  });
+})();
+</script>
 </body>
 </html>`
 }
