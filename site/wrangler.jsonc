@@ -10,7 +10,7 @@
   },
   // Cloudflare Workers Builds: connect this repo on the Cloudflare dashboard.
   // Set root directory = repo root, build command = "pnpm install --frozen-lockfile",
-  // deploy command = "pnpm -C site deploy", branch = main.
+  // deploy command = "pnpm -C site run deploy", branch = main.
   "build": {
     "command": "pnpm install --frozen-lockfile",
     "cwd": ".."
