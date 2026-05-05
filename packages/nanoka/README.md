@@ -17,7 +17,7 @@ Targets **Cloudflare Workers + D1 (SQLite)** as first-class. Hono-compatible rou
 
 ## Status
 
-**Stable (1.0.0).** Core API-boundary surface — field policies, `inputSchema` / `outputSchema`, validator presets, `t.json(zodSchema)`, field accessor API, Zod 3 / 4 support, OpenAPI component seed — is stable under SemVer.
+**Stable (1.6.1).** Core API-boundary surface — field policies, `inputSchema` / `outputSchema`, validator presets, `t.json(zodSchema)`, field accessor API, Zod 3 / 4 support, OpenAPI component seed — is stable under SemVer.
 
 ## Stable API surface (1.0)
 
@@ -75,7 +75,7 @@ pnpm add -D typescript drizzle-kit @cloudflare/workers-types
 
 The tsconfig `types` entry above still applies if you're targeting Cloudflare Workers.
 
-Peer dependency ranges: `hono ^4.0.0`, `drizzle-orm ^0.45.0`, `zod ^3.23.0 || ^4.0.0`, `@cloudflare/workers-types ^4.20240925.0`.
+Peer dependency ranges: `hono ^4.0.0`, `drizzle-orm ^0.45.2`, `zod ^3.23.0 || ^4.0.0`, `@cloudflare/workers-types ^4.20240925.0`.
 
 ## Quickstart
 
@@ -89,11 +89,11 @@ Peer dependency ranges: `hono ^4.0.0`, `drizzle-orm ^0.45.0`, `zod ^3.23.0 || ^4
 
    export const postTableName = 'posts'
    export const postFields = {
-     id: t.uuid().primary(),
+     id: t.uuid().primary().readOnly(),   // auto-generates UUID on create
      title: t.string().min(1).max(200),
      body: t.string().min(1),
      published: t.boolean().default(false),
-     createdAt: t.timestamp().default(() => new Date()),
+     createdAt: t.timestamp().default(() => new Date()).readOnly(),
    }
    ```
 
@@ -181,10 +181,10 @@ export default {
 
     app.post(
       '/posts',
-      Post.validator('json', { omit: ['id', 'createdAt'] }),
+      Post.validator('json', 'create'),  // readOnly fields auto-excluded
       async (c) => {
         const body = c.req.valid('json')
-        const created = await Post.create({ ...body, id: crypto.randomUUID() })
+        const created = await Post.create(body)  // id auto-generated via readOnly UUID
         return c.json(created, 201)
       }
     )
@@ -317,16 +317,16 @@ The optional `where` field accepts either an equality object or a Drizzle SQL ex
 import { eq, like, or } from 'drizzle-orm'
 
 // Equality AND (plain object form)
-const admins = await User.findMany(adapter, { limit: 20, where: { role: 'admin' } })
+const admins = await User.findMany({ limit: 20, where: { role: 'admin' } })
 
 // LIKE pattern (Drizzle SQL expression)
-const exampleUsers = await User.findMany(adapter, {
+const exampleUsers = await User.findMany({
   limit: 20,
   where: like(User.table.email, '%@example.com'),
 })
 
 // OR condition
-const specific = await User.findMany(adapter, {
+const specific = await User.findMany({
   limit: 20,
   where: or(eq(User.table.email, 'alice@example.com'), eq(User.table.email, 'bob@example.com')),
 })
@@ -340,10 +340,10 @@ When passing a Drizzle SQL expression, SQL injection prevention follows Drizzle'
 
 ```ts
 // Fetch all users (no limit)
-const users = await User.findAll(adapter)
+const users = await User.findAll()
 
 // With filtering and ordering
-const admins = await User.findAll(adapter, { orderBy: 'name', where: { role: 'admin' } })
+const admins = await User.findAll({ orderBy: 'name', where: { role: 'admin' } })
 
 // Apply toResponseMany to strip serverOnly fields
 return c.json(User.toResponseMany(users))

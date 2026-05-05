@@ -3,7 +3,7 @@ export const contentEn = `\
 
 <p class="intro-logo"><img src="/images/nanoka-logo.png" alt="Nanoka logo" width="160" height="160"></p>
 
-> **Stable 1.0.0** — Thin wrapper over Hono + Drizzle + Zod for Cloudflare Workers + D1.
+> **Stable 1.6.1** — Thin wrapper over Hono + Drizzle + Zod for Cloudflare Workers + D1.
 
 Nanoka eliminates the wiring ceremony between Hono, Drizzle, and Zod.
 One model definition becomes your DB schema, TypeScript types, and base validation — while keeping the 20% explicit where it matters.
@@ -80,7 +80,7 @@ export const contentJa = `\
 
 <p class="intro-logo"><img src="/images/nanoka-logo.png" alt="Nanoka logo" width="160" height="160"></p>
 
-> **Stable 1.0.0** — Cloudflare Workers + D1 向け Hono + Drizzle + Zod 薄ラッパー
+> **Stable 1.6.1** — Cloudflare Workers + D1 向け Hono + Drizzle + Zod 薄ラッパー
 
 Nanoka は Hono・Drizzle・Zod の配線作業をなくします。
 1 つのモデル定義から DB スキーマ・TypeScript 型・基本バリデーションが派生し、重要な 20% だけを明示的に書きます。

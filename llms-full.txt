@@ -219,21 +219,21 @@ The `f` object is `as const`, not a Proxy. No runtime magic.
 
 ### 4.8 CRUD
 
-**`findMany(adapter, options)`** — query with pagination (limit is required)
+**`findMany(options)`** — query with pagination (limit is required)
 
 ```ts
 import { like, or, eq } from 'drizzle-orm'
 
-const users = await User.findMany(adapter, { limit: 20 })
-const page2 = await User.findMany(adapter, { limit: 20, offset: 20 })
-const sorted = await User.findMany(adapter, { limit: 20, orderBy: 'email' })
+const users = await User.findMany({ limit: 20 })
+const page2 = await User.findMany({ limit: 20, offset: 20 })
+const sorted = await User.findMany({ limit: 20, orderBy: 'email' })
 
 // Equality AND (plain object)
-const admins = await User.findMany(adapter, { limit: 20, where: { role: 'admin' } })
+const admins = await User.findMany({ limit: 20, where: { role: 'admin' } })
 
 // Drizzle SQL expression (LIKE, OR, ranges, etc.)
-const matched = await User.findMany(adapter, { limit: 20, where: like(User.table.email, '%@example.com') })
-const either = await User.findMany(adapter, { limit: 20, where: or(eq(User.table.role, 'admin'), eq(User.table.role, 'mod')) })
+const matched = await User.findMany({ limit: 20, where: like(User.table.email, '%@example.com') })
+const either = await User.findMany({ limit: 20, where: or(eq(User.table.role, 'admin'), eq(User.table.role, 'mod')) })
 ```
 
 Calling `findMany()` without `limit` is a **type error** — the parameter is required. This prevents accidental unbounded queries.
@@ -244,10 +244,10 @@ Pagination shape: `{ limit, offset?, orderBy?, where? }`. The `where` field acce
 
 ```ts
 // All rows (no limit)
-const users = await User.findAll(adapter)
+const users = await User.findAll()
 
 // With filtering and ordering
-const admins = await User.findAll(adapter, { orderBy: 'name', where: { role: 'admin' } })
+const admins = await User.findAll({ orderBy: 'name', where: { role: 'admin' } })
 ```
 
 Options: `{ offset?, orderBy?, where? }`. No `limit` parameter. Issues no LIMIT clause to the database. For batch processing / admin tooling. Apply an app-level size guard when used in request handlers.
@@ -585,11 +585,11 @@ return c.json(User.toResponse(user))
 **Do not call `findMany()` without `limit`**
 
 ```ts
-// ❌ Type error
-const users = await User.findMany(adapter)
+// ❌ Type error — limit is required
+const users = await User.findMany()
 
 // ✅ Correct
-const users = await User.findMany(adapter, { limit: 20 })
+const users = await User.findMany({ limit: 20 })
 ```
 
 **Do not use `findAll()` in request handlers without an app-level size guard**
@@ -597,18 +597,18 @@ const users = await User.findMany(adapter, { limit: 20 })
 ```ts
 // ❌ Unbounded query in a request handler — may return millions of rows
 app.get('/users', async (c) => {
-  const users = await User.findAll(adapter)
+  const users = await User.findAll()
   return c.json(users)
 })
 
 // ✅ Use findMany with limit for request handlers
 app.get('/users', async (c) => {
-  const users = await User.findMany(adapter, { limit: 100 })
+  const users = await User.findMany({ limit: 100 })
   return c.json(users)
 })
 
 // ✅ findAll is appropriate for batch jobs / admin scripts
-const allUsers = await User.findAll(adapter)
+const allUsers = await User.findAll()
 ```
 
 **Do not pass DB rows directly to responses**
@@ -696,11 +696,11 @@ OpenAPI is documentation. The source of truth for validation is Zod schema + Hon
 import { d1Adapter, nanoka, t } from '@nanokajs/core'
 
 const postFields = {
-  id: t.uuid().primary(),
+  id: t.uuid().primary().readOnly(),   // auto-generates UUID on create
   title: t.string().min(1).max(200),
   body: t.string().min(1),
   published: t.boolean().default(false),
-  createdAt: t.timestamp().default(() => new Date()),
+  createdAt: t.timestamp().default(() => new Date()).readOnly(),
 }
 
 export interface Env {
@@ -720,10 +720,10 @@ export default {
 
     app.post(
       '/posts',
-      Post.validator('json', { omit: f => [f.id, f.createdAt] }),
+      Post.validator('json', 'create'),  // readOnly fields auto-excluded
       async (c) => {
         const body = c.req.valid('json')
-        const post = await Post.create({ ...body, id: crypto.randomUUID(), createdAt: new Date() })
+        const post = await Post.create(body)  // id auto-generated via readOnly UUID
         return c.json(post, 201)
       }
     )
