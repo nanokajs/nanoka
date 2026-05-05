@@ -605,7 +605,9 @@ export interface Model<Fields extends Record<string, Field<any, any, any>>> {
    *
    * The return type precisely reflects policy-derived omissions using PolicyOmitKeys.
    */
-  outputSchema<Opts extends SchemaOptions<NonRelationKeys<Fields> & string> | undefined = undefined>(
+  outputSchema<
+    Opts extends SchemaOptions<NonRelationKeys<Fields> & string> | undefined = undefined,
+  >(
     opts?: Opts,
   ): z.ZodObject<
     ApplyShape<Omit<FieldsToZodShape<Fields>, PolicyOmitKeys<Fields, 'output'> & string>, Opts>

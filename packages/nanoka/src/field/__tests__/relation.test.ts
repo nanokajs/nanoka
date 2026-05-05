@@ -1,10 +1,10 @@
 import { describe, expect, expectTypeOf, it } from 'vitest'
+import { defineModel } from '../../model'
 import { buildFieldAccessor } from '../../model/types'
 import { type RelationFieldBuilder, t } from '../factories'
-import { defineModel } from '../../model'
 
 const PostModel = { fields: { id: t.integer(), title: t.string() }, tableName: 'posts' }
-const CommentModel = { fields: { id: t.integer(), body: t.string() }, tableName: 'comments' }
+const _CommentModel = { fields: { id: t.integer(), body: t.string() }, tableName: 'comments' }
 
 describe('t.hasMany', () => {
   it('creates a relation field with kind relation and relationKind hasMany', () => {
@@ -44,7 +44,9 @@ describe('type-level tests', () => {
 
   it('t.belongsTo returns RelationFieldBuilder with belongsTo kind', () => {
     const field = t.belongsTo(PostModel, { foreignKey: 'postId' })
-    expectTypeOf(field).toMatchTypeOf<RelationFieldBuilder<typeof PostModel, 'postId', 'belongsTo'>>()
+    expectTypeOf(field).toMatchTypeOf<
+      RelationFieldBuilder<typeof PostModel, 'postId', 'belongsTo'>
+    >()
     expectTypeOf(field.relationKind).toEqualTypeOf<'belongsTo'>()
   })
 

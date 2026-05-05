@@ -1,5 +1,5 @@
-export { t } from './factories'
 export type { RelationFieldBuilder } from './factories'
+export { t } from './factories'
 export type {
   Field,
   FieldModifiers,

@@ -15,16 +15,30 @@ export interface FieldModifiers {
   policy?: FieldPolicy
 }
 
-export type FieldKind = 'string' | 'uuid' | 'number' | 'integer' | 'boolean' | 'timestamp' | 'json' | 'relation'
+export type FieldKind =
+  | 'string'
+  | 'uuid'
+  | 'number'
+  | 'integer'
+  | 'boolean'
+  | 'timestamp'
+  | 'json'
+  | 'relation'
 
 export type RelationKind = 'hasMany' | 'belongsTo'
 
 export interface RelationTargetLike {
-  readonly fields: Record<string, { kind: FieldKind; zodBase: unknown; drizzleColumn(name: string): unknown }>
+  readonly fields: Record<
+    string,
+    { kind: FieldKind; zodBase: unknown; drizzleColumn(name: string): unknown }
+  >
   readonly tableName: string
 }
 
-export interface RelationDef<Target extends RelationTargetLike = RelationTargetLike, FK extends string = string> {
+export interface RelationDef<
+  Target extends RelationTargetLike = RelationTargetLike,
+  FK extends string = string,
+> {
   readonly kind: 'relation'
   readonly relationKind: RelationKind
   readonly target: Target | (() => Target)
