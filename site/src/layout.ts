@@ -49,6 +49,7 @@ export function renderLayout(opts: {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${escapeHtml(title)} — Nanoka</title>${descTag}
+  <link rel="stylesheet" href="/highlight.css">
 </head>
 <body>
   <div class="layout">
