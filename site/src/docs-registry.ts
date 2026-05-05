@@ -15,11 +15,18 @@ import {
   contentEn as schemaValidatorEn,
   contentJa as schemaValidatorJa,
 } from './content/api/schema-validator'
+import { contentEn as cliEn, contentJa as cliJa } from './content/cli'
 import { contentEn as conceptsEn, contentJa as conceptsJa } from './content/concepts'
 import {
   contentEn as gettingStartedEn,
   contentJa as gettingStartedJa,
 } from './content/getting-started'
+import {
+  contentEn as errorHandlingEn,
+  contentJa as errorHandlingJa,
+} from './content/guides/error-handling'
+import { contentEn as migrationEn, contentJa as migrationJa } from './content/guides/migration'
+import { contentEn as tursoEn, contentJa as tursoJa } from './content/guides/turso'
 import { contentEn as indexEn, contentJa as indexJa } from './content/index'
 import { renderMarkdown } from './markdown'
 
@@ -39,8 +46,6 @@ interface NavGroup {
   section: DocSection
   pages: DocPage[]
 }
-
-const PLACEHOLDER = '<p>This page is under construction.</p>'
 
 const indexHtml = renderMarkdown(indexEn)
 const indexHtmlJa = renderMarkdown(indexJa)
@@ -65,6 +70,14 @@ const escapeHatchHtml = renderMarkdown(escapeHatchEn)
 const escapeHatchHtmlJa = renderMarkdown(escapeHatchJa)
 const adaptersHtml = renderMarkdown(adaptersEn)
 const adaptersHtmlJa = renderMarkdown(adaptersJa)
+const migrationHtml = renderMarkdown(migrationEn)
+const migrationHtmlJa = renderMarkdown(migrationJa)
+const errorHandlingHtml = renderMarkdown(errorHandlingEn)
+const errorHandlingHtmlJa = renderMarkdown(errorHandlingJa)
+const tursoHtml = renderMarkdown(tursoEn)
+const tursoHtmlJa = renderMarkdown(tursoJa)
+const cliHtml = renderMarkdown(cliEn)
+const cliHtmlJa = renderMarkdown(cliJa)
 
 // 15 pages total
 export const docPages: readonly DocPage[] = [
@@ -167,25 +180,35 @@ export const docPages: readonly DocPage[] = [
     path: '/guides/migration',
     title: 'Migration Workflow',
     section: 'guides',
-    content: PLACEHOLDER,
+    description:
+      'End-to-end migration pipeline — model definitions, nanoka generate, drizzle-kit, and wrangler d1 migrations apply.',
+    content: migrationHtml,
+    contentJa: migrationHtmlJa,
   },
   {
     path: '/guides/error-handling',
     title: 'Error Handling',
     section: 'guides',
-    content: PLACEHOLDER,
+    description:
+      'HTTPException, app.onError, Zod validation errors, and patterns for safe error responses.',
+    content: errorHandlingHtml,
+    contentJa: errorHandlingHtmlJa,
   },
   {
     path: '/guides/turso',
     title: 'Using with Turso',
     section: 'guides',
-    content: PLACEHOLDER,
+    description: 'Switching to Turso/libSQL — setup, secrets, local development, and migrations.',
+    content: tursoHtml,
+    contentJa: tursoHtmlJa,
   },
   {
     path: '/cli',
     title: 'CLI Reference',
     section: 'cli',
-    content: PLACEHOLDER,
+    description: 'nanoka generate options, nanoka.config.ts, and the create-nanoka-app scaffolder.',
+    content: cliHtml,
+    contentJa: cliHtmlJa,
   },
 ] satisfies readonly DocPage[]
 
