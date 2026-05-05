@@ -111,10 +111,10 @@ export const docPages: readonly DocPage[] = [
 ] satisfies readonly DocPage[]
 
 export const navStructure: NavGroup[] = [
-  { label: '', section: 'top', pages: docPages.filter(p => p.section === 'top') },
-  { label: 'API Reference', section: 'api', pages: docPages.filter(p => p.section === 'api') },
-  { label: 'Guides', section: 'guides', pages: docPages.filter(p => p.section === 'guides') },
-  { label: '', section: 'cli', pages: docPages.filter(p => p.section === 'cli') },
+  { label: '', section: 'top', pages: docPages.filter((p) => p.section === 'top') },
+  { label: 'API Reference', section: 'api', pages: docPages.filter((p) => p.section === 'api') },
+  { label: 'Guides', section: 'guides', pages: docPages.filter((p) => p.section === 'guides') },
+  { label: '', section: 'cli', pages: docPages.filter((p) => p.section === 'cli') },
 ]
 
 export const docsByPath = new Map(docPages.map((p) => [p.path, p]))
