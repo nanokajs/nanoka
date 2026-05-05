@@ -22,6 +22,21 @@ function computeForcedOmit(
 }
 
 /**
+ * Returns field names for relation fields that must always be omitted from API schemas.
+ * Relation fields have no DB column and no Zod schema representation.
+ */
+function computeRelationOmit(
+  // biome-ignore lint/suspicious/noExplicitAny: any is necessary for generic Field handling
+  fields: Record<string, Field<any, any, any>>,
+): Set<string> {
+  const keys = new Set<string>()
+  for (const [key, field] of Object.entries(fields)) {
+    if (field.kind === 'relation') keys.add(key)
+  }
+  return keys
+}
+
+/**
  * Returns field names to omit based on UX-oriented policy (writeOnly / readOnly).
  * These can be overridden when user explicitly provides pick.
  *
@@ -66,7 +81,9 @@ export function derivePolicyOptions(
   // biome-ignore lint/suspicious/noExplicitAny: accessor is a plain object with string keys
   accessor?: FieldAccessor<any>,
 ): SchemaOptions {
-  const forced = computeForcedOmit(fields)
+  const forcedBase = computeForcedOmit(fields)
+  const relationOmit = computeRelationOmit(fields)
+  const forced = [...new Set([...forcedBase, ...relationOmit])]
   const optional = computeOptionalOmit(fields, usage)
 
   const acc = accessor ?? ({} as FieldAccessor<string>)
@@ -102,12 +119,14 @@ export function derivePolicyOptions(
 /**
  * Builds a Zod object schema from a fields definition.
  * Returns a ZodObject with all fields required and present.
+ * Relation fields are excluded as they have no Zod schema representation.
  */
 // biome-ignore lint/suspicious/noExplicitAny: any is necessary for generic Field handling and Zod shape
 export function buildBaseObject(fields: Record<string, Field<any, any, any>>): z.ZodObject<any> {
   // biome-ignore lint/suspicious/noExplicitAny: Record key-value pairs have any type for shape
   const shape: Record<string, any> = {}
   for (const [key, field] of Object.entries(fields)) {
+    if (field.kind === 'relation') continue
     shape[key] = field.zodBase
   }
   return z.object(shape)

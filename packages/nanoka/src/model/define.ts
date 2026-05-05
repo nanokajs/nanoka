@@ -16,6 +16,7 @@ import type {
   FindManyOptions,
   IdOrWhere,
   Model,
+  NonRelationKeys,
   RowType,
   SchemaOptions,
 } from './types'
@@ -49,7 +50,7 @@ export function defineModel<Fields extends Record<string, Field<any, any, any>>>
     tableName,
     table,
 
-    schema<Opts extends SchemaOptions<keyof Fields & string> | undefined>(
+    schema<Opts extends SchemaOptions<NonRelationKeys<Fields> & string> | undefined>(
       opts?: Opts,
     ): Apply<FieldsToZodShape<Fields>, Opts> {
       const baseSchema = buildBaseObject(fields)
@@ -60,7 +61,7 @@ export function defineModel<Fields extends Record<string, Field<any, any, any>>>
 
     validator(
       target: keyof ValidationTargets,
-      optsOrPreset?: 'create' | 'update' | SchemaOptions<keyof Fields & string>,
+      optsOrPreset?: 'create' | 'update' | SchemaOptions<NonRelationKeys<Fields> & string>,
       // biome-ignore lint/suspicious/noExplicitAny: Hook<T> is contravariant in T; any is required to bridge overload implementations
       hook?: Hook<any, Env, string, keyof ValidationTargets>,
     ) {
@@ -68,7 +69,7 @@ export function defineModel<Fields extends Record<string, Field<any, any, any>>>
       if (optsOrPreset === 'create' || optsOrPreset === 'update') {
         schema = this.inputSchema(optsOrPreset)
       } else {
-        schema = this.schema(optsOrPreset as SchemaOptions<keyof Fields & string>)
+        schema = this.schema(optsOrPreset as SchemaOptions<NonRelationKeys<Fields> & string>)
       }
       // biome-ignore lint/suspicious/noExplicitAny: zValidator return type cast required at overload boundary
       return zValidator(target, schema, hook) as any
@@ -76,7 +77,7 @@ export function defineModel<Fields extends Record<string, Field<any, any, any>>>
 
     inputSchema(
       usage: 'create' | 'update',
-      opts?: SchemaOptions<keyof Fields & string>,
+      opts?: SchemaOptions<NonRelationKeys<Fields> & string>,
       // biome-ignore lint/suspicious/noExplicitAny: precise return type is enforced by Model<Fields> overload signatures
     ): any {
       const merged = derivePolicyOptions(
@@ -90,7 +91,7 @@ export function defineModel<Fields extends Record<string, Field<any, any, any>>>
     },
 
     outputSchema(
-      opts?: SchemaOptions<keyof Fields & string>,
+      opts?: SchemaOptions<NonRelationKeys<Fields> & string>,
       // biome-ignore lint/suspicious/noExplicitAny: precise return type is enforced by Model<Fields> overload signatures
     ): any {
       const merged = derivePolicyOptions(fields, 'output', opts, accessor)

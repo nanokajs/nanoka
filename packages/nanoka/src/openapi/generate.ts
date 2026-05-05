@@ -39,6 +39,7 @@ export function toOpenAPISchema(
   for (const [key, zodSchema] of Object.entries(shape)) {
     const field = fields[key]
     if (field === undefined) continue
+    if (field.kind === 'relation') continue
 
     properties[key] = fieldToOpenAPISchema(field, opts?.strict)
     if (field.modifiers.policy === 'writeOnly' && (usage === 'create' || usage === 'update')) {

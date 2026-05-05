@@ -3,7 +3,7 @@ import { integer, real, text } from 'drizzle-orm/sqlite-core'
 import type { z } from 'zod'
 import { z as zLib } from 'zod'
 import { BaseFieldBuilder } from './builder'
-import type { FieldModifiers } from './types'
+import type { FieldModifiers, RelationKind, RelationTargetLike } from './types'
 
 // ==================== StringFieldBuilder ====================
 
@@ -972,6 +972,36 @@ class JsonFieldBuilder<
   }
 }
 
+// ==================== RelationFieldBuilder ====================
+
+export class RelationFieldBuilder<
+  Target extends RelationTargetLike,
+  FK extends string,
+  Kind extends RelationKind,
+> {
+  readonly kind = 'relation' as const
+  readonly relationKind: Kind
+  readonly target: Target | (() => Target)
+  readonly foreignKey: FK
+  readonly tsType!: never
+  // biome-ignore lint/complexity/noBannedTypes: {} is used intentionally for empty modifiers
+  readonly modifiers = {} as const
+
+  constructor(relationKind: Kind, target: Target | (() => Target), foreignKey: FK) {
+    this.relationKind = relationKind
+    this.target = target
+    this.foreignKey = foreignKey
+  }
+
+  get zodBase(): z.ZodNever {
+    return zLib.never()
+  }
+
+  drizzleColumn(name: string): never {
+    throw new Error(`relation field '${name}' has no DB column`)
+  }
+}
+
 // ==================== Factory ====================
 
 // biome-ignore lint/complexity/noBannedTypes: {} is used intentionally for the default empty modifiers
@@ -1062,4 +1092,18 @@ export const t = {
    * Drizzle 型が欲しい場合は生成後に手動で書き換えるか `as` を使うこと。
    */
   json: jsonField,
+
+  hasMany<Target extends RelationTargetLike, FK extends string>(
+    target: Target | (() => Target),
+    options: { foreignKey: FK },
+  ): RelationFieldBuilder<Target, FK, 'hasMany'> {
+    return new RelationFieldBuilder('hasMany', target, options.foreignKey)
+  },
+
+  belongsTo<Target extends RelationTargetLike, FK extends string>(
+    target: Target | (() => Target),
+    options: { foreignKey: FK },
+  ): RelationFieldBuilder<Target, FK, 'belongsTo'> {
+    return new RelationFieldBuilder('belongsTo', target, options.foreignKey)
+  },
 }
