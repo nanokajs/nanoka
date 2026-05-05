@@ -47,6 +47,7 @@
 - プロジェクト基盤セットアップ（Cloudflare Workers + Hono scaffold） — [#56](https://github.com/nanokajs/nanoka/issues/56)
 - レイアウト・ルーティング実装（HTML レイアウト / サイドバーナビ / ページレジストリ） — [#57](https://github.com/nanokajs/nanoka/issues/57)
 - Markdown レンダリング・シンタックスハイライト（marked + marked-highlight + highlight.js、Atom One Dark CSS） — [#58](https://github.com/nanokajs/nanoka/issues/58)
+- スタイリング・レスポンシブ対応（CSS-only ドロワー、タイポグラフィ、OGP メタタグ） — [#59](https://github.com/nanokajs/nanoka/issues/59)
 
 ## 未実装として残す（将来候補）
 
