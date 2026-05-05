@@ -179,7 +179,7 @@ const result = await app.db
 - 複雑なSQLをDSLですべて表現しない（素のDrizzleで書く）
 - マイグレーションを自動実行しない
 - D1以外のDBをMVP段階で完全サポートしない
-- relationは引き続き non-goal（手書きDrizzleで対応）
+- relation: v1限定スコープで採用（設計仕様は "Relations API" 節参照）
 - 型安全なクエリビルダー（`User.where(...)` / `User.where(f => eq(...))`）— 採用しないと決定（Issue #15 参照）
 - VSCode extension（TypeScript 言語サーバ + Biome + nanoka generate で十分。Issue #16 参照）
 - フィールドアクセサAPIをMVPに含めない（Phase 2以降）
@@ -207,7 +207,7 @@ const result = await app.db
 - エラーハンドリング: Honoの `HTTPException` に乗る。Nanokaは独自エラー型を持たない
 - transaction: D1のbatch APIをそのまま公開。独自抽象は持たない
 
-> **relationについて**: `t.hasMany()` / `t.belongsTo()` は non-goal と決定（Issue #14）。cascade・N+1・join型推論の設計負荷が高く Drizzle 再発明に寄るため、引き続き手書き Drizzle（`app.db`）で対応する。
+> **relationについて**: `t.hasMany()` / `t.belongsTo()` は Phase 2/3 で限定スコープ採用（Issue #14）。depth 1 の eager loading のみサポート。複雑なクエリは引き続き手書き Drizzle（`app.db`）で対応する。設計仕様は "Relations API" 節参照。
 
 ### Phase 1.5 — 公開運用基盤
 - [ ] README onboarding parity CI（公開 tarball / 最小 scaffold で `tsc --noEmit` と `drizzle-kit generate` を検証）
@@ -297,11 +297,103 @@ relation / Turso・libSQL adapter / route-level OpenAPI / `create-nanoka-app` / 
 - [x] CLIスキャフォールダ: `create-nanoka-app`
 
 #### 次に残っている設計候補
-- [x] リレーション定義（`t.hasMany()` / `t.belongsTo()`）— 採用しないと決定（Issue #14 参照）
+- [x] リレーション定義（`t.hasMany()` / `t.belongsTo()`）— v1限定スコープで採用（Issue #14、設計仕様は "Relations API" 節参照）
 - [x] 型安全なクエリビルダー（`User.where(f => eq(f.email, x)).limit(10)`）— 採用しないと決定（Issue #15 参照）
 - [x] VSCode拡張（モデル定義からの補完）— 採用しないと決定（Issue #16 参照）
 - [ ] Claude Code / Codex プラグイン（モデル定義・ルート生成・migration手順の補助）
 - [ ] OSSコミュニティ整備
+
+---
+
+## Relations API（v1 限定スコープ）
+
+### 採用経緯
+
+Phase 1 では relations は non-goal とし、`app.db`（raw Drizzle）を escape hatch として推奨していた。Issue #14 の議論を経て、depth 1 の eager loading を限定スコープで採用することを決定した。
+
+Drizzle の複雑なクエリ DSL を再発明しない方針は維持する。複雑な JOIN・集計・ネストクエリは引き続き `app.db` を使う。
+
+### フィールドビルダー API
+
+```ts
+t.hasMany(Target, { foreignKey })    // 1 → N
+t.belongsTo(Target, { foreignKey })  // N → 1
+```
+
+- 第 1 引数 `Target` は `NanokaModel<...>` または `() => NanokaModel<...>`（遅延評価で相互参照の TDZ を回避）
+- 第 2 引数 `{ foreignKey }` は**必須**。推測しない
+  - `hasMany`: `foreignKey` は Target 側の列名（例: `Post` テーブルの `userId`）
+  - `belongsTo`: `foreignKey` は自モデル側の列名（例: `Post` テーブルの `userId`）
+- relation フィールドは **DB 列を持たない**。`nanoka generate` の Drizzle schema 出力で列として emit されない
+- `inputSchema()` / `outputSchema()` / `validator()` から**デフォルト除外**される
+
+```ts
+// 定義例
+const User = app.model('users', {
+  id:    t.uuid().primary(),
+  email: t.string().email(),
+  posts: t.hasMany(() => Post, { foreignKey: 'userId' }),
+})
+
+const Post = app.model('posts', {
+  id:     t.uuid().primary(),
+  userId: t.uuid(),
+  title:  t.string(),
+  author: t.belongsTo(User, { foreignKey: 'userId' }),
+})
+```
+
+### クエリ API（`with` オプション）
+
+`findMany` / `findOne` に `with` オプションを追加する。
+
+```ts
+// app-bound API（app.model() の戻り値経由）
+User.findMany({ limit: 20, with: { posts: true } })
+Post.findOne(id, { with: { author: true } })
+
+// raw API（adapter を明示的に渡す場合）
+findMany(adapter, { limit: 20, with: { posts: true } })
+findOne(adapter, id, { with: { author: true } })
+```
+
+- 値は `true` のみサポート（depth 1）
+- ネストした指定（`with: { posts: { with: { comments: true } } }`）は v1 対象外
+- 戻り値の型:
+  - `hasMany`: `RowType<TargetFields>[]` が乗る
+  - `belongsTo`: `RowType<TargetFields> | null` が乗る
+- `findMany` の `limit` 必須ルールは親クエリに適用。関係先行の取得には limit を付けない（v1 仕様）
+- 関係先カラムでの `where` 絞り込み DSL は提供しない。`app.db` を使う
+
+### 実装戦略
+
+**2 クエリ + JS グループ化**（SQL JOIN は採らない）:
+
+1. 親行を `findMany` で取得する
+2. 親行の主キー集合で `IN (...)` クエリを発行し、子行を一括取得する
+3. JS 側で foreign key をキーにグループ化し、結果オブジェクトに埋める
+
+**JOIN を採らない理由**: D1 / libSQL の JOIN 対応差の吸収・cartesian product 回避・Drizzle relations DSL の再発明を避けるため。
+
+### 制約
+
+| 制約 | 内容 |
+|---|---|
+| Depth | 1 のみ。ネスト `with` は v1 対象外（#14 で再検討） |
+| 循環参照 | `Target` 関数遅延評価で TDZ 回避。`with` クエリ時に DFS で循環を検出してエラー（実装は #14-4） |
+| `findMany.limit` | 親クエリには必須維持。関係先には適用しない（known limitation） |
+| `where` DSL | 関係先カラムでの絞り込みは未対応。`app.db` を使う |
+| マイグレーション | 外部キー制約 SQL を自動生成しない（Load-bearing rule 1 維持）。Drizzle schema の `references()` は手動で追加する |
+| OpenAPI | relation フィールドは `outputSchema()` に含めない（v1）。`with` 指定時の出力型表現は v2 で検討 |
+| Validator | `validator()` / `inputSchema()` / `outputSchema()` の派生から自動除外される |
+| Escape hatch | 複雑な JOIN・集計は `app.db` を使う方針を維持（Load-bearing rule 4） |
+
+### 後続 Issue 構成
+
+- **#14-2**: フィールドビルダー実装（`t.hasMany` / `t.belongsTo` の型と builder）。`Field` 型に `kind: 'relation'` discriminator を追加し、codegen・schema 派生から除外する分岐を実装
+- **#14-3**: `findMany({ with })` / `findOne({ with })` のクエリ実装。`packages/nanoka/src/model/types.ts` と `packages/nanoka/src/router/types.ts` の両層を同時更新（CLAUDE.md Load-bearing rule に従う）
+- **#14-4**: 循環参照 DFS 検出とエラー設計
+- **#14-5**: docs-site の例とドキュメントサイト更新
 
 ---
 
@@ -344,7 +436,7 @@ relation / Turso・libSQL adapter / route-level OpenAPI / `create-nanoka-app` / 
 | マイグレーション事故 | 独自diffエンジンを持たない。Drizzle Kit / Wranglerの流儀に完全委譲 |
 | D1ロックイン | adapter層を初期設計に含める |
 | 長期的な抽象の重さ | 素のDrizzleへのescape hatchを常に開けておく |
-| relation設計の複雑さ | MVPスコープから除外。必要なら手書きDrizzleで対応 |
+| relation設計の複雑さ | depth 1 eager loading のみ v1 で採用。複雑なクエリは手書きDrizzleで対応（Relations API 節参照） |
 | `findMany`のデフォルト安全性 | limit必須・デフォルト20件。limitなしは型エラー |
 | スコープ肥大化 | 「やらないこと」リストを公開し、IssueよりもPRを優先する運営方針 |
 | 依存ライブラリのbreaking change | Drizzle・Hono・Zodのメジャーアップは即対応。薄いラッパーゆえ追従コストは低い |
