@@ -9,3 +9,11 @@ export const users = sqliteTable('users', {
   passwordHash: text('passwordHash').notNull(),
   createdAt: integer('createdAt', { mode: 'timestamp_ms' }).notNull(),
 })
+
+export const posts = sqliteTable('posts', {
+  id: text('id').primaryKey().notNull(),
+  userId: text('userId').notNull(),
+  title: text('title').notNull(),
+  body: text('body'),
+  createdAt: integer('createdAt', { mode: 'timestamp_ms' }).notNull(),
+})

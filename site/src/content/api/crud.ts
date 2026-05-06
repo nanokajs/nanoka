@@ -140,6 +140,25 @@ if (result.deleted === 0) throw new HTTPException(404, { message: 'Not found' })
 return c.body(null, 204)
 \`\`\`
 
+## Eager Loading with \`with\`
+
+When a model has relations defined (\`t.hasMany()\` / \`t.belongsTo()\`), pass a \`with\` option to load related rows eagerly in a single call.
+
+\`\`\`typescript
+// Load user with their posts (hasMany)
+const user = await User.findOne(id, { with: { posts: true } })
+// { id, name, email, createdAt, posts: [{ id, userId, title, ... }] }
+
+// Load post with its author (belongsTo)
+const post = await Post.findOne(id, { with: { author: true } })
+// { id, userId, title, createdAt, author: { id, name, email, ... } | null }
+
+// findMany also supports with — limit applies to the parent query only
+const users = await User.findMany({ limit: 20, with: { posts: true } })
+\`\`\`
+
+Depth is limited to 1. Nested \`with\` is not supported in v1. For complex joins or filtered relations, use \`app.db\`. See [Relations](/api/relations) for the full API.
+
 ## Full CRUD route example
 
 \`\`\`typescript
@@ -333,6 +352,25 @@ console.log(result.deleted) // 削除された行数
 if (result.deleted === 0) throw new HTTPException(404, { message: 'Not found' })
 return c.body(null, 204)
 \`\`\`
+
+## \`with\` を使った eager loading
+
+モデルに relation（\`t.hasMany()\` / \`t.belongsTo()\`）が定義されている場合、\`with\` オプションを渡して関連行を 1 回の呼び出しで eager load できます。
+
+\`\`\`typescript
+// user と posts を一緒に取得（hasMany）
+const user = await User.findOne(id, { with: { posts: true } })
+// { id, name, email, createdAt, posts: [{ id, userId, title, ... }] }
+
+// post と author を一緒に取得（belongsTo）
+const post = await Post.findOne(id, { with: { author: true } })
+// { id, userId, title, createdAt, author: { id, name, email, ... } | null }
+
+// findMany でも with が使える — limit は親クエリにのみ適用される
+const users = await User.findMany({ limit: 20, with: { posts: true } })
+\`\`\`
+
+Depth は 1 のみです。ネストした \`with\` は v1 非対応です。複雑な join やフィルタ付き relation には \`app.db\` を使います。詳細は [Relations](/api/relations) を参照してください。
 
 ## フル CRUD ルート例
 

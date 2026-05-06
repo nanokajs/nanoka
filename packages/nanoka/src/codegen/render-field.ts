@@ -1,6 +1,9 @@
-import type { Field } from '../field'
+import type { Field, FieldModifiers } from '../field'
 
-export function renderField(fieldName: string, field: Field<any, any, any>): string | null {
+export function renderField(
+  fieldName: string,
+  field: Field<unknown, FieldModifiers>,
+): string | null {
   if (field.kind === 'relation') return null
 
   const lines: string[] = []

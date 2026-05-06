@@ -115,6 +115,26 @@ app.get('/docs', swaggerUI({ url: '/openapi.json', title: 'API Docs' }))
 
 Navigate to \`/docs\` to see the interactive API documentation.
 
+## Relations in OpenAPI Output
+
+When a model has relations defined, pass \`{ with }\` to \`toOpenAPISchema('output')\` to expand relation fields in the spec. This is **spec-only** — runtime validation source of truth remains Zod.
+
+\`\`\`typescript
+// Expand posts array in the User output schema
+User.toOpenAPISchema('output', { with: { posts: true } })
+// → { type: 'object', properties: { id, name, ..., posts: { type: 'array', items: { ... } } } }
+
+// Expand author object in the Post output schema
+Post.toOpenAPISchema('output', { with: { author: true } })
+// → { type: 'object', properties: { id, title, ..., author: { type: 'object', nullable: true, ... } } }
+\`\`\`
+
+- \`hasMany\` relations expand as \`{ type: 'array', items: { ... } }\`.
+- \`belongsTo\` relations expand as \`{ type: 'object', nullable: true, ... }\`.
+- When \`with\` is not passed, relation fields are excluded from the schema (default behavior).
+
+> **Important:** The \`with\` option in \`toOpenAPISchema\` affects the spec only. Runtime validation always uses Zod. See [Relations](/api/relations) for the full Relations API.
+
 ## OpenAPI and runtime validation
 
 > **Important:** The OpenAPI spec is documentation only. Runtime validation is always performed by Zod schemas and Hono validators (\`inputSchema()\` / \`outputSchema()\` / \`User.validator()\`). Do not treat the OpenAPI spec as a security boundary.
@@ -236,6 +256,26 @@ app.get('/docs', swaggerUI({ url: '/openapi.json', title: 'API Docs' }))
 \`\`\`
 
 \`/docs\` にアクセスするとインタラクティブな API ドキュメントが表示されます。
+
+## Relations の OpenAPI 出力
+
+モデルに relation が定義されている場合、\`toOpenAPISchema('output')\` に \`{ with }\` を渡すと spec 内で relation フィールドを展開できます。これは **spec のみ** の展開です — runtime バリデーションの source of truth は引き続き Zod です。
+
+\`\`\`typescript
+// User の output スキーマに posts 配列を展開
+User.toOpenAPISchema('output', { with: { posts: true } })
+// → { type: 'object', properties: { id, name, ..., posts: { type: 'array', items: { ... } } } }
+
+// Post の output スキーマに author オブジェクトを展開
+Post.toOpenAPISchema('output', { with: { author: true } })
+// → { type: 'object', properties: { id, title, ..., author: { type: 'object', nullable: true, ... } } }
+\`\`\`
+
+- \`hasMany\` relation は \`{ type: 'array', items: { ... } }\` として展開されます。
+- \`belongsTo\` relation は \`{ type: 'object', nullable: true, ... }\` として展開されます。
+- \`with\` を渡さない場合、relation フィールドはスキーマから除外されます（デフォルト動作）。
+
+> **重要:** \`toOpenAPISchema\` の \`with\` オプションは spec のみに影響します。runtime バリデーションは常に Zod を使います。Relations API の詳細は [Relations](/api/relations) を参照してください。
 
 ## OpenAPI と runtime バリデーション
 

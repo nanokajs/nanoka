@@ -1,6 +1,7 @@
 import { applyD1Migrations, env, SELF } from 'cloudflare:test'
 import { d1Adapter, defineModel } from '@nanokajs/core'
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest'
+import { postFields, postTableName } from '../src/models/post'
 import { userFields, userTableName } from '../src/models/user'
 
 declare module 'cloudflare:test' {
@@ -26,6 +27,7 @@ describe('E2E: User CRUD API', () => {
   })
 
   beforeEach(async () => {
+    await env.DB.exec('DELETE FROM posts')
     await env.DB.exec('DELETE FROM users')
   })
 
@@ -161,5 +163,146 @@ describe('E2E: User CRUD API', () => {
 
     const getResponse = await SELF.fetch(`http://example.com/users/${userId}`)
     expect(getResponse.status).toBe(404)
+  })
+})
+
+describe('E2E: Post CRUD API', () => {
+  const User = defineModel(userTableName, userFields)
+  const Post = defineModel(postTableName, postFields)
+
+  const seedUser = (row: {
+    id: string
+    name: string
+    email: string
+    passwordHash: string
+    createdAt: Date
+  }) => User.create(d1Adapter(env.DB), row)
+
+  const seedPost = (row: {
+    id: string
+    userId: string
+    title: string
+    body?: string
+    createdAt: Date
+  }) => Post.create(d1Adapter(env.DB), row)
+
+  beforeAll(async () => {
+    await applyD1Migrations(env.DB, env.TEST_MIGRATIONS)
+  })
+
+  beforeEach(async () => {
+    await env.DB.exec('DELETE FROM posts')
+    await env.DB.exec('DELETE FROM users')
+  })
+
+  it('8. POST /posts creates a post with userId and title', async () => {
+    const userId = '550e8400-e29b-41d4-a716-446655440010'
+    await seedUser({
+      id: userId,
+      name: 'Alice',
+      email: 'alice@example.com',
+      passwordHash: 'hash1',
+      createdAt: new Date(),
+    })
+
+    const response = await SELF.fetch('http://example.com/posts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, title: 'Hello World' }),
+    })
+    expect(response.status).toBe(201)
+
+    const data = (await response.json()) as Record<string, unknown>
+    expect(data.id).toBeDefined()
+    expect(data.userId).toBe(userId)
+    expect(data.title).toBe('Hello World')
+    expect(data.createdAt).toBeDefined()
+  })
+
+  it('9. GET /users/:id?with=posts returns user with posts array', async () => {
+    const userId = '550e8400-e29b-41d4-a716-446655440011'
+    const postId = '550e8400-e29b-41d4-a716-446655440012'
+
+    await seedUser({
+      id: userId,
+      name: 'Alice',
+      email: 'alice@example.com',
+      passwordHash: 'hash1',
+      createdAt: new Date(),
+    })
+    await seedPost({
+      id: postId,
+      userId,
+      title: 'Test Post',
+      createdAt: new Date(),
+    })
+
+    const response = await SELF.fetch(`http://example.com/users/${userId}?with=posts`)
+    expect(response.status).toBe(200)
+
+    const data = (await response.json()) as Record<string, unknown>
+    expect(data.id).toBe(userId)
+    expect(data.passwordHash).toBeUndefined()
+    expect(Array.isArray(data.posts)).toBe(true)
+    const posts = data.posts as Record<string, unknown>[]
+    expect(posts.length).toBe(1)
+    // biome-ignore lint/style/noNonNullAssertion: length is asserted to be 1 above
+    expect(posts[0]!.id).toBe(postId)
+    // biome-ignore lint/style/noNonNullAssertion: length is asserted to be 1 above
+    expect(posts[0]!.title).toBe('Test Post')
+  })
+
+  it('10. GET /posts/:id?with=author returns post with author (no passwordHash)', async () => {
+    const userId = '550e8400-e29b-41d4-a716-446655440013'
+    const postId = '550e8400-e29b-41d4-a716-446655440014'
+
+    await seedUser({
+      id: userId,
+      name: 'Bob',
+      email: 'bob@example.com',
+      passwordHash: 'secret-hash',
+      createdAt: new Date(),
+    })
+    await seedPost({
+      id: postId,
+      userId,
+      title: 'Authored Post',
+      createdAt: new Date(),
+    })
+
+    const response = await SELF.fetch(`http://example.com/posts/${postId}?with=author`)
+    expect(response.status).toBe(200)
+
+    const data = (await response.json()) as Record<string, unknown>
+    expect(data.id).toBe(postId)
+    expect(data.title).toBe('Authored Post')
+
+    // author must be present
+    expect(data.author).toBeDefined()
+    const author = data.author as Record<string, unknown>
+    expect(author.id).toBe(userId)
+    expect(author.name).toBe('Bob')
+
+    // SECURITY: passwordHash must never leak via relation
+    expect(author.passwordHash).toBeUndefined()
+  })
+
+  it('11. GET /users/:id (without with) does not include posts', async () => {
+    const userId = '550e8400-e29b-41d4-a716-446655440015'
+
+    await seedUser({
+      id: userId,
+      name: 'Charlie',
+      email: 'charlie@example.com',
+      passwordHash: 'hash3',
+      createdAt: new Date(),
+    })
+
+    const response = await SELF.fetch(`http://example.com/users/${userId}`)
+    expect(response.status).toBe(200)
+
+    const data = (await response.json()) as Record<string, unknown>
+    expect(data.id).toBe(userId)
+    expect(data.posts).toBeUndefined()
   })
 })

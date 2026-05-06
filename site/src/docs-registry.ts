@@ -7,6 +7,7 @@ import {
 } from './content/api/field-policies'
 import { contentEn as fieldTypesEn, contentJa as fieldTypesJa } from './content/api/field-types'
 import { contentEn as openapiEn, contentJa as openapiJa } from './content/api/openapi'
+import { contentEn as relationsEn, contentJa as relationsJa } from './content/api/relations'
 import {
   contentEn as responseShapingEn,
   contentJa as responseShapingJa,
@@ -62,6 +63,8 @@ const schemaValidatorHtml = renderMarkdown(schemaValidatorEn)
 const schemaValidatorHtmlJa = renderMarkdown(schemaValidatorJa)
 const crudHtml = renderMarkdown(crudEn)
 const crudHtmlJa = renderMarkdown(crudJa)
+const relationsHtml = renderMarkdown(relationsEn)
+const relationsHtmlJa = renderMarkdown(relationsJa)
 const responseShapingHtml = renderMarkdown(responseShapingEn)
 const responseShapingHtmlJa = renderMarkdown(responseShapingJa)
 const openapiHtml = renderMarkdown(openapiEn)
@@ -79,7 +82,7 @@ const tursoHtmlJa = renderMarkdown(tursoJa)
 const cliHtml = renderMarkdown(cliEn)
 const cliHtmlJa = renderMarkdown(cliJa)
 
-// 15 pages total
+// 17 pages total
 export const docPages: readonly DocPage[] = [
   {
     path: '/',
@@ -141,6 +144,14 @@ export const docPages: readonly DocPage[] = [
       'findMany, findAll, findOne, create, update, and delete — adapter-bound CRUD methods on Nanoka models.',
     content: crudHtml,
     contentJa: crudHtmlJa,
+  },
+  {
+    path: '/api/relations',
+    title: 'Relations',
+    section: 'api',
+    description: 'Define hasMany and belongsTo relations and eager-load with `with`.',
+    content: relationsHtml,
+    contentJa: relationsHtmlJa,
   },
   {
     path: '/api/response-shaping',
