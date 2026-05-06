@@ -108,7 +108,7 @@ export async function verify<T = Record<string, unknown>>(
     if (typeof payload.exp !== 'number' || !Number.isFinite(payload.exp)) {
       throw new Error('Invalid exp claim')
     }
-    if (Math.floor(Date.now() / 1000) > payload.exp) {
+    if (Math.floor(Date.now() / 1000) >= payload.exp) {
       throw new Error('Token expired')
     }
   }
