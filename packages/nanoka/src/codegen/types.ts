@@ -1,8 +1,8 @@
-import type { Field } from '../field'
+import type { Field, FieldModifiers } from '../field'
 
 export interface ModelDef {
   readonly name: string
-  readonly fields: Record<string, Field>
+  readonly fields: Record<string, Field<unknown, FieldModifiers>>
 }
 
 export interface NanokaConfig {
