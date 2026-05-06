@@ -146,6 +146,40 @@ describe('createAuth', () => {
     expect(res.status).toBe(401)
   })
 
+  it('middleware() は access token のみを受け入れ refresh token を拒否する', async () => {
+    const hash = await pbkdf2Hasher.hash('password123')
+    const model = makeFakeModel([{ id: 'user-mw', email: 'mw@example.com', passwordHash: hash }])
+    const auth = createAuth({
+      model,
+      secret: SECRET,
+      fields: { identifier: 'email', password: 'passwordHash' },
+    })
+    const app = new Hono()
+    app.post('/login', auth.loginHandler())
+    app.use('/protected', auth.middleware())
+    app.get('/protected', (c) => c.json({ ok: true }))
+
+    const loginRes = await app.request('/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'mw@example.com', passwordHash: 'password123' }),
+    })
+    const { accessToken, refreshToken } = (await loginRes.json()) as {
+      accessToken: string
+      refreshToken: string
+    }
+
+    const okRes = await app.request('/protected', {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    })
+    expect(okRes.status).toBe(200)
+
+    const ngRes = await app.request('/protected', {
+      headers: { Authorization: `Bearer ${refreshToken}` },
+    })
+    expect(ngRes.status).toBe(401)
+  })
+
   it('カスタム hasher が差し込めるテスト（タイミング攻撃対策を含む）', async () => {
     const verifyCalls: Array<[string, string]> = []
     const stubHasher: Hasher = {

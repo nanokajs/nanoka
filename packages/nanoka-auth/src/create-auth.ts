@@ -4,7 +4,6 @@ import { HTTPException } from 'hono/http-exception'
 import type { Hasher } from './hasher.js'
 import { pbkdf2Hasher } from './hashers/pbkdf2.js'
 import { sign, verify } from './jwt.js'
-import { authMiddleware } from './middleware.js'
 
 export interface CreateAuthOptions {
   // biome-ignore lint/suspicious/noExplicitAny: any is necessary for NanokaModel generic constraint
@@ -116,7 +115,28 @@ export function createAuth(opts: CreateAuthOptions): AuthInstance {
     },
 
     middleware(): MiddlewareHandler {
-      return authMiddleware({ secret: opts.secret })
+      return async (c, next) => {
+        const authHeader = c.req.header('Authorization')
+        if (!authHeader || !/^Bearer\s+/i.test(authHeader)) {
+          throw new HTTPException(401, { message: 'Unauthorized' })
+        }
+        const token = authHeader.replace(/^Bearer\s+/i, '')
+        if (!token) {
+          throw new HTTPException(401, { message: 'Unauthorized' })
+        }
+        let payload: Record<string, unknown>
+        try {
+          payload = await verify<Record<string, unknown>>(token, opts.secret)
+        } catch (err) {
+          throw new HTTPException(401, { message: 'Unauthorized', cause: err })
+        }
+        if (payload.type !== 'access') {
+          throw new HTTPException(401, { message: 'Unauthorized' })
+        }
+        // biome-ignore lint/suspicious/noExplicitAny: Variables shape is unknown at this call site
+        c.set('user' as any, payload)
+        await next()
+      }
     },
   }
 }
