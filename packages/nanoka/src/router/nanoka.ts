@@ -118,7 +118,9 @@ export function nanoka<E extends Env = BlankEnv>(adapter: Adapter): Nanoka<E> {
 
       toOpenAPIComponent: () => inner.toOpenAPIComponent(),
 
-      toOpenAPISchema: (usage) => inner.toOpenAPISchema(usage),
+      toOpenAPISchema: (usage, opts?: { readonly with: Partial<Record<string, true>> }) =>
+        // biome-ignore lint/suspicious/noExplicitAny: NanokaModel interface overloads provide type safety
+        (inner.toOpenAPISchema as (u: typeof usage, o?: typeof opts) => any)(usage, opts),
 
       findMany: ((options: Parameters<NanokaModel<Fields>['findMany']>[0]) =>
         inner.findMany(adapter, options as any)) as NanokaModel<Fields>['findMany'],

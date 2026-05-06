@@ -13,4 +13,5 @@ export type {
   OpenAPISpecOptions,
   OpenAPIUsage,
   RouteOpenAPIMetadata,
+  WithOpenAPIOption,
 } from './types'

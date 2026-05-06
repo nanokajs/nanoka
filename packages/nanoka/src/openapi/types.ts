@@ -1,5 +1,7 @@
 export type OpenAPISchemaObject = Record<string, unknown>
 
+export type WithOpenAPIOption = Readonly<Record<string, true>>
+
 export interface OpenAPIModelComponent {
   create: OpenAPISchemaObject
   update: OpenAPISchemaObject

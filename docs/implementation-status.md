@@ -37,6 +37,7 @@
 - `findMany` の `where` に Drizzle SQL 式を渡せるオーバーロード — [#39](https://github.com/nanokajs/nanoka/issues/39)
 - `Model.toResponseMany(rows)` ヘルパ — [#39](https://github.com/nanokajs/nanoka/issues/39)
 - `Model.findAll(adapter, options?)` — LIMIT なし全件取得。`findMany` の `MAX_LIMIT = 100` ランタイムキャップを廃止 — [#49](https://github.com/nanokajs/nanoka/issues/49)
+- `toOpenAPISchema('output', { with })` による relations nested 展開（spec-only、runtime は Zod のまま） — [#91](https://github.com/nanokajs/nanoka/issues/91)
 
 ### AI coding support
 
@@ -63,6 +64,7 @@
   - フィールドビルダー実装 — #14-2 ✅ 完了（v1.7.0）
   - クエリ API 実装 — #83 ✅ 完了（v1.8.0）
   - depth 1 `with` で双方向 relation graph を許容 — #89 ✅ 完了（v1.8.0）
+  - `toOpenAPISchema('output', { with })` による relations nested 展開（spec-only、runtime は Zod のまま） — [#91](https://github.com/nanokajs/nanoka/issues/91) ✅ 完了
   - docs-site 更新 — #14-5
 
 ## Non-goal（全 Phase 外）

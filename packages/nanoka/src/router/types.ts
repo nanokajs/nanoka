@@ -16,6 +16,7 @@ import type {
   ModelValidatorReturn,
   NonRelationKeys,
   PolicyOmitKeys,
+  RelationKeys,
   RowType,
   SchemaOptions,
   ValidatorInput,
@@ -137,6 +138,10 @@ export interface NanokaModel<Fields extends Record<string, Field<any, any, any>>
 
   toOpenAPIComponent(): OpenAPIModelComponent
 
+  toOpenAPISchema(
+    usage: 'output',
+    opts: { readonly with: Partial<Record<RelationKeys<Fields> & string, true>> },
+  ): OpenAPISchemaObject
   toOpenAPISchema(usage: OpenAPIUsage): OpenAPISchemaObject
 
   /**

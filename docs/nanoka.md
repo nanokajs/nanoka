@@ -384,7 +384,7 @@ findOne(adapter, id, { with: { author: true } })
 | `findMany.limit` | 親クエリには必須維持。関係先には適用しない（known limitation） |
 | `where` DSL | 関係先カラムでの絞り込みは未対応。`app.db` を使う |
 | マイグレーション | 外部キー制約 SQL を自動生成しない（Load-bearing rule 1 維持）。Drizzle schema の `references()` は手動で追加する |
-| OpenAPI | relation フィールドは `outputSchema()` に含めない（v1）。`with` 指定時の出力型表現は v2 で検討 |
+| OpenAPI | `outputSchema()` への relation 自動展開は v1 対象外。`toOpenAPISchema('output', { with })` による spec-only 展開は v1.9.0 で追加。runtime validation source of truth は Zod のまま |
 | Validator | `validator()` / `inputSchema()` / `outputSchema()` の派生から自動除外される |
 | Escape hatch | 複雑な JOIN・集計は `app.db` を使う方針を維持（Load-bearing rule 4） |
 
