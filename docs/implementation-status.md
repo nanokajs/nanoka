@@ -71,6 +71,10 @@
 
 Auth（コアに含めない）/ full-stack React / Drizzle replacement DSL は実装しない。Auth は `@nanokajs/auth` パッケージとして別途提供（パッケージ骨格は v1.9.0 で追加済み — Issue #74 / #75）。
 
+`@nanokajs/auth` shipped:
+- `Hasher` インターフェース（`hash` / `verify`）— Issue #76
+- `pbkdf2Hasher`: `crypto.subtle` のみを使う zero-dependency PBKDF2 実装（SHA-256、310,000 iterations、タイミングセーフ比較）— Issue #76
+
 ### Typed query helper を non-goal とする根拠
 
 - `findOne` / `update` / `delete` は既に `Where<Fields>`（等価 AND）を受け付けており、単純なルックアップは shipped
