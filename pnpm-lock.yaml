@@ -113,11 +113,13 @@ importers:
         version: 3.25.76
 
   packages/nanoka-auth:
-    dependencies:
-      '@nanokajs/core':
-        specifier: ^1.9.0
-        version: 1.9.0(@cloudflare/workers-types@4.20260501.1)(@libsql/client@0.14.0)(drizzle-orm@0.45.2(@cloudflare/workers-types@4.20260501.1)(@libsql/client@0.14.0))(hono@4.12.16)(zod@3.25.76)
     devDependencies:
+      '@cloudflare/vitest-pool-workers':
+        specifier: ^0.5.0
+        version: 0.5.41(@cloudflare/workers-types@4.20260501.1)(@vitest/runner@2.1.9)(@vitest/snapshot@2.1.9)(vitest@2.1.9(@types/node@25.6.0))
+      '@cloudflare/workers-types':
+        specifier: ^4.20240925.0
+        version: 4.20260501.1
       '@types/node':
         specifier: ^25.6.0
         version: 25.6.0
@@ -127,6 +129,12 @@ importers:
       typescript:
         specifier: ^5.6.0
         version: 5.9.3
+      vitest:
+        specifier: ^2.1.0
+        version: 2.1.9(@types/node@25.6.0)
+      wrangler:
+        specifier: '>=3.114.17 <4.0.0'
+        version: 3.114.17(@cloudflare/workers-types@4.20260501.1)
 
   site:
     dependencies:
@@ -1342,20 +1350,6 @@ packages:
     resolution: {integrity: sha512-7pJzOWzPm6oJUxml+PCDRzYQ4A1hTMHAciTAHfFK4fkbDZX33nWPVG7Y3vqdKtslcwAzwmrNDc6sXy2nwWnbiw==}
     cpu: [x64]
     os: [win32]
-
-  '@nanokajs/core@1.9.0':
-    resolution: {integrity: sha512-flI3ImCdfCoF8J6eagiOi+gH5xYEmtGkVwQ3IHgKjD/fV/cCBW9hzhVaznZ6OZBKVwt8g+HuZC+sR/mu0Z939g==}
-    engines: {node: '>=20'}
-    hasBin: true
-    peerDependencies:
-      '@cloudflare/workers-types': ^4.20240925.0
-      '@libsql/client': ^0.14.0
-      drizzle-orm: ^0.45.2
-      hono: ^4.0.0
-      zod: ^3.23.0 || ^4.0.0
-    peerDependenciesMeta:
-      '@libsql/client':
-        optional: true
 
   '@neon-rs/load@0.0.4':
     resolution: {integrity: sha512-kTPhdZyTQxB+2wpiRcFWrDcejc4JI6tkPuS7UZCG4l6Zvc5kU/gGQ/ozvHTh1XR5tS+UlfAfGuPajjzQjCiHCw==}
@@ -3081,17 +3075,6 @@ snapshots:
 
   '@libsql/win32-x64-msvc@0.4.7':
     optional: true
-
-  '@nanokajs/core@1.9.0(@cloudflare/workers-types@4.20260501.1)(@libsql/client@0.14.0)(drizzle-orm@0.45.2(@cloudflare/workers-types@4.20260501.1)(@libsql/client@0.14.0))(hono@4.12.16)(zod@3.25.76)':
-    dependencies:
-      '@cloudflare/workers-types': 4.20260501.1
-      '@hono/zod-validator': 0.4.3(hono@4.12.16)(zod@3.25.76)
-      drizzle-orm: 0.45.2(@cloudflare/workers-types@4.20260501.1)(@libsql/client@0.14.0)
-      hono: 4.12.16
-      jiti: 2.6.1
-      zod: 3.25.76
-    optionalDependencies:
-      '@libsql/client': 0.14.0
 
   '@neon-rs/load@0.0.4': {}
 
