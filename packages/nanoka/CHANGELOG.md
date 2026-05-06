@@ -5,6 +5,18 @@ All notable changes to `@nanokajs/core` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.0] — 2026-05-06
+
+### Added
+
+- Depth-1 relation eager loading via `findMany(adapter, { limit, with })` and `findOne(adapter, idOrWhere, { with })`.
+- Typed `WithOptions`, `WithResult`, `RelationKeys`, and `FindOneOptions` exports for relation query results.
+- Runtime `with` validation and relation graph cycle detection for relation eager loading.
+
+### Notes
+
+- Relation loading follows the documented parent query + relation query + JavaScript grouping strategy; nested eager loading remains out of scope.
+
 ## [1.6.0] — 2026-05-05
 
 ### Added
