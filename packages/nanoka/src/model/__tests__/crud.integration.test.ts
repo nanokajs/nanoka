@@ -673,22 +673,53 @@ describe('relation eager loading', () => {
     ).rejects.toThrow(HTTPException)
   })
 
-  it('detects cyclic relation graphs on with query', async () => {
+  it('allows depth-1 hasMany loading on bidirectional relation graphs', async () => {
     const { env } = await import('cloudflare:test')
     const adapter = d1Adapter(env.DB)
 
-    await expect(CycleUser.findMany(adapter, { limit: 10, with: { posts: true } })).rejects.toThrow(
-      /relation cycle detected/,
-    )
+    const users = await CycleUser.findMany(adapter, {
+      limit: 10,
+      with: { posts: true },
+    })
+
+    expect(users).toHaveLength(1)
+    expect(users[0]!.posts.map((post: { id: string }) => post.id)).toEqual(['cp-1'])
   })
 
-  it('detects cyclic relation graphs on findOne with missing parent row', async () => {
+  it('allows depth-1 belongsTo loading on bidirectional relation graphs', async () => {
+    const { env } = await import('cloudflare:test')
+    const adapter = d1Adapter(env.DB)
+
+    const posts = await CyclePost.findMany(adapter, {
+      limit: 10,
+      with: { user: true },
+    })
+
+    expect(posts).toHaveLength(1)
+    expect(posts[0]!.user?.id).toBe('cu-1')
+  })
+
+  it('returns null for findOne with missing parent row and with option', async () => {
     const { env } = await import('cloudflare:test')
     const adapter = d1Adapter(env.DB)
 
     await expect(
       CycleUser.findOne(adapter, 'missing-user', { with: { posts: true } }),
-    ).rejects.toThrow(/relation cycle detected/)
+    ).resolves.toBeNull()
+  })
+
+  it('validates findOne with option before returning null for missing parent rows', async () => {
+    const { env } = await import('cloudflare:test')
+    const adapter = d1Adapter(env.DB)
+
+    await expect(
+      CycleUser.findOne(adapter, 'missing-user', {
+        with: { posts: { with: { user: true } } },
+      } as any),
+    ).rejects.toThrow(HTTPException)
+    await expect(
+      CycleUser.findOne(adapter, 'missing-user', { with: { name: true } } as any),
+    ).rejects.toThrow(HTTPException)
   })
 })
 
