@@ -1,8 +1,8 @@
+import { readFileSync, writeFileSync } from 'node:fs'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import satori from 'satori'
 import sharp from 'sharp'
-import { writeFileSync, readFileSync } from 'node:fs'
-import { join, dirname } from 'node:path'
-import { fileURLToPath } from 'node:url'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
@@ -67,7 +67,9 @@ async function main() {
     fetchFont('Inter', 400),
   ])
 
-  const logoBase64 = readFileSync(join(__dirname, '../public/images/nanoka-logo.png')).toString('base64')
+  const logoBase64 = readFileSync(join(__dirname, '../public/images/nanoka-logo.png')).toString(
+    'base64',
+  )
 
   const svg = await satori(
     {
@@ -198,9 +200,27 @@ async function main() {
                       flexShrink: 0,
                     },
                     children: [
-                      { type: 'div', key: 'r', props: { style: { width: 14, height: 14, borderRadius: 7, background: '#FF5F57' } } },
-                      { type: 'div', key: 'y', props: { style: { width: 14, height: 14, borderRadius: 7, background: '#FFBD2E' } } },
-                      { type: 'div', key: 'g', props: { style: { width: 14, height: 14, borderRadius: 7, background: '#28CA41' } } },
+                      {
+                        type: 'div',
+                        key: 'r',
+                        props: {
+                          style: { width: 14, height: 14, borderRadius: 7, background: '#FF5F57' },
+                        },
+                      },
+                      {
+                        type: 'div',
+                        key: 'y',
+                        props: {
+                          style: { width: 14, height: 14, borderRadius: 7, background: '#FFBD2E' },
+                        },
+                      },
+                      {
+                        type: 'div',
+                        key: 'g',
+                        props: {
+                          style: { width: 14, height: 14, borderRadius: 7, background: '#28CA41' },
+                        },
+                      },
                     ],
                   },
                 },
@@ -223,26 +243,37 @@ async function main() {
                         token("'users'", '#F0C060'),
                         token(', {', '#E2EAF4'),
                       ]),
-                      codeLine([
-                        token('id', '#3CBFB8'),
-                        token(':    ', '#E2EAF4'),
-                        token('t.id()', '#C8A8E8'),
-                        token(',', '#E2EAF4'),
-                      ], true),
-                      codeLine([
-                        token('email', '#3CBFB8'),
-                        token(': ', '#E2EAF4'),
-                        token('t.text().unique()', '#C8A8E8'),
-                        token(',', '#E2EAF4'),
-                      ], true),
-                      codeLine([
-                        token('name', '#3CBFB8'),
-                        token(':  ', '#E2EAF4'),
-                        token('t.text()', '#C8A8E8'),
-                        token(',', '#E2EAF4'),
-                      ], true),
+                      codeLine(
+                        [
+                          token('id', '#3CBFB8'),
+                          token(':    ', '#E2EAF4'),
+                          token('t.id()', '#C8A8E8'),
+                          token(',', '#E2EAF4'),
+                        ],
+                        true,
+                      ),
+                      codeLine(
+                        [
+                          token('email', '#3CBFB8'),
+                          token(': ', '#E2EAF4'),
+                          token('t.text().unique()', '#C8A8E8'),
+                          token(',', '#E2EAF4'),
+                        ],
+                        true,
+                      ),
+                      codeLine(
+                        [
+                          token('name', '#3CBFB8'),
+                          token(':  ', '#E2EAF4'),
+                          token('t.text()', '#C8A8E8'),
+                          token(',', '#E2EAF4'),
+                        ],
+                        true,
+                      ),
                       codeLine([token('}', '#E2EAF4')]),
-                      codeLine([token('// → DB schema + TypeScript types + Zod validator', '#4A617E')]),
+                      codeLine([
+                        token('// → DB schema + TypeScript types + Zod validator', '#4A617E'),
+                      ]),
                     ],
                   },
                 },
