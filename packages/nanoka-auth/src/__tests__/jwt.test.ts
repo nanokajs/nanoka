@@ -87,10 +87,7 @@ describe('jwt', () => {
       .replace(/\+/g, '-')
       .replace(/\//g, '_')
       .replace(/=+$/, '')
-    const nullPayloadB64 = btoa('null')
-      .replace(/\+/g, '-')
-      .replace(/\//g, '_')
-      .replace(/=+$/, '')
+    const nullPayloadB64 = btoa('null').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
     const validToken = await sign({ sub: 'user-1' }, 'secret')
     const validSig = validToken.split('.')[2]
     const tampered = `${headerB64}.${nullPayloadB64}.${validSig}`
