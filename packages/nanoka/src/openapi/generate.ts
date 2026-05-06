@@ -1,7 +1,12 @@
-import type { Field } from '../field/types'
+import type { Field, RelationDef } from '../field/types'
 import { applySchemaOptions, buildBaseObject, derivePolicyOptions } from '../model/schema'
 import type { SchemaOptions } from '../model/types'
-import type { OpenAPIModelComponent, OpenAPISchemaObject, OpenAPIUsage } from './types'
+import type {
+  OpenAPIModelComponent,
+  OpenAPISchemaObject,
+  OpenAPIUsage,
+  WithOpenAPIOption,
+} from './types'
 
 // biome-ignore lint/suspicious/noExplicitAny: OpenAPI generation accepts any concrete field builder.
 type AnyField = Field<any, any, any>
@@ -10,6 +15,7 @@ type FieldsRecord = Record<string, AnyField>
 interface OpenAPIOptions {
   readonly opts?: SchemaOptions
   readonly strict?: boolean
+  readonly with?: WithOpenAPIOption
 }
 
 export function toOpenAPIComponent(
@@ -50,6 +56,22 @@ export function toOpenAPISchema(
     }
     if (usage !== 'update' && isRequiredZodSchema(zodSchema)) {
       required.push(key)
+    }
+  }
+
+  if (usage === 'output' && opts?.with !== undefined) {
+    for (const [key, field] of Object.entries(fields)) {
+      if (field.kind !== 'relation') continue
+      if (opts.with[key] !== true) continue
+      const relationField = field as unknown as RelationDef
+      const rawTarget = relationField.target
+      const targetModel = typeof rawTarget === 'function' ? rawTarget() : rawTarget
+      const targetSchema = toOpenAPISchema(targetModel.fields as FieldsRecord, 'output')
+      if (relationField.relationKind === 'hasMany') {
+        properties[key] = { type: 'array', items: targetSchema }
+      } else {
+        properties[key] = { ...targetSchema, nullable: true }
+      }
     }
   }
 

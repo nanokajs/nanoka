@@ -40,6 +40,7 @@ export type {
   OpenAPISpecOptions,
   OpenAPIUsage,
   RouteOpenAPIMetadata,
+  WithOpenAPIOption,
 } from './openapi'
 export { swaggerUI } from './openapi'
 export type { Nanoka, NanokaModel, RouteOpenAPIOption } from './router'

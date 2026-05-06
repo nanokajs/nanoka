@@ -214,3 +214,90 @@ describe('OpenAPI component generation', () => {
     expect(component.output.properties).toHaveProperty('name')
   })
 })
+
+describe('toOpenAPISchema with { with } option', () => {
+  const Post = defineModel('posts', {
+    id: t.integer().primary().readOnly(),
+    title: t.string(),
+    userId: t.integer(),
+  })
+
+  const User = defineModel('users', {
+    id: t.uuid().primary().readOnly(),
+    name: t.string(),
+    posts: t.hasMany(() => Post, { foreignKey: 'userId' }),
+  })
+
+  it('toOpenAPISchema("output") without with does not include relation', () => {
+    const schema = User.toOpenAPISchema('output')
+    expect(schema.properties).not.toHaveProperty('posts')
+  })
+
+  it('toOpenAPISchema("output", { with: { posts: true } }) expands hasMany as array', () => {
+    const schema = User.toOpenAPISchema('output', { with: { posts: true } })
+    const properties = schema.properties as Record<string, Record<string, unknown>>
+    expect(properties).toHaveProperty('posts')
+    const postsSchema = properties['posts']!
+    expect(postsSchema.type).toBe('array')
+    const items = postsSchema['items'] as Record<string, unknown>
+    expect(items.type).toBe('object')
+    const itemProperties = items['properties'] as Record<string, unknown>
+    expect(itemProperties).toHaveProperty('id')
+    expect(itemProperties).toHaveProperty('title')
+    expect(itemProperties).toHaveProperty('userId')
+  })
+
+  it('toOpenAPISchema("output", { with: { author: true } }) expands belongsTo as nullable object', () => {
+    const PostWithAuthor = defineModel('posts', {
+      id: t.integer().primary().readOnly(),
+      title: t.string(),
+      userId: t.integer(),
+      author: t.belongsTo(User, { foreignKey: 'userId' }),
+    })
+
+    const schema = PostWithAuthor.toOpenAPISchema('output', { with: { author: true } })
+    const properties = schema.properties as Record<string, Record<string, unknown>>
+    expect(properties).toHaveProperty('author')
+    const authorSchema = properties['author']!
+    expect(authorSchema.type).toBe('object')
+    expect(authorSchema.nullable).toBe(true)
+    const authorProperties = authorSchema['properties'] as Record<string, unknown>
+    expect(authorProperties).toHaveProperty('id')
+    expect(authorProperties).toHaveProperty('name')
+  })
+
+  it('toOpenAPISchema("create") with relation field does not include relation', () => {
+    const schema = User.toOpenAPISchema('create')
+    expect(schema.properties).not.toHaveProperty('posts')
+  })
+
+  it('create + with: { posts: true } does not expand relation', () => {
+    // usage が 'output' 以外の場合は with オプションを渡しても relation は展開されない
+    const schema = User.toOpenAPISchema('create' as any, { with: { posts: true } })
+    expect(schema.properties).not.toHaveProperty('posts')
+  })
+
+  it('does not recurse infinitely with bidirectional relations (depth 1 only)', () => {
+    const PostBi = defineModel('posts', {
+      id: t.integer().primary().readOnly(),
+      title: t.string(),
+      userId: t.uuid(),
+      author: t.belongsTo(User, { foreignKey: 'userId' }),
+    })
+
+    const UserBi = defineModel('users', {
+      id: t.uuid().primary().readOnly(),
+      name: t.string(),
+      posts: t.hasMany(() => PostBi, { foreignKey: 'userId' }),
+    })
+
+    expect(() => {
+      const schema = UserBi.toOpenAPISchema('output', { with: { posts: true } })
+      const properties = schema.properties as Record<string, Record<string, unknown>>
+      const postsSchema = properties['posts']!
+      const items = postsSchema['items'] as Record<string, unknown>
+      const itemProperties = items['properties'] as Record<string, unknown>
+      expect(itemProperties).not.toHaveProperty('author')
+    }).not.toThrow()
+  })
+})

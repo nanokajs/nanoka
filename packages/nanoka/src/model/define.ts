@@ -4,7 +4,7 @@ import type { z } from 'zod'
 import type { Adapter } from '../adapter/types'
 import type { Field } from '../field/types'
 import { toOpenAPIComponent, toOpenAPISchema } from '../openapi/generate'
-import type { OpenAPIUsage } from '../openapi/types'
+import type { OpenAPIUsage, WithOpenAPIOption } from '../openapi/types'
 import { createImpl, deleteImpl, findAllImpl, findManyImpl, findOneImpl, updateImpl } from './crud'
 import { applySchemaOptions, buildBaseObject, derivePolicyOptions } from './schema'
 import { buildTable } from './table'
@@ -113,8 +113,12 @@ export function defineModel<Fields extends Record<string, Field<any, any, any>>>
       return toOpenAPIComponent(fields)
     },
 
-    toOpenAPISchema(usage: OpenAPIUsage) {
-      return toOpenAPISchema(fields, usage)
+    toOpenAPISchema(usage: OpenAPIUsage, opts?: { readonly with: Partial<Record<string, true>> }) {
+      return toOpenAPISchema(
+        fields,
+        usage,
+        opts ? { with: opts.with as WithOpenAPIOption } : undefined,
+      )
     },
 
     findMany: ((adapter: Adapter, options: FindManyOptions<Fields>) =>
