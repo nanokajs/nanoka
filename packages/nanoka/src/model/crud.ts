@@ -446,13 +446,16 @@ export async function findOneImpl<Fields extends Record<string, Field<any, any, 
     throw new HTTPException(400, { message: 'where clause must not be empty' })
   }
 
+  if (options?.with !== undefined) {
+    validateWithOptions(fields, options.with as Record<string, unknown>)
+  }
+
   // biome-ignore lint/suspicious/noExplicitAny: drizzle query type
   const rows = await (adapter.drizzle.select().from(table).where(whereClause).limit(1) as any)
   if (rows.length === 0) {
     return null
   }
   if (options?.with !== undefined) {
-    validateWithOptions(fields, options.with as Record<string, unknown>)
     const withRows = await loadRelations(adapter, table, fields, [rows[0]], options.with)
     return withRows[0] ?? null
   }

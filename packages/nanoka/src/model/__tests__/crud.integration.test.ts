@@ -707,6 +707,20 @@ describe('relation eager loading', () => {
       CycleUser.findOne(adapter, 'missing-user', { with: { posts: true } }),
     ).resolves.toBeNull()
   })
+
+  it('validates findOne with option before returning null for missing parent rows', async () => {
+    const { env } = await import('cloudflare:test')
+    const adapter = d1Adapter(env.DB)
+
+    await expect(
+      CycleUser.findOne(adapter, 'missing-user', {
+        with: { posts: { with: { user: true } } },
+      } as any),
+    ).rejects.toThrow(HTTPException)
+    await expect(
+      CycleUser.findOne(adapter, 'missing-user', { with: { name: true } } as any),
+    ).rejects.toThrow(HTTPException)
+  })
 })
 
 describe('findAll', () => {
