@@ -69,7 +69,7 @@
 
 ## Non-goal（全 Phase 外）
 
-Auth / full-stack React / Drizzle replacement DSL は実装しない。
+Auth（コアに含めない）/ full-stack React / Drizzle replacement DSL は実装しない。Auth は `@nanokajs/auth` パッケージとして別途提供（パッケージ骨格は v1.9.0 で追加済み — Issue #74 / #75）。
 
 ### Typed query helper を non-goal とする根拠
 

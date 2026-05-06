@@ -1,0 +1,55 @@
+{
+  "name": "@nanokajs/auth",
+  "version": "1.9.0",
+  "type": "module",
+  "description": "Authentication utilities for Nanoka on Cloudflare Workers.",
+  "author": "Eiichiro Iriguchi <eiichiro_iriguchi@a-1ro.dev>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nanokajs/nanoka.git"
+  },
+  "homepage": "https://github.com/nanokajs/nanoka#readme",
+  "bugs": {
+    "url": "https://github.com/nanokajs/nanoka/issues"
+  },
+  "keywords": [
+    "nanoka",
+    "auth",
+    "cloudflare-workers",
+    "hono",
+    "d1"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "@nanokajs/core": "^1.9.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "tsup": "^8.3.0",
+    "typescript": "^5.6.0"
+  }
+}
