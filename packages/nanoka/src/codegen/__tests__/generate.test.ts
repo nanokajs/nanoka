@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { t } from '../../field'
 import { generateDrizzleSchema } from '../generate'
 import type { ModelDef } from '../types'
@@ -83,11 +83,10 @@ describe('generateDrizzleSchema', () => {
   })
 
   it('handles function defaults with warning', () => {
-    const originalWarn = console.warn
     const warnings: string[] = []
-    ;(console.warn as any) = (...args: any[]) => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation((...args: unknown[]) => {
       warnings.push(args.join(' '))
-    }
+    })
 
     try {
       const models: ModelDef[] = [
@@ -107,7 +106,7 @@ describe('generateDrizzleSchema', () => {
       expect(warnings[0]).toContain('function default')
       expect(result).toMatchSnapshot()
     } finally {
-      console.warn = originalWarn
+      warnSpy.mockRestore()
     }
   })
 
