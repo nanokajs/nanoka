@@ -439,6 +439,259 @@ describe('findMany SQL where + toResponseMany', () => {
   })
 })
 
+describe('relation eager loading', () => {
+  const RelationAuthor = defineModel('relation_authors', {
+    id: t.uuid().primary(),
+    name: t.string(),
+  })
+
+  const RelationComment = defineModel('relation_comments', {
+    id: t.uuid().primary(),
+    postId: t.uuid(),
+    body: t.string(),
+  })
+
+  const RelationPost = defineModel('relation_posts', {
+    id: t.uuid().primary(),
+    userId: t.uuid(),
+    authorId: t.uuid(),
+    title: t.string(),
+    author: t.belongsTo(RelationAuthor, { foreignKey: 'authorId' }),
+    comments: t.hasMany(RelationComment, { foreignKey: 'postId' }),
+  })
+
+  const RelationUser = defineModel('relation_users', {
+    id: t.uuid().primary(),
+    name: t.string(),
+    posts: t.hasMany(RelationPost, { foreignKey: 'userId' }),
+  })
+
+  // biome-ignore lint/suspicious/noExplicitAny: cyclic model graph needs lazy self references in test setup
+  let CycleUser: any
+  // biome-ignore lint/suspicious/noExplicitAny: cyclic model graph needs lazy self references in test setup
+  let CyclePost: any
+  CycleUser = defineModel('cycle_users', {
+    id: t.uuid().primary(),
+    posts: t.hasMany(() => CyclePost, { foreignKey: 'userId' }),
+  })
+  CyclePost = defineModel('cycle_posts', {
+    id: t.uuid().primary(),
+    userId: t.uuid(),
+    user: t.belongsTo(() => CycleUser, { foreignKey: 'userId' }),
+  })
+
+  beforeEach(async () => {
+    const { env } = await import('cloudflare:test')
+    const adapter = d1Adapter(env.DB)
+
+    await adapter.drizzle.run(sql`DROP TABLE IF EXISTS relation_users`)
+    await adapter.drizzle.run(sql`DROP TABLE IF EXISTS relation_posts`)
+    await adapter.drizzle.run(sql`DROP TABLE IF EXISTS relation_authors`)
+    await adapter.drizzle.run(sql`DROP TABLE IF EXISTS relation_comments`)
+    await adapter.drizzle.run(sql`DROP TABLE IF EXISTS cycle_users`)
+    await adapter.drizzle.run(sql`DROP TABLE IF EXISTS cycle_posts`)
+
+    await adapter.drizzle.run(
+      sql`
+        CREATE TABLE relation_users (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL
+        )
+      `,
+    )
+    await adapter.drizzle.run(
+      sql`
+        CREATE TABLE relation_authors (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL
+        )
+      `,
+    )
+    await adapter.drizzle.run(
+      sql`
+        CREATE TABLE relation_posts (
+          id TEXT PRIMARY KEY,
+          userId TEXT NOT NULL,
+          authorId TEXT NOT NULL,
+          title TEXT NOT NULL
+        )
+      `,
+    )
+    await adapter.drizzle.run(
+      sql`
+        CREATE TABLE relation_comments (
+          id TEXT PRIMARY KEY,
+          postId TEXT NOT NULL,
+          body TEXT NOT NULL
+        )
+      `,
+    )
+    await adapter.drizzle.run(
+      sql`
+        CREATE TABLE cycle_users (
+          id TEXT PRIMARY KEY
+        )
+      `,
+    )
+    await adapter.drizzle.run(
+      sql`
+        CREATE TABLE cycle_posts (
+          id TEXT PRIMARY KEY,
+          userId TEXT NOT NULL
+        )
+      `,
+    )
+
+    await RelationUser.create(adapter, { id: 'ru-1', name: 'Alice' })
+    await RelationUser.create(adapter, { id: 'ru-2', name: 'Bob' })
+    await RelationAuthor.create(adapter, { id: 'ra-1', name: 'Author One' })
+    await RelationAuthor.create(adapter, { id: 'ra-2', name: 'Author Two' })
+    await RelationPost.create(adapter, {
+      id: 'rp-1',
+      userId: 'ru-1',
+      authorId: 'ra-1',
+      title: 'First',
+    })
+    await RelationPost.create(adapter, {
+      id: 'rp-2',
+      userId: 'ru-1',
+      authorId: 'ra-2',
+      title: 'Second',
+    })
+    await RelationPost.create(adapter, {
+      id: 'rp-3',
+      userId: 'ru-2',
+      authorId: 'missing-author',
+      title: 'Third',
+    })
+    await RelationComment.create(adapter, { id: 'rc-1', postId: 'rp-1', body: 'One' })
+    await RelationComment.create(adapter, { id: 'rc-2', postId: 'rp-1', body: 'Two' })
+    await CycleUser.create(adapter, { id: 'cu-1' })
+    await CyclePost.create(adapter, { id: 'cp-1', userId: 'cu-1' })
+  })
+
+  it('findMany loads hasMany rows grouped by parent', async () => {
+    const { env } = await import('cloudflare:test')
+    const adapter = d1Adapter(env.DB)
+
+    const users = await RelationUser.findMany(adapter, {
+      limit: 10,
+      orderBy: 'id',
+      with: { posts: true },
+    })
+
+    expect(users).toHaveLength(2)
+    expect(users[0]!.posts.map((post) => post.id)).toEqual(['rp-1', 'rp-2'])
+    expect(users[1]!.posts.map((post) => post.id)).toEqual(['rp-3'])
+  })
+
+  it('findOne loads hasMany rows', async () => {
+    const { env } = await import('cloudflare:test')
+    const adapter = d1Adapter(env.DB)
+
+    const post = await RelationPost.findOne(adapter, 'rp-1', { with: { comments: true } })
+
+    expect(post).not.toBeNull()
+    expect(post?.comments.map((comment) => comment.id)).toEqual(['rc-1', 'rc-2'])
+  })
+
+  it('findMany loads belongsTo rows or null', async () => {
+    const { env } = await import('cloudflare:test')
+    const adapter = d1Adapter(env.DB)
+
+    const posts = await RelationPost.findMany(adapter, {
+      limit: 10,
+      orderBy: 'id',
+      with: { author: true },
+    })
+
+    expect(posts[0]!.author?.id).toBe('ra-1')
+    expect(posts[1]!.author?.id).toBe('ra-2')
+    expect(posts[2]!.author).toBeNull()
+  })
+
+  it('combines where, orderBy, offset, and with on the parent query', async () => {
+    const { env } = await import('cloudflare:test')
+    const adapter = d1Adapter(env.DB)
+
+    const users = await RelationUser.findMany(adapter, {
+      limit: 1,
+      offset: 1,
+      orderBy: 'id',
+      where: like(RelationUser.table.id, 'ru-%'),
+      with: { posts: true },
+    })
+
+    expect(users).toHaveLength(1)
+    expect(users[0]!.id).toBe('ru-2')
+    expect(users[0]!.posts.map((post) => post.id)).toEqual(['rp-3'])
+  })
+
+  it('returns an empty parent result without relation rows', async () => {
+    const { env } = await import('cloudflare:test')
+    const adapter = d1Adapter(env.DB)
+
+    const users = await RelationUser.findMany(adapter, {
+      limit: 10,
+      where: { id: 'missing-user' },
+      with: { posts: true },
+    })
+
+    expect(users).toEqual([])
+  })
+
+  it('rejects nested with at runtime', async () => {
+    const { env } = await import('cloudflare:test')
+    const adapter = d1Adapter(env.DB)
+
+    await expect(
+      RelationUser.findMany(adapter, {
+        limit: 10,
+        with: { posts: { with: { comments: true } } },
+      } as any),
+    ).rejects.toThrow(HTTPException)
+  })
+
+  it('rejects invalid relation keys at runtime', async () => {
+    const { env } = await import('cloudflare:test')
+    const adapter = d1Adapter(env.DB)
+
+    await expect(
+      RelationUser.findMany(adapter, { limit: 10, with: { name: true } } as any),
+    ).rejects.toThrow(HTTPException)
+  })
+
+  it('rejects invalid with option shapes at runtime', async () => {
+    const { env } = await import('cloudflare:test')
+    const adapter = d1Adapter(env.DB)
+
+    await expect(RelationUser.findMany(adapter, { limit: 10, with: null } as any)).rejects.toThrow(
+      HTTPException,
+    )
+    await expect(
+      RelationUser.findMany(adapter, { limit: 10, with: ['posts'] } as any),
+    ).rejects.toThrow(HTTPException)
+  })
+
+  it('detects cyclic relation graphs on with query', async () => {
+    const { env } = await import('cloudflare:test')
+    const adapter = d1Adapter(env.DB)
+
+    await expect(CycleUser.findMany(adapter, { limit: 10, with: { posts: true } })).rejects.toThrow(
+      /relation cycle detected/,
+    )
+  })
+
+  it('detects cyclic relation graphs on findOne with missing parent row', async () => {
+    const { env } = await import('cloudflare:test')
+    const adapter = d1Adapter(env.DB)
+
+    await expect(
+      CycleUser.findOne(adapter, 'missing-user', { with: { posts: true } }),
+    ).rejects.toThrow(/relation cycle detected/)
+  })
+})
+
 describe('findAll', () => {
   const AllUser = defineModel('all_users', {
     id: t.uuid().primary(),

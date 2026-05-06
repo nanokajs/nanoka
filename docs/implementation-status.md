@@ -61,8 +61,8 @@
 - Relations API (`t.hasMany()` / `t.belongsTo()` / `findMany({ with })`) — [#14](https://github.com/nanokajs/nanoka/issues/14)
   - 設計仕様: `docs/nanoka.md` "Relations API" 節
   - フィールドビルダー実装 — #14-2 ✅ 完了（v1.7.0）
-  - クエリ API 実装 — #14-3
-  - 循環参照検出 — #14-4
+  - クエリ API 実装 — #83 ✅ 完了（v1.8.0）
+  - 循環参照検出 — #83 ✅ 完了（v1.8.0）
   - docs-site 更新 — #14-5
 
 ## Non-goal（全 Phase 外）

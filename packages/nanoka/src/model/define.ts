@@ -14,6 +14,7 @@ import type {
   FieldsToZodShape,
   FindAllOptions,
   FindManyOptions,
+  FindOneOptions,
   IdOrWhere,
   Model,
   NonRelationKeys,
@@ -116,17 +117,15 @@ export function defineModel<Fields extends Record<string, Field<any, any, any>>>
       return toOpenAPISchema(fields, usage)
     },
 
-    findMany(adapter: Adapter, options: FindManyOptions<Fields>): Promise<RowType<Fields>[]> {
-      return findManyImpl(adapter, table, fields, options)
-    },
+    findMany: ((adapter: Adapter, options: FindManyOptions<Fields>) =>
+      findManyImpl(adapter, table, fields, options)) as Model<Fields>['findMany'],
 
     findAll(adapter: Adapter, options?: FindAllOptions<Fields>): Promise<RowType<Fields>[]> {
       return findAllImpl(adapter, table, fields, options)
     },
 
-    findOne(adapter: Adapter, idOrWhere: IdOrWhere<Fields>): Promise<RowType<Fields> | null> {
-      return findOneImpl(adapter, table, fields, idOrWhere)
-    },
+    findOne: ((adapter: Adapter, idOrWhere: IdOrWhere<Fields>, options?: FindOneOptions<Fields>) =>
+      findOneImpl(adapter, table, fields, idOrWhere, options)) as Model<Fields>['findOne'],
 
     create(adapter: Adapter, data: CreateInput<Fields>): Promise<RowType<Fields>> {
       return createImpl(adapter, table, data)

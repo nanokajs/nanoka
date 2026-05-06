@@ -10,6 +10,7 @@ import type {
   FieldsToZodShape,
   FindAllOptions,
   FindManyOptions,
+  FindOneOptions,
   IdOrWhere,
   ModelTable,
   ModelValidatorReturn,
@@ -18,6 +19,8 @@ import type {
   RowType,
   SchemaOptions,
   ValidatorInput,
+  WithOptions,
+  WithResult,
 } from '../model/types'
 import type {
   OpenAPIDocument,
@@ -140,6 +143,9 @@ export interface NanokaModel<Fields extends Record<string, Field<any, any, any>>
    * Fetches multiple rows with pagination and optional ordering.
    * `limit` is required (no default) to prevent accidental unbounded queries.
    */
+  findMany<With extends WithOptions<Fields>>(
+    options: FindManyOptions<Fields, With> & { readonly with: With },
+  ): Promise<WithResult<Fields, With>[]>
   findMany(options: FindManyOptions<Fields>): Promise<RowType<Fields>[]>
 
   /**
@@ -152,6 +158,10 @@ export interface NanokaModel<Fields extends Record<string, Field<any, any, any>>
    * Fetches a single row by primary key or where clause.
    * Returns null if not found.
    */
+  findOne<With extends WithOptions<Fields>>(
+    idOrWhere: IdOrWhere<Fields>,
+    options: FindOneOptions<Fields, With> & { readonly with: With },
+  ): Promise<WithResult<Fields, With> | null>
   findOne(idOrWhere: IdOrWhere<Fields>): Promise<RowType<Fields> | null>
 
   /**

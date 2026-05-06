@@ -3,6 +3,7 @@ import type { BlankEnv, Env, H } from 'hono/types'
 import type { Adapter } from '../adapter/types'
 import type { Field } from '../field/types'
 import { defineModel } from '../model/define'
+import type { IdOrWhere } from '../model/types'
 import { buildOpenAPIDocument } from '../openapi/route'
 import type { HttpMethod, OpenAPIRouteMetadata } from '../openapi/types'
 import type { Nanoka, NanokaModel, RouteOpenAPIOption } from './types'
@@ -119,11 +120,15 @@ export function nanoka<E extends Env = BlankEnv>(adapter: Adapter): Nanoka<E> {
 
       toOpenAPISchema: (usage) => inner.toOpenAPISchema(usage),
 
-      findMany: (options) => inner.findMany(adapter, options),
+      findMany: ((options: Parameters<NanokaModel<Fields>['findMany']>[0]) =>
+        inner.findMany(adapter, options as any)) as NanokaModel<Fields>['findMany'],
 
       findAll: (options) => inner.findAll(adapter, options),
 
-      findOne: (idOrWhere) => inner.findOne(adapter, idOrWhere),
+      findOne: ((
+        idOrWhere: IdOrWhere<Fields>,
+        options?: import('../model/types').FindOneOptions<Fields>,
+      ) => inner.findOne(adapter, idOrWhere, options as any)) as NanokaModel<Fields>['findOne'],
 
       create: (data) => inner.create(adapter, data),
 

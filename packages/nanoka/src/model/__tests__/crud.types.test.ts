@@ -3,7 +3,7 @@ import { describe, it } from 'vitest'
 import type { Adapter } from '../../adapter/types'
 import { t } from '../../field'
 import { defineModel } from '../define'
-import type { CreateInput, FindAllOptions, FindManyOptions, RowType } from '../types'
+import type { CreateInput, FindAllOptions, FindManyOptions, RowType, WithOptions } from '../types'
 
 describe('CRUD methods: type checking', () => {
   const User = defineModel('users', {
@@ -88,6 +88,74 @@ describe('CRUD methods: type checking', () => {
 
     it('allows findMany with where omitted', () => {
       const opts: FindManyOptions<typeof User.fields> = { limit: 20 }
+      void opts
+    })
+  })
+
+  describe('relation with type constraints', () => {
+    const Author = defineModel('authors_for_relation_types', {
+      id: t.uuid().primary(),
+      name: t.string(),
+    })
+
+    const Post = defineModel('posts_for_relation_types', {
+      id: t.uuid().primary(),
+      userId: t.uuid(),
+      authorId: t.uuid(),
+      title: t.string(),
+      author: t.belongsTo(Author, { foreignKey: 'authorId' }),
+    })
+
+    const UserWithPosts = defineModel('users_for_relation_types', {
+      id: t.uuid().primary(),
+      name: t.string(),
+      email: t.string().email(),
+      posts: t.hasMany(Post, { foreignKey: 'userId' }),
+    })
+
+    it('allows FindManyOptions with relation with true', () => {
+      const opts: FindManyOptions<typeof UserWithPosts.fields, { posts: true }> = {
+        limit: 10,
+        with: { posts: true },
+      }
+      void opts
+    })
+
+    it('allows WithOptions with relation key', () => {
+      const opts: WithOptions<typeof UserWithPosts.fields> = { posts: true }
+      void opts
+    })
+
+    it('findMany with hasMany returns rows with relation arrays', () => {
+      const result: Promise<
+        Array<
+          RowType<typeof UserWithPosts.fields> & { readonly posts: RowType<typeof Post.fields>[] }
+        >
+      > = UserWithPosts.findMany({} as Adapter, { limit: 10, with: { posts: true } })
+      void result
+    })
+
+    it('findOne with belongsTo returns row with nullable relation', () => {
+      const result: Promise<
+        | (RowType<typeof Post.fields> & { readonly author: RowType<typeof Author.fields> | null })
+        | null
+      > = Post.findOne({} as Adapter, 'post-1', { with: { author: true } })
+      void result
+    })
+
+    it('rejects nested with', () => {
+      const opts: WithOptions<typeof UserWithPosts.fields> = {
+        // @ts-expect-error - nested eager loading is not supported
+        posts: { with: { comments: true } },
+      }
+      void opts
+    })
+
+    it('rejects non-relation with key', () => {
+      const opts: WithOptions<typeof UserWithPosts.fields> = {
+        // @ts-expect-error - name is not a relation key
+        name: true,
+      }
       void opts
     })
   })

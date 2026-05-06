@@ -4,7 +4,7 @@ import type { AnySQLiteColumn, SQLiteTableWithColumns } from 'drizzle-orm/sqlite
 import type { Env, MiddlewareHandler, ValidationTargets } from 'hono'
 import type { z } from 'zod'
 import type { Adapter } from '../adapter/types'
-import type { Field, FieldPolicy, InferFieldType } from '../field/types'
+import type { Field, FieldPolicy, InferFieldType, RelationDef } from '../field/types'
 import type { OpenAPIModelComponent, OpenAPISchemaObject, OpenAPIUsage } from '../openapi/types'
 
 /**
@@ -18,6 +18,43 @@ export type NonRelationKeys<Fields extends Record<string, Field<any, any, any>>>
 }[keyof Fields]
 
 /**
+ * @internal
+ * Extracts keys of relation fields from a Fields record.
+ */
+// biome-ignore lint/suspicious/noExplicitAny: any is necessary for Field constraint
+export type RelationKeys<Fields extends Record<string, Field<any, any, any>>> = {
+  [K in keyof Fields]: Fields[K] extends { kind: 'relation' } ? K : never
+}[keyof Fields]
+
+export type RelationTargetFields<Target> = Target extends () => infer Resolved
+  ? RelationTargetFields<Resolved>
+  : Target extends { fields: infer TargetFields }
+    ? TargetFields
+    : never
+
+export type RelationResult<F> =
+  F extends RelationDef<infer Target, string>
+    ? RelationTargetFields<Target> extends Record<string, Field<any, any, any>>
+      ? F['relationKind'] extends 'hasMany'
+        ? RowType<RelationTargetFields<Target>>[]
+        : RowType<RelationTargetFields<Target>> | null
+      : never
+    : never
+
+export type WithOptions<
+  // biome-ignore lint/suspicious/noExplicitAny: any is necessary for Field constraint
+  Fields extends Record<string, Field<any, any, any>>,
+> = {
+  readonly [K in RelationKeys<Fields>]?: true
+}
+
+export type WithResult<
+  // biome-ignore lint/suspicious/noExplicitAny: any is necessary for Field constraint
+  Fields extends Record<string, Field<any, any, any>>,
+  With,
+> = RowType<Fields> & { readonly [K in keyof With]: RelationResult<Fields[K & keyof Fields]> }
+
+/**
  * Options for findMany query.
  * `limit` is required (no default).
  * `offset` defaults to 0 if omitted.
@@ -27,11 +64,21 @@ export type NonRelationKeys<Fields extends Record<string, Field<any, any, any>>>
 export interface FindManyOptions<
   // biome-ignore lint/suspicious/noExplicitAny: any is necessary for Field constraint
   Fields extends Record<string, Field<any, any, any>>,
+  With extends WithOptions<Fields> | undefined = undefined,
 > {
   readonly limit: number
   readonly offset?: number
   readonly orderBy?: OrderBy<Fields>
   readonly where?: Where<Fields> | SQL
+  readonly with?: With
+}
+
+export interface FindOneOptions<
+  // biome-ignore lint/suspicious/noExplicitAny: any is necessary for Field constraint
+  Fields extends Record<string, Field<any, any, any>>,
+  With extends WithOptions<Fields> | undefined = undefined,
+> {
+  readonly with?: With
 }
 
 /**
@@ -644,6 +691,10 @@ export interface Model<Fields extends Record<string, Field<any, any, any>>> {
    * const page2 = await User.findMany(adapter, { limit: 20, offset: 20 })
    * const sorted = await User.findMany(adapter, { limit: 10, orderBy: 'name' })
    */
+  findMany<With extends WithOptions<Fields>>(
+    adapter: Adapter,
+    options: FindManyOptions<Fields, With> & { readonly with: With },
+  ): Promise<WithResult<Fields, With>[]>
   findMany(adapter: Adapter, options: FindManyOptions<Fields>): Promise<RowType<Fields>[]>
 
   /**
@@ -664,6 +715,11 @@ export interface Model<Fields extends Record<string, Field<any, any, any>>> {
    * const user = await User.findOne(adapter, id)
    * const byEmail = await User.findOne(adapter, { email: 'john@example.com' })
    */
+  findOne<With extends WithOptions<Fields>>(
+    adapter: Adapter,
+    idOrWhere: IdOrWhere<Fields>,
+    options: FindOneOptions<Fields, With> & { readonly with: With },
+  ): Promise<WithResult<Fields, With> | null>
   findOne(adapter: Adapter, idOrWhere: IdOrWhere<Fields>): Promise<RowType<Fields> | null>
 
   /**
