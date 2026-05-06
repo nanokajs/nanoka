@@ -69,4 +69,31 @@ describe('jwt', () => {
     const result = await verify<{ sub: string; exp?: number }>(token, 'secret')
     expect(result.exp).toBeUndefined()
   })
+
+  it('sign with expiresIn: NaN throws', async () => {
+    await expect(sign({ sub: 'user-1' }, 'secret', { expiresIn: Number.NaN })).rejects.toThrow(
+      'expiresIn must be a finite number',
+    )
+  })
+
+  it('sign with expiresIn: Infinity throws', async () => {
+    await expect(sign({ sub: 'user-1' }, 'secret', { expiresIn: Infinity })).rejects.toThrow(
+      'expiresIn must be a finite number',
+    )
+  })
+
+  it('null payload token throws', async () => {
+    const headerB64 = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }))
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '')
+    const nullPayloadB64 = btoa('null')
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '')
+    const validToken = await sign({ sub: 'user-1' }, 'secret')
+    const validSig = validToken.split('.')[2]
+    const tampered = `${headerB64}.${nullPayloadB64}.${validSig}`
+    await expect(verify(tampered, 'secret')).rejects.toThrow()
+  })
 })

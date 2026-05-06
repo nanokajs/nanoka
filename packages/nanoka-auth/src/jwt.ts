@@ -52,6 +52,9 @@ export async function sign(
   const header = { alg: ALGORITHM, typ: 'JWT' }
   const headerB64 = toBase64url(utf8(JSON.stringify(header)).buffer as ArrayBuffer)
 
+  if (options?.expiresIn !== undefined && !Number.isFinite(options.expiresIn)) {
+    throw new Error('expiresIn must be a finite number')
+  }
   const finalPayload =
     options?.expiresIn !== undefined
       ? { ...payload, exp: Math.floor(Date.now() / 1000) + options.expiresIn }
@@ -83,11 +86,17 @@ export async function verify<T = Record<string, unknown>>(
 
   const [headerB64, payloadB64, signatureB64] = segments as [string, string, string]
 
-  const header = JSON.parse(new TextDecoder().decode(fromBase64url(headerB64))) as Record<
-    string,
-    unknown
-  >
-  if (header.alg !== ALGORITHM || header.typ !== 'JWT') {
+  const header = JSON.parse(new TextDecoder().decode(fromBase64url(headerB64))) as unknown
+  if (typeof header !== 'object' || header === null || Array.isArray(header)) {
+    throw new Error('Invalid token header')
+  }
+  if ((header as Record<string, unknown>).alg === 'none') {
+    throw new Error('Invalid token header')
+  }
+  if (
+    (header as Record<string, unknown>).alg !== ALGORITHM ||
+    (header as Record<string, unknown>).typ !== 'JWT'
+  ) {
     throw new Error('Invalid token header')
   }
 
@@ -99,19 +108,20 @@ export async function verify<T = Record<string, unknown>>(
     throw new Error('Invalid signature')
   }
 
-  const payload = JSON.parse(new TextDecoder().decode(fromBase64url(payloadB64))) as Record<
-    string,
-    unknown
-  >
+  const payload = JSON.parse(new TextDecoder().decode(fromBase64url(payloadB64))) as unknown
+  if (typeof payload !== 'object' || payload === null || Array.isArray(payload)) {
+    throw new Error('Invalid payload')
+  }
+  const payloadObj = payload as Record<string, unknown>
 
-  if (payload.exp !== undefined) {
-    if (typeof payload.exp !== 'number' || !Number.isFinite(payload.exp)) {
+  if (payloadObj.exp !== undefined) {
+    if (typeof payloadObj.exp !== 'number' || !Number.isFinite(payloadObj.exp)) {
       throw new Error('Invalid exp claim')
     }
-    if (Math.floor(Date.now() / 1000) >= payload.exp) {
+    if (Math.floor(Date.now() / 1000) >= payloadObj.exp) {
       throw new Error('Token expired')
     }
   }
 
-  return payload as T
+  return payloadObj as T
 }
