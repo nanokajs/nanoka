@@ -142,55 +142,6 @@ function validateWithOptions(
   }
 }
 
-const relationCycleCache = new WeakMap<object, Error | null>()
-
-function assertNoRelationCycle(
-  fields: Record<string, Field<any, any, any>>,
-  rootName = 'root',
-): void {
-  const cached = relationCycleCache.get(fields)
-  if (cached !== undefined) {
-    if (cached !== null) throw cached
-    return
-  }
-
-  const visiting = new Set<object>()
-  const visited = new Set<object>()
-
-  const visit = (
-    currentFields: Record<string, Field<any, any, any>>,
-    path: readonly string[],
-  ): Error | null => {
-    if (visiting.has(currentFields)) {
-      return new HTTPException(500, { message: 'relation cycle detected' })
-    }
-    if (visited.has(currentFields)) {
-      return null
-    }
-
-    visiting.add(currentFields)
-    for (const field of Object.values(currentFields)) {
-      if (field.kind !== 'relation') continue
-
-      const target = resolveRelationTarget(field as RelationDef)
-      const targetFields = target.fields as Record<string, Field<any, any, any>>
-      const error = visit(targetFields, [...path, target.tableName])
-      if (error !== null) {
-        return error
-      }
-    }
-    visiting.delete(currentFields)
-    visited.add(currentFields)
-    return null
-  }
-
-  const error = visit(fields, [rootName])
-  relationCycleCache.set(fields, error)
-  if (error !== null) {
-    throw error
-  }
-}
-
 async function loadRelations<
   Fields extends Record<string, Field<any, any, any>>,
   With extends WithOptions<Fields>,
@@ -383,7 +334,6 @@ export async function findManyImpl<
   const rows = await query
   if (options.with !== undefined) {
     validateWithOptions(fields, options.with as Record<string, unknown>)
-    assertNoRelationCycle(fields)
     return loadRelations(adapter, table, fields, rows, options.with as NonNullable<With>)
   }
   return rows
@@ -496,17 +446,13 @@ export async function findOneImpl<Fields extends Record<string, Field<any, any, 
     throw new HTTPException(400, { message: 'where clause must not be empty' })
   }
 
-  if (options?.with !== undefined) {
-    validateWithOptions(fields, options.with as Record<string, unknown>)
-    assertNoRelationCycle(fields)
-  }
-
   // biome-ignore lint/suspicious/noExplicitAny: drizzle query type
   const rows = await (adapter.drizzle.select().from(table).where(whereClause).limit(1) as any)
   if (rows.length === 0) {
     return null
   }
   if (options?.with !== undefined) {
+    validateWithOptions(fields, options.with as Record<string, unknown>)
     const withRows = await loadRelations(adapter, table, fields, [rows[0]], options.with)
     return withRows[0] ?? null
   }

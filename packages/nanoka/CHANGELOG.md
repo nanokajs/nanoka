@@ -11,11 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Depth-1 relation eager loading via `findMany(adapter, { limit, with })` and `findOne(adapter, idOrWhere, { with })`.
 - Typed `WithOptions`, `WithResult`, `RelationKeys`, and `FindOneOptions` exports for relation query results.
-- Runtime `with` validation and relation graph cycle detection for relation eager loading.
+- Runtime `with` validation for relation eager loading.
+- Bidirectional relation graphs are supported for depth-1 eager loading.
 
 ### Notes
 
-- Relation loading follows the documented parent query + relation query + JavaScript grouping strategy; nested eager loading remains out of scope.
+- Relation loading follows the documented parent query + relation query + JavaScript grouping strategy; nested eager loading and recursive relation graph traversal remain out of scope.
 
 ## [1.6.0] — 2026-05-05
 

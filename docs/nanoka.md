@@ -380,7 +380,7 @@ findOne(adapter, id, { with: { author: true } })
 | 制約 | 内容 |
 |---|---|
 | Depth | 1 のみ。ネスト `with` は v1 対象外（#14 で再検討） |
-| 循環参照 | `Target` 関数遅延評価で TDZ 回避。`with` クエリ時に DFS で循環を検出してエラー（実装は #14-4） |
+| 循環参照 | `Target` 関数遅延評価で TDZ 回避。depth 1 eager loading では指定された関係のみ取得し、関係先から逆方向へ再帰しないため、双方向 relation graph も許容する |
 | `findMany.limit` | 親クエリには必須維持。関係先には適用しない（known limitation） |
 | `where` DSL | 関係先カラムでの絞り込みは未対応。`app.db` を使う |
 | マイグレーション | 外部キー制約 SQL を自動生成しない（Load-bearing rule 1 維持）。Drizzle schema の `references()` は手動で追加する |
@@ -392,7 +392,7 @@ findOne(adapter, id, { with: { author: true } })
 
 - **#14-2**: フィールドビルダー実装（`t.hasMany` / `t.belongsTo` の型と builder）。`Field` 型に `kind: 'relation'` discriminator を追加し、codegen・schema 派生から除外する分岐を実装
 - **#14-3**: `findMany({ with })` / `findOne({ with })` のクエリ実装。`packages/nanoka/src/model/types.ts` と `packages/nanoka/src/router/types.ts` の両層を同時更新（CLAUDE.md Load-bearing rule に従う）
-- **#14-4**: 循環参照 DFS 検出とエラー設計
+- **#14-4 / #89**: depth 1 eager loading では双方向 relation graph を許容。ネスト `with` 導入時に必要なら循環参照検出を再検討
 - **#14-5**: docs-site の例とドキュメントサイト更新
 
 ---
