@@ -118,6 +118,31 @@ All field builders support the following chainable modifiers:
 | \`.serverOnly()\` | Column exists in DB but is excluded from all API inputs and outputs |
 | \`.writeOnly()\` | Accepted as input but never included in responses |
 | \`.readOnly()\` | Included in responses but excluded from create/update inputs |
+
+## Relations
+
+Two relation field builders are available for defining associations between models:
+
+\`\`\`typescript
+import { t } from '@nanokajs/core'
+
+// 1 → N: define on the parent model
+t.hasMany(target, { foreignKey: 'userId' })
+
+// N → 1: define on the child model
+t.belongsTo(target, { foreignKey: 'userId' })
+\`\`\`
+
+**Key characteristics:**
+
+- Relation fields **have no DB column** — \`nanoka generate\` skips them entirely.
+- They are **excluded from \`validator()\`, \`inputSchema()\`, and \`outputSchema()\`** by default.
+- The target can be a model reference or a thunk (\`() => Model\`) to handle bidirectional relations.
+- \`foreignKey\` is always required — Nanoka does not infer it.
+
+Relation fields are defined in \`app.model()\` registration, not in model files (which should contain DB columns only).
+
+See [Relations](/api/relations) for the full API including \`with\` query options and OpenAPI integration.
 `
 
 export const contentJa = `\
@@ -240,4 +265,29 @@ const fields = {
 | \`.serverOnly()\` | DB にカラムは存在するが、すべての API 入出力から除外される |
 | \`.writeOnly()\` | 入力として受け付けるが、レスポンスには含めない |
 | \`.readOnly()\` | レスポンスには含まれるが、create/update 入力から除外される |
+
+## Relations
+
+モデル間の関連を定義するための relation フィールドビルダーが 2 つあります:
+
+\`\`\`typescript
+import { t } from '@nanokajs/core'
+
+// 1 → N: 親モデルに定義する
+t.hasMany(target, { foreignKey: 'userId' })
+
+// N → 1: 子モデルに定義する
+t.belongsTo(target, { foreignKey: 'userId' })
+\`\`\`
+
+**主な特性:**
+
+- relation フィールドは **DB 列を持ちません** — \`nanoka generate\` で完全に skip されます。
+- \`validator()\`・\`inputSchema()\`・\`outputSchema()\` から**デフォルト除外**されます。
+- ターゲットにはモデル参照か thunk（\`() => Model\`）を使えます（双方向 relation の TDZ 回避）。
+- \`foreignKey\` は常に必須です — Nanoka は推測しません。
+
+relation フィールドはモデルファイルではなく \`app.model()\` 登録時に定義します（モデルファイルは DB 列のみ持つ）。
+
+\`with\` クエリオプションや OpenAPI 連携を含む詳細は [Relations](/api/relations) を参照してください。
 `

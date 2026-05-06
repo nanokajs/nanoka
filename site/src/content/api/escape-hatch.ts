@@ -93,11 +93,13 @@ const [newUser, newPost] = await app.batch([
 
 Note: D1 batch is not a transaction. If the second query fails, the first may already have been applied. For true transactional semantics, use SQLite transactions via raw SQL or Drizzle's transaction API where supported.
 
-## Relations: using joins manually
+## Relations: depth-1 eager loading and complex joins
 
-Nanoka does not implement \`t.hasMany()\` or \`t.belongsTo()\` (non-goal, see Issue #14). Use Drizzle's join API directly for relational queries.
+Nanoka provides a Relations API (\`t.hasMany()\` / \`t.belongsTo()\`) for depth-1 eager loading. Use it for the common case of loading a parent with its direct children.
 
-**Inner join:**
+For complex queries — filtered joins, aggregations, or related-model \`where\` clauses — use \`app.db\` directly. See the [Relations](/api/relations) page for the full Relations API.
+
+**Inner join (complex query example):**
 
 \`\`\`typescript
 import { eq } from 'drizzle-orm'
@@ -131,8 +133,9 @@ Remember to pass the user portions of the result through \`User.toResponse()\` b
 | Use case | Recommendation |
 |---|---|
 | Paginated list, single lookup, create, update, delete | Use model CRUD methods |
+| Load user with posts (depth 1) | \`User.findOne(id, { with: { posts: true } })\` — see [Relations](/api/relations) |
 | Complex WHERE with multiple conditions | \`app.db\` with Drizzle SQL operators |
-| JOIN across multiple tables | \`app.db\` with \`.innerJoin()\` / \`.leftJoin()\` |
+| Filter by related-model column | \`app.db\` with \`.innerJoin()\` / \`.leftJoin()\` |
 | Aggregation (COUNT, SUM, AVG) | \`app.db\` with Drizzle aggregate functions |
 | Full-text search | \`app.db\` with raw SQL fragment |
 | Multiple inserts that must batch | \`app.batch()\` |
@@ -233,11 +236,13 @@ const [newUser, newPost] = await app.batch([
 
 注意: D1 バッチはトランザクションではありません。2 番目のクエリが失敗しても、最初のクエリはすでに適用されている可能性があります。真のトランザクションセマンティクスには、サポートされている場合は raw SQL または Drizzle のトランザクション API を通じた SQLite トランザクションを使ってください。
 
-## Relations: 手動での join の扱い
+## Relations: depth-1 の eager loading と複雑な join
 
-Nanoka は \`t.hasMany()\` や \`t.belongsTo()\` を実装していません（非目標、Issue #14 参照）。リレーショナルクエリには Drizzle の join API を直接使ってください。
+Nanoka は Relations API（\`t.hasMany()\` / \`t.belongsTo()\`）による depth-1 の eager loading を提供します。親と直接の子を一緒に取得する一般的なケースに使います。
 
-**内部結合:**
+複雑なクエリ — フィルタ付き join・集計・関係先カラムへの \`where\` — には \`app.db\` を直接使います。Relations API の詳細は [Relations](/api/relations) ページを参照してください。
+
+**内部結合（複雑なクエリの例）:**
 
 \`\`\`typescript
 import { eq } from 'drizzle-orm'
@@ -271,8 +276,9 @@ const results = await app.db
 | ユースケース | 推奨 |
 |---|---|
 | ページネーション付きリスト・単一ルックアップ・作成・更新・削除 | モデル CRUD メソッドを使う |
+| user と posts を一緒に取得（depth 1）| \`User.findOne(id, { with: { posts: true } })\` — [Relations](/api/relations) 参照 |
 | 複数条件を持つ複雑な WHERE | Drizzle SQL オペレーターを使った \`app.db\` |
-| 複数テーブルの JOIN | \`.innerJoin()\` / \`.leftJoin()\` を使った \`app.db\` |
+| 関係先カラムへのフィルタ | \`.innerJoin()\` / \`.leftJoin()\` を使った \`app.db\` |
 | 集計（COUNT、SUM、AVG）| Drizzle 集計関数を使った \`app.db\` |
 | 全文検索 | raw SQL フラグメントを使った \`app.db\` |
 | バッチ処理が必要な複数の挿入 | \`app.batch()\` |
