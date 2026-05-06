@@ -7,10 +7,10 @@ export function authMiddleware<
 >(opts: { secret: string }): MiddlewareHandler<{ Variables: { user: TPayload } }> {
   return async (c, next) => {
     const authHeader = c.req.header('Authorization')
-    if (!authHeader?.startsWith('Bearer ')) {
+    if (!authHeader || !/^Bearer\s+/i.test(authHeader)) {
       throw new HTTPException(401, { message: 'Unauthorized' })
     }
-    const token = authHeader.slice('Bearer '.length)
+    const token = authHeader.replace(/^Bearer\s+/i, '')
     if (!token) {
       throw new HTTPException(401, { message: 'Unauthorized' })
     }

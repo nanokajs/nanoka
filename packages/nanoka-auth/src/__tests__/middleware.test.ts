@@ -77,6 +77,21 @@ describe('authMiddleware', () => {
     expect(res.status).toBe(401)
   })
 
+  it('lowercase bearer scheme passes through (case-insensitive)', async () => {
+    type AuthVars = { user: { sub: string } }
+    const app = new Hono<{ Variables: AuthVars }>()
+    app.use('/protected', authMiddleware<AuthVars['user']>({ secret: SECRET }))
+    app.get('/protected', (c) => c.json({ user: c.get('user') }))
+
+    const token = await sign({ sub: 'user-1' }, SECRET)
+    const res = await app.request('/protected', {
+      headers: { Authorization: `bearer ${token}` },
+    })
+    expect(res.status).toBe(200)
+    const body = (await res.json()) as AuthVars
+    expect(body.user.sub).toBe('user-1')
+  })
+
   it('type inference: c.get("user").sub is string', async () => {
     type UserPayload = { sub: string }
     const app = new Hono<{ Variables: { user: UserPayload } }>()
