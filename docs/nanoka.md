@@ -175,7 +175,7 @@ const result = await app.db
 ## Nanokaがやらないこと（MVP時点）
 
 - フルスタックReactフレームワークにはしない
-- 認証・認可をコアに含めない
+- 認証・認可を `@nanokajs/core` に含めない。`@nanokajs/auth` パッケージとして別途提供（Issue #74 / #75）
 - 複雑なSQLをDSLですべて表現しない（素のDrizzleで書く）
 - マイグレーションを自動実行しない
 - D1以外のDBをMVP段階で完全サポートしない

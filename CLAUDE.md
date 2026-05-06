@@ -60,7 +60,7 @@ These remain unimplemented or intentionally out of scope. If a task appears to r
 - Relations: `t.hasMany()`, `t.belongsTo()`. — Issue #14、設計確定済み・実装中（設計仕様は `docs/nanoka.md` の "Relations API" 節参照）
 - Typed query helper: `User.where(f => eq(f.email, x)).limit(10)`. — non-goal, Issue #15
 - Codex or Claude Code plugin.
-- Auth, full-stack React, or a complex query DSL that replaces Drizzle.
+- Auth (provided as `@nanokajs/auth` separate package — Issue #74 / #75), full-stack React, or a complex query DSL that replaces Drizzle.
 
 The schema / validator field-accessor API already exists for `{ pick: f => [f.name] }` and `{ omit: f => [f.passwordHash] }`. Keep its `f` object `as const`, not a Proxy. Runtime cost must remain zero.
 
@@ -111,7 +111,7 @@ Security review priorities:
 - Do not leak DB-only fields such as `passwordHash` in API responses.
 - Do not expose `c.env` secrets, stack traces, internal paths, or PII in responses or logs.
 - Do not mix external side effects into adapter batch semantics.
-- Auth remains out of scope unless the user explicitly changes scope.
+- Auth in `@nanokajs/core` remains out of scope. Use `@nanokajs/auth` package for authentication concerns (Issue #74 / #75).
 
 ## Commands
 
