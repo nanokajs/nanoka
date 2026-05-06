@@ -298,6 +298,92 @@ describe('nanoka() integration with D1', () => {
     })
   })
 
+  describe('relation eager loading through app.model', () => {
+    beforeEach(async () => {
+      const { env } = await import('cloudflare:test')
+      const adapter = d1Adapter(env.DB)
+
+      await adapter.drizzle.run(sql`DROP TABLE IF EXISTS router_relation_users`)
+      await adapter.drizzle.run(sql`DROP TABLE IF EXISTS router_relation_posts`)
+      await adapter.drizzle.run(sql`DROP TABLE IF EXISTS router_relation_authors`)
+      await adapter.drizzle.run(
+        sql`
+          CREATE TABLE router_relation_users (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL
+          )
+        `,
+      )
+      await adapter.drizzle.run(
+        sql`
+          CREATE TABLE router_relation_authors (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL
+          )
+        `,
+      )
+      await adapter.drizzle.run(
+        sql`
+          CREATE TABLE router_relation_posts (
+            id TEXT PRIMARY KEY,
+            userId TEXT NOT NULL,
+            authorId TEXT NOT NULL,
+            title TEXT NOT NULL
+          )
+        `,
+      )
+    })
+
+    it('findMany loads hasMany relations from adapter-bound API', async () => {
+      const { env } = await import('cloudflare:test')
+      const app = nanoka(d1Adapter(env.DB))
+
+      const Post = app.model('router_relation_posts', {
+        id: t.uuid().primary(),
+        userId: t.uuid(),
+        authorId: t.uuid(),
+        title: t.string(),
+      })
+      const User = app.model('router_relation_users', {
+        id: t.uuid().primary(),
+        name: t.string(),
+        posts: t.hasMany(Post, { foreignKey: 'userId' }),
+      })
+
+      await User.create({ id: 'rru-1', name: 'Alice' })
+      await Post.create({ id: 'rrp-1', userId: 'rru-1', authorId: 'rra-1', title: 'First' })
+
+      const users = await User.findMany({ limit: 10, with: { posts: true } })
+
+      expect(users).toHaveLength(1)
+      expect(users[0]!.posts.map((post) => post.id)).toEqual(['rrp-1'])
+    })
+
+    it('findOne loads belongsTo relations from adapter-bound API', async () => {
+      const { env } = await import('cloudflare:test')
+      const app = nanoka(d1Adapter(env.DB))
+
+      const Author = app.model('router_relation_authors', {
+        id: t.uuid().primary(),
+        name: t.string(),
+      })
+      const Post = app.model('router_relation_posts', {
+        id: t.uuid().primary(),
+        userId: t.uuid(),
+        authorId: t.uuid(),
+        title: t.string(),
+        author: t.belongsTo(Author, { foreignKey: 'authorId' }),
+      })
+
+      await Author.create({ id: 'rra-1', name: 'Author' })
+      await Post.create({ id: 'rrp-1', userId: 'rru-1', authorId: 'rra-1', title: 'First' })
+
+      const post = await Post.findOne('rrp-1', { with: { author: true } })
+
+      expect(post?.author?.id).toBe('rra-1')
+    })
+  })
+
   describe('validator field type safety', () => {
     it('omit excludes fields from validated input at runtime', async () => {
       const { env } = await import('cloudflare:test')
