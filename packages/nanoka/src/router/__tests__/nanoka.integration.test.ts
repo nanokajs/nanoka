@@ -136,11 +136,14 @@ describe('nanoka() integration with D1', () => {
       // Access raw Drizzle via app.db escape hatch
       const rawResult = await app.db
         .select()
+        // biome-ignore lint/suspicious/noExplicitAny: accessing Drizzle escape hatch with raw table type
         .from(User.table as any)
+        // biome-ignore lint/suspicious/noExplicitAny: accessing Drizzle escape hatch with raw table type
         .where(eq((User.table as any).id, userId))
         .limit(1)
 
       expect(rawResult).toHaveLength(1)
+      // biome-ignore lint/suspicious/noExplicitAny: accessing raw Drizzle result without schema type
       expect((rawResult[0] as any).name).toBe('Test User')
     })
   })
@@ -172,6 +175,7 @@ describe('nanoka() integration with D1', () => {
         passwordHash: 'hashed2',
       })
 
+      // biome-ignore lint/suspicious/noExplicitAny: batch API type requires cast for mixed query types
       const results = await app.batch([query1, query2] as any)
 
       expect(results).toHaveLength(2)
@@ -356,7 +360,7 @@ describe('nanoka() integration with D1', () => {
       const users = await User.findMany({ limit: 10, with: { posts: true } })
 
       expect(users).toHaveLength(1)
-      expect(users[0]!.posts.map((post) => post.id)).toEqual(['rrp-1'])
+      expect(users[0]?.posts.map((post) => post.id)).toEqual(['rrp-1'])
     })
 
     it('findOne loads belongsTo relations from adapter-bound API', async () => {
@@ -396,6 +400,7 @@ describe('nanoka() integration with D1', () => {
         passwordHash: t.string(),
       })
 
+      // biome-ignore lint/suspicious/noExplicitAny: test variable to capture validated body
       let receivedBody: any
 
       app.post('/users-safe', User.validator('json', { omit: ['passwordHash'] }), (c) => {
@@ -431,6 +436,7 @@ describe('nanoka() integration with D1', () => {
         passwordHash: t.string(),
       })
 
+      // biome-ignore lint/suspicious/noExplicitAny: test variable to capture validated body
       let receivedBody: any
 
       app.patch(

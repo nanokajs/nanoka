@@ -147,8 +147,8 @@ describe('CRUD operations: vitest-pool-workers D1 integration', () => {
       })
 
       expect(rows.length).toBe(2)
-      expect(rows[0]!.id).toBe('uuid-4b')
-      expect(rows[1]!.id).toBe('uuid-4c')
+      expect(rows[0]?.id).toBe('uuid-4b')
+      expect(rows[1]?.id).toBe('uuid-4c')
     })
 
     it('5. findMany with orderBy as object with desc direction', async () => {
@@ -164,8 +164,8 @@ describe('CRUD operations: vitest-pool-workers D1 integration', () => {
       })
 
       expect(rows.length).toBe(2)
-      expect(rows[0]!.name).toBe('Y')
-      expect(rows[1]!.name).toBe('X')
+      expect(rows[0]?.name).toBe('Y')
+      expect(rows[1]?.name).toBe('X')
     })
 
     it('6. findMany with multiple orderBy columns', async () => {
@@ -181,8 +181,8 @@ describe('CRUD operations: vitest-pool-workers D1 integration', () => {
       })
 
       expect(rows.length).toBe(2)
-      expect(rows[0]!.name).toBe('A')
-      expect(rows[1]!.name).toBe('B')
+      expect(rows[0]?.name).toBe('A')
+      expect(rows[1]?.name).toBe('B')
     })
 
     it('7. update with PK and return updated row', async () => {
@@ -246,6 +246,7 @@ describe('CRUD operations: vitest-pool-workers D1 integration', () => {
       const { env } = await import('cloudflare:test')
       const adapter = d1Adapter(env.DB)
 
+      // biome-ignore lint/suspicious/noExplicitAny: intentionally passing invalid type to test runtime validation
       await expect(User.findMany(adapter, { limit: -1 } as any)).rejects.toThrow(HTTPException)
     })
 
@@ -253,6 +254,7 @@ describe('CRUD operations: vitest-pool-workers D1 integration', () => {
       const { env } = await import('cloudflare:test')
       const adapter = d1Adapter(env.DB)
 
+      // biome-ignore lint/suspicious/noExplicitAny: intentionally passing invalid type to test runtime validation
       await expect(User.findMany(adapter, { limit: NaN } as any)).rejects.toThrow(HTTPException)
     })
 
@@ -270,6 +272,7 @@ describe('CRUD operations: vitest-pool-workers D1 integration', () => {
       const { env } = await import('cloudflare:test')
       const adapter = d1Adapter(env.DB)
 
+      // biome-ignore lint/suspicious/noExplicitAny: intentionally passing invalid type to test runtime validation
       await expect(User.delete(adapter, {} as any)).rejects.toThrow(HTTPException)
     })
 
@@ -280,6 +283,7 @@ describe('CRUD operations: vitest-pool-workers D1 integration', () => {
       await User.create(adapter, { id: 'uuid-14', name: 'Test', email: 'test@example.com' })
 
       await expect(
+        // biome-ignore lint/suspicious/noExplicitAny: intentionally passing invalid type to test runtime validation
         User.findMany(adapter, { limit: 20, orderBy: 'evil; drop' as any } as any),
       ).rejects.toThrow(HTTPException)
     })
@@ -290,6 +294,7 @@ describe('CRUD operations: vitest-pool-workers D1 integration', () => {
 
       // Simulate untrusted input that has a prototype-chain key as own property
       const malicious = JSON.parse('{"toString": "x"}')
+      // biome-ignore lint/suspicious/noExplicitAny: intentionally passing invalid type to test runtime validation
       await expect(User.findOne(adapter, malicious as any)).rejects.toThrow(HTTPException)
     })
 
@@ -300,6 +305,7 @@ describe('CRUD operations: vitest-pool-workers D1 integration', () => {
       await User.create(adapter, { id: 'uuid-16', name: 'Test', email: 'test@example.com' })
 
       await expect(
+        // biome-ignore lint/suspicious/noExplicitAny: intentionally passing invalid type to test runtime validation
         User.findMany(adapter, { limit: 20, orderBy: 'toString' as any } as any),
       ).rejects.toThrow(HTTPException)
     })
@@ -361,7 +367,7 @@ describe('findMany SQL where + toResponseMany', () => {
     })
 
     expect(rows.length).toBe(1)
-    expect(rows[0]!.name).toBe('Alice')
+    expect(rows[0]?.name).toBe('Alice')
   })
 
   it('where: like() fetches multiple matching rows', async () => {
@@ -410,19 +416,20 @@ describe('findMany SQL where + toResponseMany', () => {
     // Insert directly via escape hatch because serverOnly fields are excluded from CreateInput
     await adapter.drizzle
       .insert(SecureUser.table)
-      // biome-ignore lint/suspicious/noExplicitAny: inserting serverOnly field directly via escape hatch
       .values([
         {
           id: '11111111-1111-1111-1111-111111111111',
           name: 'Heidi',
           email: 'heidi@example.com',
           passwordHash: 'secret9',
+        // biome-ignore lint/suspicious/noExplicitAny: inserting serverOnly field directly via escape hatch
         } as any,
         {
           id: '22222222-2222-2222-2222-222222222222',
           name: 'Ivan',
           email: 'ivan@example.com',
           passwordHash: 'secret10',
+        // biome-ignore lint/suspicious/noExplicitAny: inserting serverOnly field directly via escape hatch
         } as any,
       ])
       .run()
@@ -581,8 +588,8 @@ describe('relation eager loading', () => {
     })
 
     expect(users).toHaveLength(2)
-    expect(users[0]!.posts.map((post) => post.id)).toEqual(['rp-1', 'rp-2'])
-    expect(users[1]!.posts.map((post) => post.id)).toEqual(['rp-3'])
+    expect(users[0]?.posts.map((post) => post.id)).toEqual(['rp-1', 'rp-2'])
+    expect(users[1]?.posts.map((post) => post.id)).toEqual(['rp-3'])
   })
 
   it('findOne loads hasMany rows', async () => {
@@ -605,9 +612,9 @@ describe('relation eager loading', () => {
       with: { author: true },
     })
 
-    expect(posts[0]!.author?.id).toBe('ra-1')
-    expect(posts[1]!.author?.id).toBe('ra-2')
-    expect(posts[2]!.author).toBeNull()
+    expect(posts[0]?.author?.id).toBe('ra-1')
+    expect(posts[1]?.author?.id).toBe('ra-2')
+    expect(posts[2]?.author).toBeNull()
   })
 
   it('combines where, orderBy, offset, and with on the parent query', async () => {
@@ -623,8 +630,8 @@ describe('relation eager loading', () => {
     })
 
     expect(users).toHaveLength(1)
-    expect(users[0]!.id).toBe('ru-2')
-    expect(users[0]!.posts.map((post) => post.id)).toEqual(['rp-3'])
+    expect(users[0]?.id).toBe('ru-2')
+    expect(users[0]?.posts.map((post) => post.id)).toEqual(['rp-3'])
   })
 
   it('returns an empty parent result without relation rows', async () => {
@@ -648,6 +655,7 @@ describe('relation eager loading', () => {
       RelationUser.findMany(adapter, {
         limit: 10,
         with: { posts: { with: { comments: true } } },
+      // biome-ignore lint/suspicious/noExplicitAny: intentionally passing invalid type to test runtime validation
       } as any),
     ).rejects.toThrow(HTTPException)
   })
@@ -657,6 +665,7 @@ describe('relation eager loading', () => {
     const adapter = d1Adapter(env.DB)
 
     await expect(
+      // biome-ignore lint/suspicious/noExplicitAny: intentionally passing invalid type to test runtime validation
       RelationUser.findMany(adapter, { limit: 10, with: { name: true } } as any),
     ).rejects.toThrow(HTTPException)
   })
@@ -665,10 +674,12 @@ describe('relation eager loading', () => {
     const { env } = await import('cloudflare:test')
     const adapter = d1Adapter(env.DB)
 
+    // biome-ignore lint/suspicious/noExplicitAny: intentionally passing invalid type to test runtime validation
     await expect(RelationUser.findMany(adapter, { limit: 10, with: null } as any)).rejects.toThrow(
       HTTPException,
     )
     await expect(
+      // biome-ignore lint/suspicious/noExplicitAny: intentionally passing invalid type to test runtime validation
       RelationUser.findMany(adapter, { limit: 10, with: ['posts'] } as any),
     ).rejects.toThrow(HTTPException)
   })
@@ -683,7 +694,7 @@ describe('relation eager loading', () => {
     })
 
     expect(users).toHaveLength(1)
-    expect(users[0]!.posts.map((post: { id: string }) => post.id)).toEqual(['cp-1'])
+    expect(users[0]?.posts.map((post: { id: string }) => post.id)).toEqual(['cp-1'])
   })
 
   it('allows depth-1 belongsTo loading on bidirectional relation graphs', async () => {
@@ -696,7 +707,7 @@ describe('relation eager loading', () => {
     })
 
     expect(posts).toHaveLength(1)
-    expect(posts[0]!.user?.id).toBe('cu-1')
+    expect(posts[0]?.user?.id).toBe('cu-1')
   })
 
   it('returns null for findOne with missing parent row and with option', async () => {
@@ -715,9 +726,11 @@ describe('relation eager loading', () => {
     await expect(
       CycleUser.findOne(adapter, 'missing-user', {
         with: { posts: { with: { user: true } } },
+      // biome-ignore lint/suspicious/noExplicitAny: intentionally passing invalid type to test runtime validation
       } as any),
     ).rejects.toThrow(HTTPException)
     await expect(
+      // biome-ignore lint/suspicious/noExplicitAny: intentionally passing invalid type to test runtime validation
       CycleUser.findOne(adapter, 'missing-user', { with: { name: true } } as any),
     ).rejects.toThrow(HTTPException)
   })
@@ -772,8 +785,8 @@ describe('findAll', () => {
 
     const rows = await AllUser.findAll(adapter, { offset: 1, orderBy: 'id' })
     expect(rows.length).toBe(2)
-    expect(rows[0]!.id).toBe('all-2')
-    expect(rows[1]!.id).toBe('all-3')
+    expect(rows[0]?.id).toBe('all-2')
+    expect(rows[1]?.id).toBe('all-3')
   })
 
   it('orderBy asc sorts correctly', async () => {
@@ -808,7 +821,7 @@ describe('findAll', () => {
 
     const rows = await AllUser.findAll(adapter, { where: { email: 'alice@example.com' } })
     expect(rows.length).toBe(1)
-    expect(rows[0]!.name).toBe('Alice')
+    expect(rows[0]?.name).toBe('Alice')
   })
 
   it('where Drizzle SQL expression (like) filters rows', async () => {

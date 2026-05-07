@@ -984,7 +984,6 @@ export class RelationFieldBuilder<
   readonly target: Target | (() => Target)
   readonly foreignKey: FK
   readonly tsType!: never
-  // biome-ignore lint/complexity/noBannedTypes: {} is used intentionally for empty modifiers
   readonly modifiers = {} as const
 
   constructor(relationKind: Kind, target: Target | (() => Target), foreignKey: FK) {
