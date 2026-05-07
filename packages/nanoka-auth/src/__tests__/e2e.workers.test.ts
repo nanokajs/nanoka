@@ -24,8 +24,6 @@ const userFields = {
   createdAt: t.timestamp().readOnly(),
 }
 
-const SECRET = 'test-secret-for-e2e-testing-32chars!!'
-
 async function seedUser(opts: { id: string; email: string; password: string }): Promise<void> {
   const passwordHash = await pbkdf2Hasher.hash(opts.password)
   await env.DB.prepare(
@@ -41,7 +39,7 @@ function makeApp(cookieMode = false) {
 
   const auth = createAuth({
     model: User,
-    secret: SECRET,
+    secret: env.AUTH_SECRET,
     fields: { identifier: 'email', password: 'passwordHash' },
     ...(cookieMode ? { cookie: {} } : {}),
   })
@@ -73,6 +71,8 @@ describe('E2E Workers: createAuth with D1', () => {
     const loginRes = await app.request('/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      // `fields.password` に 'passwordHash' を指定しているため、リクエストボディのキー名は 'passwordHash'
+      // (実際に送るのは平文パスワード)
       body: JSON.stringify({ email: 'alice@example.com', passwordHash: 'password123' }),
     })
     expect(loginRes.status).toBe(200)
@@ -81,7 +81,7 @@ describe('E2E Workers: createAuth with D1', () => {
     expect(typeof body.accessToken).toBe('string')
     expect(typeof body.refreshToken).toBe('string')
 
-    const payload = await verify<{ sub: string; type: string }>(body.accessToken, SECRET)
+    const payload = await verify<{ sub: string; type: string }>(body.accessToken, env.AUTH_SECRET)
     expect(payload.sub).toBe(id)
     expect(payload.type).toBe('access')
 
@@ -100,6 +100,8 @@ describe('E2E Workers: createAuth with D1', () => {
     const res = await app.request('/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      // `fields.password` に 'passwordHash' を指定しているため、リクエストボディのキー名は 'passwordHash'
+      // (実際に送るのは平文パスワード)
       body: JSON.stringify({ email: 'bob@example.com', passwordHash: 'wrongpassword' }),
     })
     expect(res.status).toBe(401)
@@ -111,6 +113,8 @@ describe('E2E Workers: createAuth with D1', () => {
     const res = await app.request('/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      // `fields.password` に 'passwordHash' を指定しているため、リクエストボディのキー名は 'passwordHash'
+      // (実際に送るのは平文パスワード)
       body: JSON.stringify({ email: 'notexist@example.com', passwordHash: 'anypassword' }),
     })
     expect(res.status).toBe(401)
@@ -125,6 +129,8 @@ describe('E2E Workers: createAuth with D1', () => {
     const loginRes = await app.request('/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      // `fields.password` に 'passwordHash' を指定しているため、リクエストボディのキー名は 'passwordHash'
+      // (実際に送るのは平文パスワード)
       body: JSON.stringify({ email: 'carol@example.com', passwordHash: 'password123' }),
     })
     expect(loginRes.status).toBe(200)
