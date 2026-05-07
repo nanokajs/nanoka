@@ -1,10 +1,8 @@
--- TODO(#110): このファイルを新規作成する。
--- 目的: Workers E2E テスト（e2e.workers.test.ts）が D1 に対して SQL を実行する前に
---       適用するマイグレーション SQL。applyD1Migrations(env.DB, env.TEST_MIGRATIONS)
---       によって beforeAll フックで実行される。
--- 内容: @nanokajs/auth の E2E テストが必要とする最小限の users テーブルを定義する。
---       カラムは id（TEXT PK）/ email（TEXT UNIQUE）/ passwordHash（TEXT）/ createdAt（INTEGER）の4列。
---       examples/basic の users テーブルにある name 列は auth パッケージのテストでは不要なので省く。
--- 参考: examples/basic/drizzle/migrations/0000_grey_microchip.sql のスキーマ構造を踏襲する。
---       @nanokajs/auth の createAuth が findOne({ email }) / user.id / user[passwordField]
---       の3フィールドしか参照しないため、最小スキーマで十分である。
+CREATE TABLE `users` (
+	`id` text PRIMARY KEY NOT NULL,
+	`email` text NOT NULL,
+	`passwordHash` text NOT NULL,
+	`createdAt` integer NOT NULL
+);
+--> statement-breakpoint
+CREATE UNIQUE INDEX `users_email_unique` ON `users` (`email`);
