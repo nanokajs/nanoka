@@ -422,14 +422,14 @@ describe('findMany SQL where + toResponseMany', () => {
           name: 'Heidi',
           email: 'heidi@example.com',
           passwordHash: 'secret9',
-        // biome-ignore lint/suspicious/noExplicitAny: inserting serverOnly field directly via escape hatch
+          // biome-ignore lint/suspicious/noExplicitAny: inserting serverOnly field directly via escape hatch
         } as any,
         {
           id: '22222222-2222-2222-2222-222222222222',
           name: 'Ivan',
           email: 'ivan@example.com',
           passwordHash: 'secret10',
-        // biome-ignore lint/suspicious/noExplicitAny: inserting serverOnly field directly via escape hatch
+          // biome-ignore lint/suspicious/noExplicitAny: inserting serverOnly field directly via escape hatch
         } as any,
       ])
       .run()
@@ -655,7 +655,7 @@ describe('relation eager loading', () => {
       RelationUser.findMany(adapter, {
         limit: 10,
         with: { posts: { with: { comments: true } } },
-      // biome-ignore lint/suspicious/noExplicitAny: intentionally passing invalid type to test runtime validation
+        // biome-ignore lint/suspicious/noExplicitAny: intentionally passing invalid type to test runtime validation
       } as any),
     ).rejects.toThrow(HTTPException)
   })
@@ -726,7 +726,7 @@ describe('relation eager loading', () => {
     await expect(
       CycleUser.findOne(adapter, 'missing-user', {
         with: { posts: { with: { user: true } } },
-      // biome-ignore lint/suspicious/noExplicitAny: intentionally passing invalid type to test runtime validation
+        // biome-ignore lint/suspicious/noExplicitAny: intentionally passing invalid type to test runtime validation
       } as any),
     ).rejects.toThrow(HTTPException)
     await expect(
