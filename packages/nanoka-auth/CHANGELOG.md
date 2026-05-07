@@ -5,6 +5,16 @@ All notable changes to `@nanokajs/auth` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] — 2026-05-07
+
+### Added
+
+- `CookieOptions` interface and `cookie?` field on `CreateAuthOptions`.
+  - `loginHandler()`: when `cookie` is set, writes `access_token` and `refresh_token` as `Set-Cookie` headers (`HttpOnly`, `SameSite=Lax`, `Secure` by default) and returns `{ ok: true }` instead of tokens in the body.
+  - `refreshHandler()`: when `cookie` is set, reads the refresh token from the cookie (falls back to `body.refreshToken` if absent); on success writes the new access token via `Set-Cookie` and returns `{ ok: true }`.
+  - All cookie attributes (`httpOnly`, `sameSite`, `secure`, `path`, `accessTokenName`, `refreshTokenName`) are configurable with sensible secure defaults.
+  - Omitting `cookie` preserves the existing JSON body behavior — no breaking change.
+
 ## [1.3.0] — 2026-05-07
 
 ### Added

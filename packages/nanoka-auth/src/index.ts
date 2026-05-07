@@ -1,4 +1,4 @@
-export type { AuthInstance, CreateAuthOptions } from './create-auth.js'
+export type { AuthInstance, CookieOptions, CreateAuthOptions } from './create-auth.js'
 export { createAuth } from './create-auth.js'
 export type { Hasher } from './hasher.js'
 export { pbkdf2Hasher } from './hashers/pbkdf2.js'
