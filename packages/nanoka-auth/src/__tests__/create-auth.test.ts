@@ -1,8 +1,8 @@
 import type { NanokaModel } from '@nanokajs/core'
 import { Hono } from 'hono'
 import { describe, expect, it } from 'vitest'
-import { createAuth } from '../create-auth.js'
 import type { CookieOptions } from '../create-auth.js'
+import { createAuth } from '../create-auth.js'
 import type { Hasher } from '../hasher.js'
 import { pbkdf2Hasher } from '../hashers/pbkdf2.js'
 import { verify } from '../jwt.js'
@@ -22,7 +22,11 @@ function makeFakeModel(users: Array<{ id: string; [key: string]: string }>) {
 function makeApp(
   // biome-ignore lint/suspicious/noExplicitAny: NanokaModel<any> is necessary for test helper
   model: NanokaModel<any>,
-  opts?: { hasher?: Hasher; jwt?: { expiresIn?: number; refreshExpiresIn?: number }; cookie?: CookieOptions },
+  opts?: {
+    hasher?: Hasher
+    jwt?: { expiresIn?: number; refreshExpiresIn?: number }
+    cookie?: CookieOptions
+  },
 ) {
   const auth = createAuth({
     model,
@@ -243,7 +247,9 @@ describe('createAuth (cookie mode)', () => {
 
   it('cookie 有効時: refreshHandler が cookie から refresh token を読み取り、新しい access_token cookie を設定する', async () => {
     const hash = await pbkdf2Hasher.hash('password123')
-    const model = makeFakeModel([{ id: 'user-2', email: 'cookierefresh@example.com', passwordHash: hash }])
+    const model = makeFakeModel([
+      { id: 'user-2', email: 'cookierefresh@example.com', passwordHash: hash },
+    ])
     const app = makeApp(model, { cookie: {} })
 
     const loginRes = await app.request('/login', {
@@ -256,7 +262,8 @@ describe('createAuth (cookie mode)', () => {
     const setCookieHeaders = loginRes.headers.getSetCookie()
     const refreshCookieHeader = setCookieHeaders.find((h) => h.startsWith('refresh_token='))
     if (refreshCookieHeader === undefined) throw new Error('refresh_token cookie not set')
-    const refreshTokenValue = refreshCookieHeader.split(';').at(0)?.replace('refresh_token=', '') ?? ''
+    const refreshTokenValue =
+      refreshCookieHeader.split(';').at(0)?.replace('refresh_token=', '') ?? ''
 
     const refreshRes = await app.request('/refresh', {
       method: 'POST',
@@ -275,7 +282,9 @@ describe('createAuth (cookie mode)', () => {
 
   it('cookie 有効時: refreshHandler は cookie が無ければ body の refreshToken にフォールバックする', async () => {
     const hash = await pbkdf2Hasher.hash('password123')
-    const model = makeFakeModel([{ id: 'user-3', email: 'fallback@example.com', passwordHash: hash }])
+    const model = makeFakeModel([
+      { id: 'user-3', email: 'fallback@example.com', passwordHash: hash },
+    ])
     const app = makeApp(model, { cookie: {} })
 
     const loginRes = await app.request('/login', {
@@ -286,7 +295,8 @@ describe('createAuth (cookie mode)', () => {
     const setCookieHeaders = loginRes.headers.getSetCookie()
     const refreshCookieHeader = setCookieHeaders.find((h) => h.startsWith('refresh_token='))
     if (refreshCookieHeader === undefined) throw new Error('refresh_token cookie not set')
-    const refreshTokenValue = refreshCookieHeader.split(';').at(0)?.replace('refresh_token=', '') ?? ''
+    const refreshTokenValue =
+      refreshCookieHeader.split(';').at(0)?.replace('refresh_token=', '') ?? ''
 
     const refreshRes = await app.request('/refresh', {
       method: 'POST',
@@ -301,7 +311,9 @@ describe('createAuth (cookie mode)', () => {
 
   it('cookie: {} を渡したとき既定値（httpOnly=true, sameSite=Lax, secure=true, path=/）が Set-Cookie ヘッダに含まれる', async () => {
     const hash = await pbkdf2Hasher.hash('password123')
-    const model = makeFakeModel([{ id: 'user-4', email: 'defaults@example.com', passwordHash: hash }])
+    const model = makeFakeModel([
+      { id: 'user-4', email: 'defaults@example.com', passwordHash: hash },
+    ])
     const app = makeApp(model, { cookie: {} })
 
     const res = await app.request('/login', {
