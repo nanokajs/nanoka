@@ -237,11 +237,11 @@ describe('toOpenAPISchema with { with } option', () => {
     const schema = User.toOpenAPISchema('output', { with: { posts: true } })
     const properties = schema.properties as Record<string, Record<string, unknown>>
     expect(properties).toHaveProperty('posts')
-    const postsSchema = properties['posts']!
-    expect(postsSchema.type).toBe('array')
-    const items = postsSchema['items'] as Record<string, unknown>
+    const postsSchema = properties.posts
+    expect(postsSchema?.type).toBe('array')
+    const items = postsSchema?.items as Record<string, unknown>
     expect(items.type).toBe('object')
-    const itemProperties = items['properties'] as Record<string, unknown>
+    const itemProperties = items.properties as Record<string, unknown>
     expect(itemProperties).toHaveProperty('id')
     expect(itemProperties).toHaveProperty('title')
     expect(itemProperties).toHaveProperty('userId')
@@ -258,10 +258,10 @@ describe('toOpenAPISchema with { with } option', () => {
     const schema = PostWithAuthor.toOpenAPISchema('output', { with: { author: true } })
     const properties = schema.properties as Record<string, Record<string, unknown>>
     expect(properties).toHaveProperty('author')
-    const authorSchema = properties['author']!
-    expect(authorSchema.type).toBe('object')
-    expect(authorSchema.nullable).toBe(true)
-    const authorProperties = authorSchema['properties'] as Record<string, unknown>
+    const authorSchema = properties.author
+    expect(authorSchema?.type).toBe('object')
+    expect(authorSchema?.nullable).toBe(true)
+    const authorProperties = authorSchema?.properties as Record<string, unknown>
     expect(authorProperties).toHaveProperty('id')
     expect(authorProperties).toHaveProperty('name')
   })
@@ -273,6 +273,7 @@ describe('toOpenAPISchema with { with } option', () => {
 
   it('create + with: { posts: true } does not expand relation', () => {
     // usage が 'output' 以外の場合は with オプションを渡しても relation は展開されない
+    // biome-ignore lint/suspicious/noExplicitAny: intentionally passing invalid type to test runtime behaviour
     const schema = User.toOpenAPISchema('create' as any, { with: { posts: true } })
     expect(schema.properties).not.toHaveProperty('posts')
   })
@@ -294,9 +295,9 @@ describe('toOpenAPISchema with { with } option', () => {
     expect(() => {
       const schema = UserBi.toOpenAPISchema('output', { with: { posts: true } })
       const properties = schema.properties as Record<string, Record<string, unknown>>
-      const postsSchema = properties['posts']!
-      const items = postsSchema['items'] as Record<string, unknown>
-      const itemProperties = items['properties'] as Record<string, unknown>
+      const postsSchema = properties.posts
+      const items = postsSchema?.items as Record<string, unknown>
+      const itemProperties = items.properties as Record<string, unknown>
       expect(itemProperties).not.toHaveProperty('author')
     }).not.toThrow()
   })
