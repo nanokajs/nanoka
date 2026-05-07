@@ -52,6 +52,7 @@
     "@nanokajs/core": "^1.0.0",
     "hono": "^4.0.0"
   },
+  "//TODO_110_devDependencies": "drizzle-orm と zod を追加し version を 1.4.0→1.4.1 に patch bump する。e2e.workers.test.ts で d1Adapter/defineModel を使うために @nanokajs/core が依存している drizzle-orm が Workers ランタイム上でも解決できる必要がある。またフィールド定義で t.text() などを使う場合に zod が必要になる。バージョンは packages/nanoka/package.json の peerDependencies に合わせる（drizzle-orm: ^0.38.0, zod: ^3.24.0）。devDeps の追加はランタイム API 変更ではないため patch が適切。",
   "devDependencies": {
     "@nanokajs/core": "workspace:*",
     "@cloudflare/vitest-pool-workers": "^0.5.0",
