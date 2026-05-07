@@ -2,6 +2,7 @@ import type { NanokaModel } from '@nanokajs/core'
 import { Hono } from 'hono'
 import { describe, expect, it } from 'vitest'
 import { createAuth } from '../create-auth.js'
+import type { CookieOptions } from '../create-auth.js'
 import type { Hasher } from '../hasher.js'
 import { pbkdf2Hasher } from '../hashers/pbkdf2.js'
 import { verify } from '../jwt.js'
@@ -21,7 +22,7 @@ function makeFakeModel(users: Array<{ id: string; [key: string]: string }>) {
 function makeApp(
   // biome-ignore lint/suspicious/noExplicitAny: NanokaModel<any> is necessary for test helper
   model: NanokaModel<any>,
-  opts?: { hasher?: Hasher; jwt?: { expiresIn?: number; refreshExpiresIn?: number } },
+  opts?: { hasher?: Hasher; jwt?: { expiresIn?: number; refreshExpiresIn?: number }; cookie?: CookieOptions },
 ) {
   const auth = createAuth({
     model,
@@ -212,5 +213,112 @@ describe('createAuth', () => {
     })
     expect(missRes.status).toBe(401)
     expect(verifyCalls.length).toBeGreaterThanOrEqual(1)
+  })
+})
+
+describe('createAuth (cookie mode)', () => {
+  it('cookie 有効時: loginHandler が Set-Cookie ヘッダに access_token と refresh_token を設定し body にトークンを含まない', async () => {
+    const hash = await pbkdf2Hasher.hash('password123')
+    const model = makeFakeModel([{ id: 'user-1', email: 'cookie@example.com', passwordHash: hash }])
+    const app = makeApp(model, { cookie: {} })
+
+    const res = await app.request('/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'cookie@example.com', passwordHash: 'password123' }),
+    })
+    expect(res.status).toBe(200)
+
+    const body = (await res.json()) as Record<string, unknown>
+    expect(body.ok).toBe(true)
+    expect(body.accessToken).toBeUndefined()
+    expect(body.refreshToken).toBeUndefined()
+
+    const setCookieHeaders = res.headers.getSetCookie()
+    const accessCookie = setCookieHeaders.find((h) => h.startsWith('access_token='))
+    const refreshCookie = setCookieHeaders.find((h) => h.startsWith('refresh_token='))
+    expect(accessCookie).toBeDefined()
+    expect(refreshCookie).toBeDefined()
+  })
+
+  it('cookie 有効時: refreshHandler が cookie から refresh token を読み取り、新しい access_token cookie を設定する', async () => {
+    const hash = await pbkdf2Hasher.hash('password123')
+    const model = makeFakeModel([{ id: 'user-2', email: 'cookierefresh@example.com', passwordHash: hash }])
+    const app = makeApp(model, { cookie: {} })
+
+    const loginRes = await app.request('/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'cookierefresh@example.com', passwordHash: 'password123' }),
+    })
+    expect(loginRes.status).toBe(200)
+
+    const setCookieHeaders = loginRes.headers.getSetCookie()
+    const refreshCookieHeader = setCookieHeaders.find((h) => h.startsWith('refresh_token='))
+    if (refreshCookieHeader === undefined) throw new Error('refresh_token cookie not set')
+    const refreshTokenValue = refreshCookieHeader.split(';').at(0)?.replace('refresh_token=', '') ?? ''
+
+    const refreshRes = await app.request('/refresh', {
+      method: 'POST',
+      headers: { Cookie: `refresh_token=${refreshTokenValue}` },
+    })
+    expect(refreshRes.status).toBe(200)
+
+    const body = (await refreshRes.json()) as Record<string, unknown>
+    expect(body.ok).toBe(true)
+    expect(body.accessToken).toBeUndefined()
+
+    const refreshSetCookies = refreshRes.headers.getSetCookie()
+    const newAccessCookie = refreshSetCookies.find((h) => h.startsWith('access_token='))
+    expect(newAccessCookie).toBeDefined()
+  })
+
+  it('cookie 有効時: refreshHandler は cookie が無ければ body の refreshToken にフォールバックする', async () => {
+    const hash = await pbkdf2Hasher.hash('password123')
+    const model = makeFakeModel([{ id: 'user-3', email: 'fallback@example.com', passwordHash: hash }])
+    const app = makeApp(model, { cookie: {} })
+
+    const loginRes = await app.request('/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'fallback@example.com', passwordHash: 'password123' }),
+    })
+    const setCookieHeaders = loginRes.headers.getSetCookie()
+    const refreshCookieHeader = setCookieHeaders.find((h) => h.startsWith('refresh_token='))
+    if (refreshCookieHeader === undefined) throw new Error('refresh_token cookie not set')
+    const refreshTokenValue = refreshCookieHeader.split(';').at(0)?.replace('refresh_token=', '') ?? ''
+
+    const refreshRes = await app.request('/refresh', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken: refreshTokenValue }),
+    })
+    expect(refreshRes.status).toBe(200)
+
+    const body = (await refreshRes.json()) as Record<string, unknown>
+    expect(body.ok).toBe(true)
+  })
+
+  it('cookie: {} を渡したとき既定値（httpOnly=true, sameSite=Lax, secure=true, path=/）が Set-Cookie ヘッダに含まれる', async () => {
+    const hash = await pbkdf2Hasher.hash('password123')
+    const model = makeFakeModel([{ id: 'user-4', email: 'defaults@example.com', passwordHash: hash }])
+    const app = makeApp(model, { cookie: {} })
+
+    const res = await app.request('/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'defaults@example.com', passwordHash: 'password123' }),
+    })
+    expect(res.status).toBe(200)
+
+    const setCookieHeaders = res.headers.getSetCookie()
+    const accessCookie = setCookieHeaders.find((h) => h.startsWith('access_token=')) as string
+    expect(accessCookie).toBeDefined()
+
+    const lowerCookie = accessCookie.toLowerCase()
+    expect(lowerCookie).toContain('httponly')
+    expect(lowerCookie).toContain('samesite=lax')
+    expect(lowerCookie).toContain('secure')
+    expect(lowerCookie).toContain('path=/')
   })
 })

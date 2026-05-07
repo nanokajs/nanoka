@@ -1,9 +1,19 @@
 import type { NanokaModel } from '@nanokajs/core'
 import type { Handler, MiddlewareHandler } from 'hono'
+import { getCookie, setCookie } from 'hono/cookie'
 import { HTTPException } from 'hono/http-exception'
 import type { Hasher } from './hasher.js'
 import { pbkdf2Hasher } from './hashers/pbkdf2.js'
 import { sign, verify } from './jwt.js'
+
+export interface CookieOptions {
+  httpOnly?: boolean
+  sameSite?: 'Strict' | 'Lax' | 'None'
+  secure?: boolean
+  path?: string
+  accessTokenName?: string
+  refreshTokenName?: string
+}
 
 export interface CreateAuthOptions {
   // biome-ignore lint/suspicious/noExplicitAny: any is necessary for NanokaModel generic constraint
@@ -12,6 +22,7 @@ export interface CreateAuthOptions {
   fields: { identifier: string; password: string }
   hasher?: Hasher
   jwt?: { expiresIn?: number; refreshExpiresIn?: number }
+  cookie?: CookieOptions
 }
 
 export interface AuthInstance {
@@ -31,6 +42,10 @@ export function createAuth(opts: CreateAuthOptions): AuthInstance {
   const identifierField = opts.fields.identifier
   const passwordField = opts.fields.password
   const dummyHashPromise = hasher.hash('__dummy__')
+
+  const cookieOpts = opts.cookie
+  const accessTokenName = cookieOpts?.accessTokenName ?? 'access_token'
+  const refreshTokenName = cookieOpts?.refreshTokenName ?? 'refresh_token'
 
   return {
     loginHandler(): Handler {
@@ -73,22 +88,49 @@ export function createAuth(opts: CreateAuthOptions): AuthInstance {
           sign({ sub, type: 'refresh' }, opts.secret, { expiresIn: refreshExpiresIn }),
         ])
 
+        if (cookieOpts !== undefined) {
+          const sameSite = cookieOpts.sameSite ?? 'Lax'
+          const baseCookieOptions = {
+            httpOnly: cookieOpts.httpOnly ?? true,
+            sameSite,
+            secure: sameSite === 'None' ? true : (cookieOpts.secure ?? true),
+            path: cookieOpts.path ?? '/',
+          } as const
+          setCookie(c, accessTokenName, accessToken, {
+            ...baseCookieOptions,
+            maxAge: expiresIn,
+          })
+          setCookie(c, refreshTokenName, refreshToken, {
+            ...baseCookieOptions,
+            maxAge: refreshExpiresIn,
+          })
+          return c.json({ ok: true }, 200)
+        }
+
         return c.json({ accessToken, refreshToken }, 200)
       }
     },
 
     refreshHandler(): Handler {
       return async (c) => {
-        let body: Record<string, unknown>
-        try {
-          body = await c.req.json<Record<string, unknown>>()
-        } catch {
-          throw new HTTPException(401, { message: 'Invalid credentials' })
-        }
-        const { refreshToken } = body
+        let refreshToken: string | undefined
 
-        if (typeof refreshToken !== 'string') {
-          throw new HTTPException(401, { message: 'Invalid credentials' })
+        if (cookieOpts !== undefined) {
+          refreshToken = getCookie(c, refreshTokenName)
+        }
+
+        if (refreshToken === undefined) {
+          let body: Record<string, unknown>
+          try {
+            body = await c.req.json<Record<string, unknown>>()
+          } catch {
+            throw new HTTPException(401, { message: 'Invalid credentials' })
+          }
+          const bodyRefreshToken = body.refreshToken
+          if (typeof bodyRefreshToken !== 'string') {
+            throw new HTTPException(401, { message: 'Invalid credentials' })
+          }
+          refreshToken = bodyRefreshToken
         }
 
         let payload: Record<string, unknown>
@@ -109,6 +151,21 @@ export function createAuth(opts: CreateAuthOptions): AuthInstance {
         const accessToken = await sign({ sub: payload.sub, type: 'access' }, opts.secret, {
           expiresIn,
         })
+
+        if (cookieOpts !== undefined) {
+          const sameSite = cookieOpts.sameSite ?? 'Lax'
+          const baseCookieOptions = {
+            httpOnly: cookieOpts.httpOnly ?? true,
+            sameSite,
+            secure: sameSite === 'None' ? true : (cookieOpts.secure ?? true),
+            path: cookieOpts.path ?? '/',
+          } as const
+          setCookie(c, accessTokenName, accessToken, {
+            ...baseCookieOptions,
+            maxAge: expiresIn,
+          })
+          return c.json({ ok: true }, 200)
+        }
 
         return c.json({ accessToken }, 200)
       }
