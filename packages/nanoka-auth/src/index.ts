@@ -1,3 +1,5 @@
+export type { BlacklistStore } from './blacklist-store.js'
+export { kvBlacklistStore } from './blacklist-stores/kv.js'
 export type { AuthInstance, CookieOptions, CreateAuthOptions } from './create-auth.js'
 export { createAuth } from './create-auth.js'
 export type { Hasher } from './hasher.js'
