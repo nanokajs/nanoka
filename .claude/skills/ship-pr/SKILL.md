@@ -66,13 +66,27 @@ pnpm -C packages/nanoka test
    ```bash
    git push -u origin {ブランチ名}
    ```
-3. PR 作成（`Closes #{番号}` を body に含める）:
-   ```bash
-   gh pr create --title "..." --body "..."
+3. PR 作成は GitHub MCP サーバー (`mcp__github__create_pull_request`) を使用する。`gh` コマンドは使わない。
+   - `owner` / `repo` は `git remote get-url origin` から取得（例: `nanokajs` / `nanoka`）。
+   - `head` は現在のブランチ名（`git rev-parse --abbrev-ref HEAD`）。
+   - `base` は `main`。
+   - `title` は Conventional Commits 形式（例: `feat(scope): 概要 (#番号)`）。
+   - `body` には背景・変更点・テスト計画を記載し、`Closes #{番号}` を含める。
+4. ツール呼び出し例:
    ```
-4. PR URL をユーザーに伝える。
+   mcp__github__create_pull_request({
+     owner: "nanokajs",
+     repo: "nanoka",
+     base: "main",
+     head: "<ブランチ名>",
+     title: "<タイトル>",
+     body: "...\n\nCloses #<番号>"
+   })
+   ```
+5. 返ってきた PR URL をユーザーに伝える。
 
 ## ガードレール
 
 - Step で失敗したら自動で続行しない。エラーを提示してユーザーに対応を確認する。
 - format の自動修正以外のコード変更は行わない。lint/typecheck エラーを修正する場合は内容をユーザーに提示する。
+- PR 作成は必ず GitHub MCP サーバー経由で行い、`gh pr create` などの CLI には依存しない。MCP サーバーが使用不可の場合はその旨をユーザーに報告して停止する。
