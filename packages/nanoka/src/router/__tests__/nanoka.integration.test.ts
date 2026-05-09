@@ -1,5 +1,6 @@
 import type { D1Database } from '@cloudflare/workers-types'
 import { eq, sql } from 'drizzle-orm'
+import { HTTPException } from 'hono/http-exception'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { d1Adapter } from '../../adapter'
 import { t } from '../../field'
@@ -460,6 +461,23 @@ describe('nanoka() integration with D1', () => {
       const response = await app.fetch(request)
       expect(response.status).toBe(200)
       expect(receivedBody).toEqual({ name: 'Partial Update' })
+    })
+  })
+
+  describe('MAX_OFFSET cap on findMany', () => {
+    it('findMany rejects offset > MAX_OFFSET via app.model() binding', async () => {
+      const { env } = await import('cloudflare:test')
+      const app = nanoka(d1Adapter(env.DB))
+
+      const User = app.model('users', {
+        id: t.uuid().primary(),
+        name: t.string(),
+        email: t.string().email(),
+        passwordHash: t.string(),
+      })
+
+      // findMany called through app.model() should reject offset > 100_000
+      await expect(User.findMany({ limit: 20, offset: 100_001 })).rejects.toThrow(HTTPException)
     })
   })
 })

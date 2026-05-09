@@ -38,6 +38,7 @@
 - `Model.toResponseMany(rows)` ヘルパ — [#39](https://github.com/nanokajs/nanoka/issues/39)
 - `Model.findAll(adapter, options?)` — LIMIT なし全件取得。`findMany` の `MAX_LIMIT = 100` ランタイムキャップを廃止 — [#49](https://github.com/nanokajs/nanoka/issues/49)
 - `toOpenAPISchema('output', { with })` による relations nested 展開（spec-only、runtime は Zod のまま） — [#91](https://github.com/nanokajs/nanoka/issues/91)
+- `findMany` の `offset` runtime cap = 100_000 — [#18](https://github.com/nanokajs/nanoka/issues/18)
 
 ### AI coding support
 
@@ -52,10 +53,6 @@
 - コンテンツ執筆（Introduction / Getting Started / Core Concepts）+ 言語トグル機構（EN/JA） — [#60](https://github.com/nanokajs/nanoka/issues/60)
 - API Reference コンテンツ執筆（Field Types / Field Policies / Schema & Validator / CRUD Methods / Response Shaping / OpenAPI / Escape Hatch / Adapters） — [#61](https://github.com/nanokajs/nanoka/issues/61)
 - Guides / CLI Reference コンテンツ執筆（Migration Workflow / Error Handling / Using with Turso / CLI Reference） — [#62](https://github.com/nanokajs/nanoka/issues/62)
-
-## 未実装として残す（将来候補）
-
-- `findMany` offset 上限 — [#18](https://github.com/nanokajs/nanoka/issues/18)
 
 ## 実装中（設計確定済み）
 

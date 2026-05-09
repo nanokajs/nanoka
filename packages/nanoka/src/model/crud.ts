@@ -16,6 +16,9 @@ import type {
   WithResult,
 } from './types'
 
+// DoS guard for findMany; findAll intentionally bypasses this; values >100k → use cursor pagination. Keep in sync with README / docs-site / llms-full.txt.
+const MAX_OFFSET = 100_000
+
 /**
  * Validates and guards limit/offset parameters.
  * @internal
@@ -277,6 +280,12 @@ export async function findManyImpl<
 ): Promise<RowType<Fields>[] | WithResult<Fields, NonNullable<With>>[]> {
   const limit = guardLimit(options.limit)
   const offset = options.offset !== undefined ? guardOffset(options.offset) : 0
+
+  if (offset > MAX_OFFSET) {
+    throw new HTTPException(400, {
+      message: `offset must be <= ${MAX_OFFSET}; use cursor pagination for deeper paging`,
+    })
+  }
 
   // biome-ignore lint/suspicious/noExplicitAny: drizzle query builder type narrowing
   let query: any = adapter.drizzle.select().from(table).limit(limit).offset(offset)

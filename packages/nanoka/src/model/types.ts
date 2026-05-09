@@ -57,7 +57,7 @@ export type WithResult<
 /**
  * Options for findMany query.
  * `limit` is required (no default).
- * `offset` defaults to 0 if omitted.
+ * `offset` defaults to 0 if omitted. Runtime-capped at 100_000 to prevent read amplification — use cursor pagination for deeper paging.
  * `orderBy` is optional for column ordering.
  * `where` accepts either an equality object or a Drizzle SQL expression.
  */
@@ -67,6 +67,7 @@ export interface FindManyOptions<
   With extends WithOptions<Fields> | undefined = undefined,
 > {
   readonly limit: number
+  /** default: 0; runtime cap: 100000 */
   readonly offset?: number
   readonly orderBy?: OrderBy<Fields>
   readonly where?: Where<Fields> | SQL
@@ -688,7 +689,7 @@ export interface Model<Fields extends Record<string, Field<any, any, any>>> {
   /**
    * Fetches multiple rows with pagination and optional ordering.
    * `limit` is required (no default) to prevent accidental unbounded queries.
-   * Offset defaults to 0 if omitted.
+   * Offset defaults to 0 if omitted. Runtime-capped at offset 100_000 — use cursor pagination for deeper paging.
    *
    * @example
    * const users = await User.findMany(adapter, { limit: 20 })

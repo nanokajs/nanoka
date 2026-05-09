@@ -240,6 +240,8 @@ Calling `findMany()` without `limit` is a **type error** — the parameter is re
 
 Pagination shape: `{ limit, offset?, orderBy?, where? }`. The `where` field accepts either an equality object or any Drizzle `SQL` expression. Never pass user input to `sql.raw()` — use parametrized Drizzle operators instead.
 
+**Offset cap**: `offset` is capped at 100_000 to prevent read amplification. If you need to paginate deeper, use cursor-based pagination (e.g., `id > lastId`) instead of offset/limit.
+
 **`findAll(options?)`** — fetch all rows without LIMIT
 
 ```ts
