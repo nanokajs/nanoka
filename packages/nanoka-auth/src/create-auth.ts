@@ -2,6 +2,7 @@ import type { NanokaModel } from '@nanokajs/core'
 import type { Handler, MiddlewareHandler } from 'hono'
 import { getCookie, setCookie } from 'hono/cookie'
 import { HTTPException } from 'hono/http-exception'
+import type { BlacklistStore } from './blacklist-store.js'
 import type { Hasher } from './hasher.js'
 import { pbkdf2Hasher } from './hashers/pbkdf2.js'
 import { sign, verify } from './jwt.js'
@@ -21,8 +22,9 @@ export interface CreateAuthOptions {
   secret: string
   fields: { identifier: string; password: string }
   hasher?: Hasher
-  jwt?: { expiresIn?: number; refreshExpiresIn?: number }
+  jwt?: { expiresIn?: number; refreshExpiresIn?: number; rotation?: boolean }
   cookie?: CookieOptions
+  blacklist?: BlacklistStore
 }
 
 export interface AuthInstance {
@@ -34,6 +36,11 @@ export interface AuthInstance {
 export function createAuth(opts: CreateAuthOptions): AuthInstance {
   if (opts.secret.length < 32) {
     throw new Error('createAuth: secret must be at least 32 characters')
+  }
+
+  const rotation = opts.jwt?.rotation ?? false
+  if (rotation && opts.blacklist === undefined) {
+    throw new Error('createAuth: blacklist is required when jwt.rotation is true')
   }
 
   const hasher = opts.hasher ?? pbkdf2Hasher
@@ -83,9 +90,14 @@ export function createAuth(opts: CreateAuthOptions): AuthInstance {
         // biome-ignore lint/suspicious/noExplicitAny: user shape is unknown at compile time
         const sub: string = String((user as any).id ?? (user as any)[identifierField])
 
+        const refreshPayload: Record<string, unknown> = { sub, type: 'refresh' }
+        if (rotation) {
+          refreshPayload.jti = crypto.randomUUID()
+        }
+
         const [accessToken, refreshToken] = await Promise.all([
           sign({ sub, type: 'access' }, opts.secret, { expiresIn }),
-          sign({ sub, type: 'refresh' }, opts.secret, { expiresIn: refreshExpiresIn }),
+          sign(refreshPayload, opts.secret, { expiresIn: refreshExpiresIn }),
         ])
 
         if (cookieOpts !== undefined) {
@@ -117,6 +129,9 @@ export function createAuth(opts: CreateAuthOptions): AuthInstance {
 
         if (cookieOpts !== undefined) {
           refreshToken = getCookie(c, refreshTokenName)
+          if (refreshToken === undefined && rotation) {
+            throw new HTTPException(401, { message: 'Invalid credentials' })
+          }
         }
 
         if (refreshToken === undefined) {
@@ -146,6 +161,57 @@ export function createAuth(opts: CreateAuthOptions): AuthInstance {
 
         if (typeof payload.sub !== 'string' || payload.sub.length === 0) {
           throw new HTTPException(401, { message: 'Invalid credentials' })
+        }
+
+        if (rotation) {
+          const jti = payload.jti
+          if (typeof jti !== 'string' || jti.length === 0) {
+            throw new HTTPException(401, { message: 'Invalid credentials' })
+          }
+          // biome-ignore lint/style/noNonNullAssertion: blacklist is guaranteed non-null when rotation is true (validated at createAuth call)
+          const blacklist = opts.blacklist!
+          if (await blacklist.has(jti)) {
+            throw new HTTPException(401, { message: 'Invalid credentials' })
+          }
+          const exp =
+            typeof payload.exp === 'number'
+              ? payload.exp
+              : Math.floor(Date.now() / 1000) + refreshExpiresIn
+          try {
+            await blacklist.add(jti, exp)
+          } catch (err) {
+            console.error('blacklist.add failed', err)
+            throw new HTTPException(401, { message: 'Invalid credentials' })
+          }
+
+          const newJti = crypto.randomUUID()
+          const [accessToken, newRefreshToken] = await Promise.all([
+            sign({ sub: payload.sub, type: 'access' }, opts.secret, { expiresIn }),
+            sign({ sub: payload.sub, type: 'refresh', jti: newJti }, opts.secret, {
+              expiresIn: refreshExpiresIn,
+            }),
+          ])
+
+          if (cookieOpts !== undefined) {
+            const sameSite = cookieOpts.sameSite ?? 'Lax'
+            const baseCookieOptions = {
+              httpOnly: cookieOpts.httpOnly ?? true,
+              sameSite,
+              secure: sameSite === 'None' ? true : (cookieOpts.secure ?? true),
+              path: cookieOpts.path ?? '/',
+            } as const
+            setCookie(c, accessTokenName, accessToken, {
+              ...baseCookieOptions,
+              maxAge: expiresIn,
+            })
+            setCookie(c, refreshTokenName, newRefreshToken, {
+              ...baseCookieOptions,
+              maxAge: refreshExpiresIn,
+            })
+            return c.json({ ok: true }, 200)
+          }
+
+          return c.json({ accessToken, refreshToken: newRefreshToken }, 200)
         }
 
         const accessToken = await sign({ sub: payload.sub, type: 'access' }, opts.secret, {

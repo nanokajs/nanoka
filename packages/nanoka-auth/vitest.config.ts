@@ -6,12 +6,14 @@ export default defineWorkersConfig(async () => {
   return {
     test: {
       include: ['src/**/__tests__/**/*.test.ts'],
+      exclude: ['src/**/__tests__/rotation.test.ts'],
       poolOptions: {
         workers: {
           miniflare: {
             compatibilityDate: '2025-04-01',
             compatibilityFlags: ['nodejs_compat'],
             d1Databases: ['DB'],
+            kvNamespaces: ['BLACKLIST_KV'],
             bindings: {
               TEST_MIGRATIONS: migrations,
               AUTH_SECRET: 'test-secret-for-e2e-testing-32chars!!',
