@@ -13,6 +13,13 @@
     }
   ],
   "vars": {
-    "ENVIRONMENT": "development"
+    "ENVIRONMENT": "development",
+    // ⚠️ AUTH_SECRET — 開発専用の固定値。本番では絶対にこの値を使わないこと。
+    //   - `vars` に置いた値は Cloudflare ダッシュボードに plain text で表示され、Worker の
+    //     レスポンスに `c.env.AUTH_SECRET` を含めれば誰でも閲覧可能（secret 扱いではない）
+    //   - 本番では `wrangler secret put AUTH_SECRET` でシークレットとして登録し、
+    //     この `vars.AUTH_SECRET` 行は削除すること
+    //   - secret は最低 32 文字。漏洩した場合は再発行し、既存トークンを失効させる
+    "AUTH_SECRET": "dev-only-32-byte-secret-string-for-local-testing-only"
   }
 }
