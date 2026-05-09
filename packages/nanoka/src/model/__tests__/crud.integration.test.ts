@@ -309,6 +309,43 @@ describe('CRUD operations: vitest-pool-workers D1 integration', () => {
         User.findMany(adapter, { limit: 20, orderBy: 'toString' as any } as any),
       ).rejects.toThrow(HTTPException)
     })
+
+    it('17. reject offset > MAX_OFFSET (100_000)', async () => {
+      const { env } = await import('cloudflare:test')
+      const adapter = d1Adapter(env.DB)
+
+      await expect(User.findMany(adapter, { limit: 20, offset: 100_001 })).rejects.toThrow(
+        HTTPException,
+      )
+    })
+
+    it('18. accept offset === MAX_OFFSET (boundary)', async () => {
+      const { env } = await import('cloudflare:test')
+      const adapter = d1Adapter(env.DB)
+
+      await User.create(adapter, { id: 'uuid-18', name: 'Boundary', email: 'boundary@example.com' })
+
+      // Should not throw even though offset equals MAX_OFFSET
+      const rows = await User.findMany(adapter, { limit: 20, offset: 100_000 })
+      expect(Array.isArray(rows)).toBe(true)
+    })
+  })
+
+  describe('findAll', () => {
+    it('findAll allows offset > MAX_OFFSET (no cap)', async () => {
+      const { env } = await import('cloudflare:test')
+      const adapter = d1Adapter(env.DB)
+
+      await User.create(adapter, {
+        id: 'uuid-findall',
+        name: 'FindAll',
+        email: 'findall@example.com',
+      })
+
+      // findAll should not reject offset > MAX_OFFSET
+      const rows = await User.findAll(adapter, { offset: 100_001 })
+      expect(Array.isArray(rows)).toBe(true)
+    })
   })
 })
 

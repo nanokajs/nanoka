@@ -334,6 +334,8 @@ const specific = await User.findMany({
 
 When passing a Drizzle SQL expression, SQL injection prevention follows Drizzle's parametrized binding rules — ensure all user-supplied values are passed as Drizzle operands (e.g., `like(col, value)`) rather than interpolated into raw strings. Never pass user input to `sql.raw()`, which skips parametrization entirely.
 
+**`offset` runtime cap:** `offset` is capped at 100,000 to prevent read amplification and DoS. If you need to paginate deeper, use cursor pagination (e.g., `id > lastId`) instead of offset/limit.
+
 ### `findAll` — unbounded fetch (no LIMIT)
 
 `findAll` issues no LIMIT clause and returns every row. Use it for batch processing, admin tooling, or export pipelines where you intentionally want all records.

@@ -147,6 +147,7 @@ export interface NanokaModel<Fields extends Record<string, Field<any, any, any>>
   /**
    * Fetches multiple rows with pagination and optional ordering.
    * `limit` is required (no default) to prevent accidental unbounded queries.
+   * Runtime-capped at offset 100_000 — use cursor pagination for deeper paging.
    */
   findMany<With extends WithOptions<Fields>>(
     options: FindManyOptions<Fields, With> & { readonly with: With },

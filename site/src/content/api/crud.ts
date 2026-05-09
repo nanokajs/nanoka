@@ -22,7 +22,7 @@ const page2 = await User.findMany({ limit: 20, offset: 20 })
 \`\`\`typescript
 interface FindManyOptions {
   limit:    number          // required
-  offset?:  number          // default: 0
+  offset?:  number          // default: 0; runtime cap: 100000
   orderBy?: OrderBy         // optional ordering
   where?:   Where | SQL     // optional filter
 }
@@ -54,6 +54,8 @@ await User.findMany({ limit: 10, orderBy: { column: 'createdAt', direction: 'des
 // Multiple fields
 await User.findMany({ limit: 10, orderBy: [{ column: 'name' }, { column: 'createdAt', direction: 'desc' }] })
 \`\`\`
+
+**\`offset\` runtime cap:** \`offset\` is capped at 100,000 to prevent read amplification and DoS. Requests above that throw \`HTTPException(400)\`. If you need to paginate deeper, use cursor pagination (e.g., \`id > lastId\`) instead of offset/limit.
 
 ## findAll
 
@@ -235,7 +237,7 @@ const page2 = await User.findMany({ limit: 20, offset: 20 })
 \`\`\`typescript
 interface FindManyOptions {
   limit:    number          // 必須
-  offset?:  number          // デフォルト: 0
+  offset?:  number          // デフォルト: 0; runtime cap: 100000
   orderBy?: OrderBy         // 任意の並び替え
   where?:   Where | SQL     // 任意のフィルタ
 }
@@ -267,6 +269,8 @@ await User.findMany({ limit: 10, orderBy: { column: 'createdAt', direction: 'des
 // 複数フィールド
 await User.findMany({ limit: 10, orderBy: [{ column: 'name' }, { column: 'createdAt', direction: 'desc' }] })
 \`\`\`
+
+**\`offset\` のランタイム上限:** read amplification と DoS を防ぐため、\`offset\` は 100,000 で上限化されています。これを超えると \`HTTPException(400)\` が throw されます。さらに深いページネーションが必要な場合は、offset/limit ではなくカーソルページネーション（例: \`id > lastId\`）を使用してください。
 
 ## findAll
 
