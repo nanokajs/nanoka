@@ -22,6 +22,9 @@ importers:
 
   examples/basic:
     dependencies:
+      '@nanokajs/auth':
+        specifier: workspace:*
+        version: link:../../packages/nanoka-auth
       '@nanokajs/core':
         specifier: workspace:*
         version: link:../../packages/nanoka

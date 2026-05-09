@@ -1,3 +1,4 @@
+import { createAuth, pbkdf2Hasher } from '@nanokajs/auth'
 import { d1Adapter, nanoka, swaggerUI, t } from '@nanokajs/core'
 import { HTTPException } from 'hono/http-exception'
 import { z } from 'zod'
@@ -8,6 +9,7 @@ export interface Env {
   DB: D1Database
   ENVIRONMENT: string
   DEBUG?: string
+  AUTH_SECRET: string
 }
 
 export default {
@@ -28,6 +30,17 @@ export default {
     User = app.model(userTableName, {
       ...userFields,
       posts: t.hasMany(() => Post, { foreignKey: 'userId' }),
+    })
+
+    const auth = createAuth({
+      model: User,
+      secret: env.AUTH_SECRET,
+      fields: { identifier: 'email', password: 'passwordHash' },
+      // hasher は省略すると pbkdf2Hasher (zero-dependency) が使われる。
+      // bcrypt や argon2 を使う場合は Hasher インターフェース実装を渡す:
+      //   import { Hasher } from '@nanokajs/auth'
+      //   const bcryptHasher: Hasher = { hash: ..., verify: ... }
+      //   createAuth({ ..., hasher: bcryptHasher })
     })
 
     // Error handler
@@ -229,6 +242,195 @@ export default {
           throw new HTTPException(404, { message: 'User not found' })
         }
         return c.body(null, 204)
+      },
+    )
+
+    // POST /auth/register - Register new user
+    //
+    // ⚠️ SECURITY WARNING ⚠️
+    // リクエストボディの `passwordHash` フィールドは **平文パスワード** を受け取る。
+    // この命名は `@nanokajs/auth` が `fields.password` で DB カラム名と request body キー名を
+    // 共有する仕様に揃えたもの（login / register でキー名統一）。
+    //
+    //   - クライアント側でハッシュ化した値を送ってはいけない（サーバ側で再ハッシュされ verify が失敗する）
+    //   - サーバ側で必ず `pbkdf2Hasher.hash()` を通してから DB に保存すること（下のコード参照）
+    //   - この example をコピーして改変する際、`pbkdf2Hasher.hash()` 行を消すと **平文パスワードが
+    //     そのまま DB に保存される**。`serverOnly()` で API には出ないので、漏洩時まで気付けない
+    //
+    // 将来的な改善: `@nanokajs/auth` の `fields.password` に `{ db, request }` 分離を追加して
+    // request body キー名を `password`、DB カラム名を `passwordHash` のように分離可能にする予定。
+    app.post(
+      '/auth/register',
+      {
+        openapi: {
+          summary: 'Register new user',
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  required: ['email', 'name', 'passwordHash'],
+                  properties: {
+                    email: { type: 'string', format: 'email' },
+                    name: { type: 'string' },
+                    passwordHash: {
+                      type: 'string',
+                      description:
+                        'Plain-text password. Server hashes it with PBKDF2 before storing. Do NOT pre-hash on the client.',
+                    },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            '201': {
+              description: 'User created',
+              content: { 'application/json': { schema: User.toOpenAPISchema('output') } },
+            },
+            '400': { description: 'Validation error' },
+          },
+        },
+      },
+      async (c) => {
+        const body = await c.req.json<{ email?: string; name?: string; passwordHash?: string }>()
+        if (
+          typeof body.email !== 'string' ||
+          typeof body.name !== 'string' ||
+          typeof body.passwordHash !== 'string'
+        ) {
+          throw new HTTPException(400, { message: 'email, name, and passwordHash are required' })
+        }
+        const hashed = await pbkdf2Hasher.hash(body.passwordHash)
+        const created = await User.create({
+          email: body.email,
+          name: body.name,
+          passwordHash: hashed,
+        })
+        return c.json(User.toResponse(created), 201)
+      },
+    )
+
+    // POST /auth/login - Login
+    app.post(
+      '/auth/login',
+      {
+        openapi: {
+          summary: 'Login',
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  required: ['email', 'passwordHash'],
+                  properties: {
+                    email: { type: 'string', format: 'email' },
+                    passwordHash: {
+                      type: 'string',
+                      description:
+                        'Plain-text password. Server compares it against the stored PBKDF2 hash.',
+                    },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            '200': {
+              description: 'Login successful',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      accessToken: { type: 'string' },
+                      refreshToken: { type: 'string' },
+                    },
+                  },
+                },
+              },
+            },
+            '401': { description: 'Invalid credentials' },
+          },
+        },
+      },
+      auth.loginHandler(),
+    )
+
+    // POST /auth/refresh - Refresh access token
+    app.post(
+      '/auth/refresh',
+      {
+        openapi: {
+          summary: 'Refresh access token',
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  required: ['refreshToken'],
+                  properties: {
+                    refreshToken: { type: 'string' },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            '200': {
+              description: 'Token refreshed',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      accessToken: { type: 'string' },
+                    },
+                  },
+                },
+              },
+            },
+            '401': { description: 'Invalid or expired refresh token' },
+          },
+        },
+      },
+      auth.refreshHandler(),
+    )
+
+    // GET /me - Get current user (requires Bearer token)
+    app.get(
+      '/me',
+      {
+        openapi: {
+          summary: 'Get current authenticated user',
+          responses: {
+            '200': {
+              description: 'Authenticated user',
+              content: { 'application/json': { schema: User.toOpenAPISchema('output') } },
+            },
+            '401': { description: 'Unauthorized' },
+            '404': { description: 'User not found' },
+          },
+        },
+      },
+      auth.middleware(),
+      async (c) => {
+        // auth.middleware() は Variables 型を持たないため 'user' as never でキャストする。
+        // payload には { sub: string; type: 'access'; ... } が入る。
+        const payload = c.get('user' as never) as { sub?: unknown; type?: unknown }
+        // middleware は alg/exp/type を verify するが sub の型・存在は検証しないため
+        // ここで明示的にチェックして DB クエリの不正な引数を防ぐ。
+        if (typeof payload.sub !== 'string' || payload.sub.length === 0) {
+          throw new HTTPException(401, { message: 'Unauthorized' })
+        }
+        const user = await User.findOne(payload.sub)
+        if (!user) {
+          throw new HTTPException(404, { message: 'User not found' })
+        }
+        return c.json(User.toResponse(user))
       },
     )
 

@@ -739,7 +739,7 @@ OpenAPI is documentation. The source of truth for validation is Zod schema + Hon
 - **Filtering on related model fields** — `with` does not support `where` on the related model; use `app.db` for that
 - **Typed query helper** (`User.where(f => eq(...))` chains) — use `app.db` for complex queries (Issue #15)
 - **VSCode extension** — TypeScript language server + `nanoka generate` CLI are sufficient (Issue #16)
-- **Auth** — out of scope; use Hono middleware
+- **Auth (in @nanokajs/core)** — out of scope; use the separate `@nanokajs/auth` package (createAuth, pbkdf2Hasher, JWT/Bearer middleware, cookie mode). See `examples/basic` for an end-to-end integration.
 - **Full-stack React** — out of scope; write your own client
 - **Drizzle replacement DSL** — out of scope; Drizzle is always available via `app.db`
 
