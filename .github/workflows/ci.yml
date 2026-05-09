@@ -44,6 +44,8 @@ jobs:
 
       - run: pnpm -C packages/nanoka typecheck
 
+      - run: pnpm -C packages/nanoka-auth build
+
       - run: pnpm -C examples/basic typecheck
 
       - run: pnpm -C examples/basic test
