@@ -64,6 +64,19 @@ These remain unimplemented or intentionally out of scope. If a task appears to r
 
 The schema / validator field-accessor API already exists for `{ pick: f => [f.name] }` and `{ omit: f => [f.passwordHash] }`. Keep its `f` object `as const`, not a Proxy. Runtime cost must remain zero.
 
+## Issue implementation workflow
+
+- Before writing any issue, PR, or documentation: list every file you'll reference, Read each one, and only then begin drafting. Never include a technical claim not backed by a file read in the current session.
+- After modifying `package.json` dependencies, regenerate `pnpm-lock.yaml` before committing (`pnpm install`).
+- Run `pnpm format` and `pnpm lint` locally before opening any PR.
+- When fixing CI failures, read the actual error log first. Do not modify files outside the PR's scope.
+- If the same approach fails twice with similar errors, stop and propose 2–3 alternative approaches before attempting a third fix. Never silently iterate on a failing strategy more than twice.
+
+## Skills & MCP locations
+
+- Project-local skills live in `.claude/skills/` at the project root — check there first, never search system directories like `/Applications` or `/usr/local`.
+- MCP config file is `.mcp.json` (not `.mcp.local.json`) at the project root.
+
 ## Workflow
 
 For normal implementation work:
@@ -79,6 +92,8 @@ For normal implementation work:
 For larger or ambiguous changes, present a short plan before editing. The plan should cover goal, affected files, implementation steps, tests, completion criteria, and deferred scope.
 
 Do not invent new design decisions during implementation. If the docs and existing code conflict, stop and surface the conflict.
+
+Before implementing any new package or feature, check `docs/nanoka.md` to confirm it aligns with stated goals/non-goals. When updating versions or APIs, also update README, docs-site, and `llms-full.txt` in the same PR.
 
 ## Versioning
 
