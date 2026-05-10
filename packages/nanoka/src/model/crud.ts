@@ -480,10 +480,12 @@ export async function createImpl<Fields extends Record<string, Field<any, any, a
   table: SQLiteTableWithColumns<any>,
   data: CreateInput<Fields>,
 ): Promise<RowType<Fields>> {
-  const rows = await (adapter.drizzle
+  const builder = adapter.drizzle
     .insert(table)
     .values(data as any)
-    .returning() as any)
+    .returning()
+  // biome-ignore lint/suspicious/noExplicitAny: drizzle query type
+  const rows = await (builder as any)
   return rows[0]
 }
 
@@ -516,11 +518,13 @@ export async function updateImpl<Fields extends Record<string, Field<any, any, a
     throw new HTTPException(400, { message: 'where clause must not be empty' })
   }
 
-  const rows = await (adapter.drizzle
+  const builder = adapter.drizzle
     .update(table)
     .set(data as any)
     .where(whereClause)
-    .returning() as any)
+    .returning()
+  // biome-ignore lint/suspicious/noExplicitAny: drizzle query type
+  const rows = await (builder as any)
   return rows.length > 0 ? rows[0] : null
 }
 
