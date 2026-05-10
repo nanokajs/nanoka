@@ -12,7 +12,7 @@ describe('authMiddleware', () => {
     app.use('/protected', authMiddleware<AuthVars['user']>({ secret: SECRET }))
     app.get('/protected', (c) => c.json({ user: c.get('user') }))
 
-    const token = await sign({ sub: 'user-1' }, SECRET)
+    const token = await sign({ sub: 'user-1', type: 'access' }, SECRET)
     const res = await app.request('/protected', {
       headers: { Authorization: `Bearer ${token}` },
     })
@@ -83,7 +83,7 @@ describe('authMiddleware', () => {
     app.use('/protected', authMiddleware<AuthVars['user']>({ secret: SECRET }))
     app.get('/protected', (c) => c.json({ user: c.get('user') }))
 
-    const token = await sign({ sub: 'user-1' }, SECRET)
+    const token = await sign({ sub: 'user-1', type: 'access' }, SECRET)
     const res = await app.request('/protected', {
       headers: { Authorization: `bearer ${token}` },
     })
@@ -102,12 +102,66 @@ describe('authMiddleware', () => {
       return c.json({ sub: _check })
     })
 
-    const token = await sign({ sub: 'type-check-user' }, SECRET)
+    const token = await sign({ sub: 'type-check-user', type: 'access' }, SECRET)
     const res = await app.request('/protected', {
       headers: { Authorization: `Bearer ${token}` },
     })
     expect(res.status).toBe(200)
     const body = (await res.json()) as { sub: string }
     expect(body.sub).toBe('type-check-user')
+  })
+
+  it('refresh token (type: "refresh") returns 401', async () => {
+    const token = await sign({ sub: 'user-1', type: 'refresh' }, SECRET)
+    const app = new Hono()
+    app.use('/protected', authMiddleware({ secret: SECRET }))
+    app.get('/protected', (c) => c.json({ ok: true }))
+    const res = await app.request('/protected', {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    expect(res.status).toBe(401)
+  })
+
+  it('token without type claim returns 401', async () => {
+    const token = await sign({ sub: 'user-1' }, SECRET)
+    const app = new Hono()
+    app.use('/protected', authMiddleware({ secret: SECRET }))
+    app.get('/protected', (c) => c.json({ ok: true }))
+    const res = await app.request('/protected', {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    expect(res.status).toBe(401)
+  })
+
+  it('token with non-string type claim returns 401', async () => {
+    const token = await sign({ sub: 'user-1', type: 123 }, SECRET)
+    const app = new Hono()
+    app.use('/protected', authMiddleware({ secret: SECRET }))
+    app.get('/protected', (c) => c.json({ ok: true }))
+    const res = await app.request('/protected', {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    expect(res.status).toBe(401)
+  })
+
+  it.each([
+    ['Access (case-mismatch)', 'Access'],
+    ['ACCESS (case-mismatch)', 'ACCESS'],
+    ['"access " (trailing space)', 'access '],
+    ['" access" (leading space)', ' access'],
+    ['empty string', ''],
+    ['boolean true', true],
+    ['null', null],
+    ['array ["access"]', ['access']],
+    ['object { value: "access" }', { value: 'access' }],
+  ])('rejects bypass attempt with type=%s (returns 401)', async (_label, typeValue) => {
+    const token = await sign({ sub: 'user-1', type: typeValue }, SECRET)
+    const app = new Hono()
+    app.use('/protected', authMiddleware({ secret: SECRET }))
+    app.get('/protected', (c) => c.json({ ok: true }))
+    const res = await app.request('/protected', {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    expect(res.status).toBe(401)
   })
 })
