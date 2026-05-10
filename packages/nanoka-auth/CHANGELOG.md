@@ -5,6 +5,16 @@ All notable changes to `@nanokajs/auth` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.1] — 2026-05-10
+
+### Fixed
+
+- `authMiddleware`: reject tokens without `type: 'access'` claim. Previously a refresh token passed via `Authorization: Bearer` could pass through standalone `authMiddleware`, since the `type` claim check was only present in `createAuth().middleware()`. Now both code paths enforce `payload.type === 'access'` and return 401 otherwise. Affects users of standalone `authMiddleware` only; `createAuth().middleware()` was unaffected. Security fix; aligns runtime with the behavior already documented in the README.
+
+<!--
+[1.5.0] entry is missing here. v1.5.0 changes shipped without a changelog entry; the gap will be backfilled in a follow-up. See git history for the v1.5.0 release.
+-->
+
 ## [1.4.0] — 2026-05-07
 
 ### Added

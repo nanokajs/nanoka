@@ -20,6 +20,9 @@ export function authMiddleware<
     } catch (err) {
       throw new HTTPException(401, { message: 'Unauthorized', cause: err })
     }
+    if ((payload as Record<string, unknown>).type !== 'access') {
+      throw new HTTPException(401, { message: 'Unauthorized' })
+    }
     c.set('user', payload)
     await next()
   }
