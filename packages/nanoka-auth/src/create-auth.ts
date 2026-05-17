@@ -129,12 +129,12 @@ export function createAuth(opts: CreateAuthOptions): AuthInstance {
 
         if (cookieOpts !== undefined) {
           refreshToken = getCookie(c, refreshTokenName)
-          if (refreshToken === undefined && rotation) {
+          if ((refreshToken === undefined || refreshToken === '') && rotation) {
             throw new HTTPException(401, { message: 'Invalid credentials' })
           }
         }
 
-        if (refreshToken === undefined) {
+        if (refreshToken === undefined || refreshToken === '') {
           let body: Record<string, unknown>
           try {
             body = await c.req.json<Record<string, unknown>>()
@@ -152,7 +152,8 @@ export function createAuth(opts: CreateAuthOptions): AuthInstance {
         try {
           payload = await verify<Record<string, unknown>>(refreshToken, opts.secret)
         } catch (err) {
-          throw new HTTPException(401, { message: 'Invalid credentials', cause: err })
+          console.warn('refresh token verify failed', err)
+          throw new HTTPException(401, { message: 'Invalid credentials' })
         }
 
         if (payload.type !== 'refresh') {
@@ -168,9 +169,19 @@ export function createAuth(opts: CreateAuthOptions): AuthInstance {
           if (typeof jti !== 'string' || jti.length === 0) {
             throw new HTTPException(401, { message: 'Invalid credentials' })
           }
+          if (jti.length > 256) {
+            throw new HTTPException(401, { message: 'Invalid credentials' })
+          }
+          if (!/^[A-Za-z0-9_-]+$/.test(jti)) {
+            throw new HTTPException(401, { message: 'Invalid credentials' })
+          }
           // biome-ignore lint/style/noNonNullAssertion: blacklist is guaranteed non-null when rotation is true (validated at createAuth call)
           const blacklist = opts.blacklist!
-          if (await blacklist.has(jti)) {
+          const blacklisted =
+            blacklist.hasForSubject !== undefined
+              ? await blacklist.hasForSubject(jti, payload.sub)
+              : await blacklist.has(jti)
+          if (blacklisted) {
             throw new HTTPException(401, { message: 'Invalid credentials' })
           }
           const exp =
@@ -178,7 +189,11 @@ export function createAuth(opts: CreateAuthOptions): AuthInstance {
               ? payload.exp
               : Math.floor(Date.now() / 1000) + refreshExpiresIn
           try {
-            await blacklist.add(jti, exp)
+            if (blacklist.addWithSubject !== undefined) {
+              await blacklist.addWithSubject(jti, payload.sub, exp)
+            } else {
+              await blacklist.add(jti, exp)
+            }
           } catch (err) {
             console.error('blacklist.add failed', err)
             throw new HTTPException(401, { message: 'Invalid credentials' })
@@ -251,7 +266,8 @@ export function createAuth(opts: CreateAuthOptions): AuthInstance {
         try {
           payload = await verify<Record<string, unknown>>(token, opts.secret)
         } catch (err) {
-          throw new HTTPException(401, { message: 'Unauthorized', cause: err })
+          console.warn('access token verify failed', err)
+          throw new HTTPException(401, { message: 'Unauthorized' })
         }
         if (payload.type !== 'access') {
           throw new HTTPException(401, { message: 'Unauthorized' })

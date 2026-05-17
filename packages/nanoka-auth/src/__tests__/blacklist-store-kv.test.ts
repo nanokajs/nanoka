@@ -9,6 +9,17 @@ declare module 'cloudflare:test' {
   }
 }
 
+async function sha256hex(jti: string): Promise<string> {
+  const encoder = new TextEncoder()
+  const buf = await crypto.subtle.digest('SHA-256', encoder.encode(jti))
+  const bytes = new Uint8Array(buf)
+  let hex = ''
+  for (let i = 0; i < bytes.length; i++) {
+    hex += (bytes[i] as number).toString(16).padStart(2, '0')
+  }
+  return hex
+}
+
 describe('kvBlacklistStore', () => {
   beforeEach(async () => {
     const keys = await env.BLACKLIST_KV.list()
@@ -52,14 +63,43 @@ describe('kvBlacklistStore', () => {
     expect(await storeB.has(jti)).toBe(false)
   })
 
-  it('デフォルト prefix は nanoka-auth:bl: が使われる', async () => {
+  it('KV キーは SHA-256 ハッシュ化されており生 jti は格納されない', async () => {
     const store = kvBlacklistStore(env.BLACKLIST_KV)
     const jti = crypto.randomUUID()
     const expiresAt = Math.floor(Date.now() / 1000) + 3600
 
     await store.add(jti, expiresAt)
 
-    const value = await env.BLACKLIST_KV.get(`nanoka-auth:bl:${jti}`)
-    expect(value).toBe('1')
+    const hashHex = await sha256hex(jti)
+    const valueByHash = await env.BLACKLIST_KV.get(`nanoka-auth:bl:${hashHex}`)
+    expect(valueByHash).toBe('1')
+
+    const valueByRawJti = await env.BLACKLIST_KV.get(`nanoka-auth:bl:${jti}`)
+    expect(valueByRawJti).toBeNull()
+  })
+
+  it('addWithSubject + hasForSubject が sub 一致のみ true を返す', async () => {
+    const store = kvBlacklistStore(env.BLACKLIST_KV)
+    const jti = crypto.randomUUID()
+    const expiresAt = Math.floor(Date.now() / 1000) + 3600
+
+    // biome-ignore lint/style/noNonNullAssertion: kvBlacklistStore implements addWithSubject/hasForSubject unconditionally
+    await store.addWithSubject!(jti, 'user-A', expiresAt)
+
+    // biome-ignore lint/style/noNonNullAssertion: kvBlacklistStore implements addWithSubject/hasForSubject unconditionally
+    expect(await store.hasForSubject!(jti, 'user-A')).toBe(true)
+    // biome-ignore lint/style/noNonNullAssertion: kvBlacklistStore implements addWithSubject/hasForSubject unconditionally
+    expect(await store.hasForSubject!(jti, 'user-B')).toBe(false)
+  })
+
+  it('add で書いたエントリを hasForSubject で読むと保守的に true を返す', async () => {
+    const store = kvBlacklistStore(env.BLACKLIST_KV)
+    const jti = crypto.randomUUID()
+    const expiresAt = Math.floor(Date.now() / 1000) + 3600
+
+    await store.add(jti, expiresAt)
+
+    // biome-ignore lint/style/noNonNullAssertion: kvBlacklistStore implements addWithSubject/hasForSubject unconditionally
+    expect(await store.hasForSubject!(jti, 'any-sub')).toBe(true)
   })
 })
