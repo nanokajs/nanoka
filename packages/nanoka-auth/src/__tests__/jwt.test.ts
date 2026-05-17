@@ -58,6 +58,39 @@ describe('jwt', () => {
     await expect(verify(tampered, 'secret')).rejects.toThrow('Invalid token header')
   })
 
+  it('alg:NONE (uppercase) header attack throws', async () => {
+    const token = await sign({ sub: 'user-1' }, 'secret')
+    const parts = token.split('.')
+    const noneHeader = btoa(JSON.stringify({ alg: 'NONE', typ: 'JWT' }))
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '')
+    const tampered = `${noneHeader}.${parts[1]}.${parts[2]}`
+    await expect(verify(tampered, 'secret')).rejects.toThrow('Invalid token header')
+  })
+
+  it('alg:None (mixed case) header attack throws', async () => {
+    const token = await sign({ sub: 'user-1' }, 'secret')
+    const parts = token.split('.')
+    const noneHeader = btoa(JSON.stringify({ alg: 'None', typ: 'JWT' }))
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '')
+    const tampered = `${noneHeader}.${parts[1]}.${parts[2]}`
+    await expect(verify(tampered, 'secret')).rejects.toThrow('Invalid token header')
+  })
+
+  it('alg:RS256 header attack throws', async () => {
+    const token = await sign({ sub: 'user-1' }, 'secret')
+    const parts = token.split('.')
+    const rs256Header = btoa(JSON.stringify({ alg: 'RS256', typ: 'JWT' }))
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '')
+    const tampered = `${rs256Header}.${parts[1]}.${parts[2]}`
+    await expect(verify(tampered, 'secret')).rejects.toThrow('Invalid token header')
+  })
+
   it('invalid token format throws', async () => {
     await expect(verify('not.a.valid.jwt.token', 'secret')).rejects.toThrow('Invalid token format')
     await expect(verify('', 'secret')).rejects.toThrow('Invalid token format')
