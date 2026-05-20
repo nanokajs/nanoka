@@ -177,10 +177,15 @@ export function createAuth(opts: CreateAuthOptions): AuthInstance {
           }
           // biome-ignore lint/style/noNonNullAssertion: blacklist is guaranteed non-null when rotation is true (validated at createAuth call)
           const blacklist = opts.blacklist!
-          const blacklisted =
-            blacklist.hasForSubject !== undefined
-              ? await blacklist.hasForSubject(jti, payload.sub)
-              : await blacklist.has(jti)
+          // Use subject-aware methods only when BOTH are present.
+          // Using them independently (e.g. hasForSubject without addWithSubject) would
+          // cause the read and write paths to use different storage keys, allowing
+          // a revoked JTI to be accepted on the read path (replay attack).
+          const useSubjectAware =
+            blacklist.hasForSubject !== undefined && blacklist.addWithSubject !== undefined
+          const blacklisted = useSubjectAware
+            ? await blacklist.hasForSubject!(jti, payload.sub)
+            : await blacklist.has(jti)
           if (blacklisted) {
             throw new HTTPException(401, { message: 'Invalid credentials' })
           }
@@ -189,8 +194,8 @@ export function createAuth(opts: CreateAuthOptions): AuthInstance {
               ? payload.exp
               : Math.floor(Date.now() / 1000) + refreshExpiresIn
           try {
-            if (blacklist.addWithSubject !== undefined) {
-              await blacklist.addWithSubject(jti, payload.sub, exp)
+            if (useSubjectAware) {
+              await blacklist.addWithSubject!(jti, payload.sub, exp)
             } else {
               await blacklist.add(jti, exp)
             }
