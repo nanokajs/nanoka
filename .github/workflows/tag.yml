@@ -21,8 +21,10 @@ jobs:
         include:
           - package: packages/nanoka
             tag_prefix: v
+            target: core
           - package: packages/nanoka-auth
             tag_prefix: auth-v
+            target: auth
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -54,4 +56,6 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh workflow run publish.yml --ref "${{ steps.create_tag.outputs.tag }}"
+          gh workflow run publish.yml \
+            --ref "${{ steps.create_tag.outputs.tag }}" \
+            -f target=${{ matrix.target }}
