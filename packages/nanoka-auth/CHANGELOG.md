@@ -5,6 +5,16 @@ All notable changes to `@nanokajs/auth` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.2] — 2026-05-23
+
+### Security
+
+- `hono` を 4.12.16 → 4.12.22 に更新（JSX SSR の CSS Declaration Injection / Cache Middleware の `Vary` 無視に関する moderate advisory 2 件を解消）。auth では該当機能を使用していないため実害低だが defense-in-depth として bump。
+
+### Changed
+
+- devDep の lockfile を caret 範囲内の最新へ追従（`@cloudflare/workers-types`、`@types/node`、`tsup`、`vitest` 等）。peerDependencies の範囲は変更なし。
+
 ## [1.6.1] — 2026-05-23
 
 ### Security
