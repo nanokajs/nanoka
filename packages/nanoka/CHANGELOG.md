@@ -5,6 +5,17 @@ All notable changes to `@nanokajs/core` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.10.2] — 2026-05-23
+
+### Security
+
+- `hono` を 4.12.16 → 4.12.22 に更新（JSX SSR の CSS Declaration Injection / Cache Middleware の `Vary` 無視に関する moderate advisory 2 件を解消）。core では該当機能を使用していないため実害低だが defense-in-depth として bump。
+- `pnpm.overrides` の `devalue` を `>=5.6.4` → `>=5.8.1`（Svelte `devalue` の sparse array deserialization DoS advisory を解消）。
+
+### Changed
+
+- devDep / 内部依存の lockfile を caret 範囲内の最新へ追従（`@hono/zod-validator` 0.4.0 → 0.4.3、`jiti` 2.6.1 → 2.7.0、`@cloudflare/workers-types`、`@types/node`、`tsup` 等）。peerDependencies の範囲は変更なし。
+
 ## [1.8.0] — 2026-05-06
 
 ### Added
