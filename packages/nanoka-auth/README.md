@@ -109,7 +109,37 @@ kvBlacklistStore(env.REFRESH_BLACKLIST_KV, { prefix: 'my-app:bl:' })
 |---|---|
 | `prefix` | `'nanoka-auth:bl:'` |
 
+KV keys are stored as `SHA-256(jti)` hex strings, not the raw JTI. This prevents JTI enumeration via KV `list()`.
+
 A D1-backed blacklist store is planned as a follow-up.
+
+### BlacklistStore interface
+
+`BlacklistStore` is the interface that any custom blacklist implementation must satisfy.
+
+```ts
+export interface BlacklistStore {
+  add(jti: string, expiresAt: number): Promise<void>
+  has(jti: string): Promise<boolean>
+  // Optional: defense-in-depth pair-check with sub.
+  // If implemented, refreshHandler uses it instead of has/add.
+  addWithSubject?(jti: string, sub: string, expiresAt: number): Promise<void>
+  hasForSubject?(jti: string, sub: string): Promise<boolean>
+}
+```
+
+| Method | Required | Description |
+|---|---|---|
+| `add(jti, expiresAt)` | Yes | Blacklist a JTI until `expiresAt` (Unix seconds) |
+| `has(jti)` | Yes | Return `true` if the JTI is blacklisted |
+| `addWithSubject(jti, sub, expiresAt)` | No (optional) | Blacklist a JTI paired with a `sub`. If implemented, `refreshHandler` calls this instead of `add`. |
+| `hasForSubject(jti, sub)` | No (optional) | Return `true` only if the JTI is blacklisted **and** was associated with the given `sub`. If implemented, `refreshHandler` calls this instead of `has`. |
+
+Implementing `addWithSubject` / `hasForSubject` provides defense-in-depth: even if an attacker obtains a valid JTI, they cannot reuse it under a different `sub`. Existing implementations that only implement `add` / `has` continue to work without any changes.
+
+> **Note**: It is recommended to implement `addWithSubject` and `hasForSubject` as a pair. If only one of the two is implemented, the missing side falls back to the existing `add` / `has` path, and the sub-matching defense-in-depth check will not be applied.
+
+> **Cross-sub overwrite trade-off**: `addWithSubject` writes a single entry keyed by `jti` (the value carries the `sub`). If an attacker who somehow obtains a valid `jti` calls `refreshHandler` under a different `sub`, the existing blacklist entry for the original `sub` is overwritten. This is a known design trade-off of single-key blacklists and is tracked for further hardening in [Issue #115](https://github.com/nanokajs/nanoka/issues/115) (D1-backed store). In normal threat models the attacker cannot mint refresh tokens without the signing secret, so this remains a defense-in-depth concern rather than an exploitable bypass.
 
 ## Rate limiting
 
@@ -176,3 +206,8 @@ Rejects requests that:
 - **`Set-Cookie` overwrite is browser-dependent.** When rotation is enabled in cookie mode, `refreshHandler` writes a new `refresh_token` via `Set-Cookie`. Whether the browser replaces the old cookie depends on cookie attribute matching (name, domain, path, secure). Ensure your `cookie` options are consistent across all endpoints.
 - **No built-in rate limiting.** `loginHandler` does not throttle requests. Protect the endpoint at the infrastructure layer.
 - **D1 blacklist store not yet available.** The current blacklist implementation is KV-only. A D1-backed implementation is planned as a follow-up issue.
+
+## Security notes
+
+- **Do not expose `HTTPException.cause` in responses or logs.** Starting from v1.6.0, `@nanokajs/auth` no longer sets `cause` on the `HTTPException` it throws, so internal verify errors no longer surface through the default Hono `onError` handler. However, if you implement a custom `onError` or exception filter, be careful not to serialize `cause` or stack traces into responses — the same principle applies to any exceptions you throw yourself.
+- **KV keys are hashed.** `kvBlacklistStore` stores `SHA-256(jti)` as the KV key. Raw JTI values are never written to KV keys, preventing JTI enumeration via `kv.list()`.

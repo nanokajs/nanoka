@@ -90,13 +90,14 @@ export async function verify<T = Record<string, unknown>>(
   if (typeof header !== 'object' || header === null || Array.isArray(header)) {
     throw new Error('Invalid token header')
   }
-  if ((header as Record<string, unknown>).alg === 'none') {
+  if ((header as Record<string, unknown>).typ !== 'JWT') {
     throw new Error('Invalid token header')
   }
-  if (
-    (header as Record<string, unknown>).alg !== ALGORITHM ||
-    (header as Record<string, unknown>).typ !== 'JWT'
-  ) {
+  const alg = (header as Record<string, unknown>).alg
+  if (typeof alg !== 'string' || alg.toLowerCase() === 'none') {
+    throw new Error('Invalid token header')
+  }
+  if (alg !== ALGORITHM) {
     throw new Error('Invalid token header')
   }
 
