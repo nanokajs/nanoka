@@ -86,18 +86,25 @@ gh issue list --state open --search "deps OR advisory OR accepted risk" --limit 
 pnpm update -r
 ```
 
-`pnpm update -r` は `package.json` の caret 範囲を **その時点の最新解決バージョンに自動で書き上げる**（pnpm 9.x のデフォルト挙動）。これにより：
+挙動の本質：
 
-- `devDependencies` / `dependencies` の caret 最低値は新しくなる
-- `peerDependencies` は **触られない**（明示確認すること）
+- **`pnpm-lock.yaml` の解決バージョンを、各 `package.json` の caret 範囲内の最新へ更新する**
+- `--latest` を **付けない限り major 範囲は超えない**（`hono: ^4.0.0` は 4.x 内で最新、`drizzle-kit: ^0.28.0` は 0.28.x 内で最新まで）
+- `peerDependencies` の範囲は変更しない
 
-### 2-3: peerDependencies 不変の確認
+`package.json` の caret 最低値が書き換わるかは pnpm のバージョン / `.npmrc` の `save-prefix` 等の設定に依存する（pnpm 公式は「`--latest` なしでは range を変えない」とするが、pnpm 9.x の実装では解決バージョンが現 caret 最低値より新しい場合に書き換わる挙動が確認されている）。**スキル内ではこの挙動に依存せず、実行後の diff で必ず確認する**。
+
+### 2-3: 差分の確認
 
 ```bash
-git diff packages/*/package.json examples/*/package.json | grep -A 5 peerDependencies
+git diff packages/*/package.json examples/*/package.json
 ```
 
-`peerDependencies` セクションに差分が出ていれば停止してユーザーに確認。利用者影響があるので patch リリースの範囲を超える。
+確認ポイント：
+
+1. **`peerDependencies` セクションに差分があれば停止**。利用者影響があるので patch リリースの範囲を超える。意図せず変わっていたら revert する。
+2. `dependencies` / `devDependencies` の caret 最低値が書き換わっていれば、書き換わった値が意図したものか確認。caret 範囲を逸脱する変更（major bump）が混じっていれば revert する。
+3. 書き換わっていない場合でも、`pnpm-lock.yaml` 内の解決バージョンは更新されているはず。`git diff pnpm-lock.yaml --stat` で更新されたパッケージを把握する。
 
 ### 2-4: 検証
 
