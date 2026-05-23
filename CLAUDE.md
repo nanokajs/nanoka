@@ -107,6 +107,8 @@ Any change to `packages/nanoka` or `packages/create-nanoka-app` must include a v
 
 When in doubt between patch and minor, use minor. When in doubt between minor and major, stop and confirm with the user — a wrong major bump is recoverable, but a missed major bump breaks users silently.
 
+`@nanokajs/auth` (`packages/nanoka-auth`) is versioned independently from `@nanokajs/core`. Use the same patch/minor/major rules above, but the version number does **not** track core. Tags use the `auth-v` prefix (e.g. `auth-v1.7.0`); `auto-tag` and `publish` workflows route core under `v*` and auth under `auth-v*`. Any change to `packages/nanoka-auth` must include an auth version bump in the same PR.
+
 ## Security review triggers
 
 Run or request a security-focused review when a change touches:
