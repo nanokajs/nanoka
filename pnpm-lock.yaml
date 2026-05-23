@@ -54,7 +54,7 @@ importers:
         specifier: ^2.1.9
         version: 2.1.9(@types/node@25.9.1)
       wrangler:
-        specifier: ^3.114.17
+        specifier: '>=3.114.17 <4.0.0'
         version: 3.114.17(@cloudflare/workers-types@4.20260523.1)
 
   packages/create-nanoka-app:
@@ -109,7 +109,7 @@ importers:
         specifier: ^2.1.9
         version: 2.1.9(@types/node@25.9.1)
       wrangler:
-        specifier: ^3.114.17
+        specifier: '>=3.114.17 <4.0.0'
         version: 3.114.17(@cloudflare/workers-types@4.20260523.1)
       zod:
         specifier: ^3.25.76
@@ -142,7 +142,7 @@ importers:
         specifier: ^2.1.9
         version: 2.1.9(@types/node@25.9.1)
       wrangler:
-        specifier: ^3.114.17
+        specifier: '>=3.114.17 <4.0.0'
         version: 3.114.17(@cloudflare/workers-types@4.20260523.1)
 
   site:
@@ -176,7 +176,7 @@ importers:
         specifier: ^5.9.3
         version: 5.9.3
       wrangler:
-        specifier: ^3.114.17
+        specifier: '>=3.114.17 <4.0.0'
         version: 3.114.17(@cloudflare/workers-types@4.20260523.1)
 
 packages:
