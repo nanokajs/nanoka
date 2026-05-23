@@ -5,6 +5,12 @@ All notable changes to `@nanokajs/auth` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.1] — 2026-05-23
+
+### Security
+
+- `refreshHandler` で `verify()` に渡す前の refresh token 文字列長に 4096 文字の上限を導入。cookie / body 双方の経路に適用。閾値超過時は 401 を返す。巨大入力で base64 デコードに CPU を消費させる攻撃面を defense-in-depth として遮断（Issue #107）。
+
 ## [1.6.0] — 2026-05-17
 
 ### Added

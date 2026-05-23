@@ -541,3 +541,60 @@ describe('m-3: jti フォーマット検証', () => {
     expect(res.status).toBe(401)
   })
 })
+
+describe('m-4: refresh token 長さ制限', () => {
+  it('body 経路: 4097 文字の refreshToken (rotation 無効) → 401', async () => {
+    const app = await makeUserAndApp()
+
+    const longRefreshToken = 'a'.repeat(4097)
+    const res = await app.request('/refresh', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken: longRefreshToken }),
+    })
+    expect(res.status).toBe(401)
+  })
+
+  it('body 経路: 4097 文字の refreshToken (rotation 有効、in-memory blacklist) → 401', async () => {
+    const blacklist = makeInMemoryBlacklist()
+    const app = await makeUserAndApp({ rotation: true, blacklist })
+
+    const longRefreshToken = 'a'.repeat(4097)
+    const res = await app.request('/refresh', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken: longRefreshToken }),
+    })
+    expect(res.status).toBe(401)
+  })
+
+  it('cookie 経路: 4097 文字の refresh_token cookie (rotation 無効) → 401', async () => {
+    const app = await makeUserAndApp({ cookie: {} })
+
+    const longRefreshToken = 'a'.repeat(4097)
+    const res = await app.request('/refresh', {
+      method: 'POST',
+      headers: { Cookie: `refresh_token=${longRefreshToken}` },
+    })
+    expect(res.status).toBe(401)
+  })
+
+  it('body 経路: 4096 文字を超える有効形式 JWT は長さチェックで 401 (rotation 無効)', async () => {
+    const app = await makeUserAndApp()
+
+    const longPayload = {
+      sub: 'user-1',
+      type: 'refresh',
+      padding: 'x'.repeat(5000),
+    }
+    const longToken = await sign(longPayload, SECRET, { expiresIn: 604_800 })
+    expect(longToken.length).toBeGreaterThan(4096)
+
+    const res = await app.request('/refresh', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken: longToken }),
+    })
+    expect(res.status).toBe(401)
+  })
+})

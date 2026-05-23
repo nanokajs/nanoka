@@ -7,6 +7,10 @@ import type { Hasher } from './hasher.js'
 import { pbkdf2Hasher } from './hashers/pbkdf2.js'
 import { sign, verify } from './jwt.js'
 
+// defense-in-depth: refresh token 文字列の長さ上限。verify() 前段で base64 デコードに
+// CPU を消費させる巨大入力攻撃を遮断する。HS256 JWT の現実的サイズを十分上回る閾値。
+const MAX_REFRESH_TOKEN_LENGTH = 4096
+
 export interface CookieOptions {
   httpOnly?: boolean
   sameSite?: 'Strict' | 'Lax' | 'None'
@@ -146,6 +150,10 @@ export function createAuth(opts: CreateAuthOptions): AuthInstance {
             throw new HTTPException(401, { message: 'Invalid credentials' })
           }
           refreshToken = bodyRefreshToken
+        }
+
+        if (refreshToken.length > MAX_REFRESH_TOKEN_LENGTH) {
+          throw new HTTPException(401, { message: 'Invalid credentials' })
         }
 
         let payload: Record<string, unknown>
