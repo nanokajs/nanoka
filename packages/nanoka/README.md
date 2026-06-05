@@ -17,14 +17,14 @@ Targets **Cloudflare Workers + D1 (SQLite)** as first-class. Hono-compatible rou
 
 ## Status
 
-**Stable (1.6.1).** Core API-boundary surface — field policies, `inputSchema` / `outputSchema`, validator presets, `t.json(zodSchema)`, field accessor API, Zod 3 / 4 support, OpenAPI component seed — is stable under SemVer.
+**Stable (1.11.0).** Core API-boundary surface — field policies, `inputSchema` / `outputSchema`, validator presets, `t.json(zodSchema)`, field accessor API, Zod 3 / 4 support, OpenAPI component seed, `t.timestamp().defaultNow()` — is stable under SemVer.
 
 ## Stable API surface (1.0)
 
 The following APIs are stable. Breaking changes require a major version bump.
 
 - **Field DSL**: `t.string()` / `t.uuid()` / `t.integer()` / `t.number()` / `t.boolean()` / `t.timestamp()` / `t.json(zodSchema?)`
-- **Field modifiers**: `.primary()` / `.unique()` / `.optional()` / `.default(fn)` / `.min(n)` / `.max(n)` / `.email()`
+- **Field modifiers**: `.primary()` / `.unique()` / `.optional()` / `.default(fn)` / `.defaultNow()` (timestamp only) / `.min(n)` / `.max(n)` / `.email()`
 - **Field policies**: `.serverOnly()` / `.writeOnly()` / `.readOnly()` — `t.uuid().primary().readOnly()` implicitly generates a UUID via `crypto.randomUUID()` when no `.default()` is provided
 - **Schema derivation**: `Model.schema(opts?)` / `Model.inputSchema('create' | 'update', opts?)` / `Model.outputSchema(opts?)`
 - **Validator**: `Model.validator(target, opts | preset, hook?)` — presets: `'create'`, `'update'`
@@ -93,7 +93,7 @@ Peer dependency ranges: `hono ^4.0.0`, `drizzle-orm ^0.45.2`, `zod ^3.23.0 || ^4
      title: t.string().min(1).max(200),
      body: t.string().min(1),
      published: t.boolean().default(false),
-     createdAt: t.timestamp().default(() => new Date()).readOnly(),
+     createdAt: t.timestamp().defaultNow().readOnly(), // DB DEFAULT clause (epoch ms)
    }
    ```
 
@@ -247,7 +247,7 @@ const fields = {
   active: t.boolean().default(() => true),
   age: t.integer().min(0).max(150),
   metadata: t.json(), // { key: string, value: unknown }[]
-  createdAt: t.timestamp().default(() => new Date()),
+  createdAt: t.timestamp().defaultNow().readOnly(), // DB DEFAULT clause (epoch ms), no nanoka generate warning
   updatedAt: t.timestamp().default(() => new Date()),
 }
 ```
@@ -263,7 +263,8 @@ Modifiers:
 - `.primary()` — primary key (required, one per model)
 - `.unique()` — unique constraint
 - `.optional()` — nullable
-- `.default(fn)` — default value (function or constant)
+- `.default(fn)` — default value (function or constant); runtime-only (no SQL DEFAULT clause emitted — function defaults produce a warning from `nanoka generate`)
+- `.defaultNow()` — **timestamp only**: sets the DB DEFAULT clause to the current epoch-ms via `sql\`(cast((julianday('now') - 2440587.5)*86400000 as integer))\``. No `nanoka generate` warning. Optional in `inputSchema('create')` (DB fills the value). Combine with `.readOnly()` to block client writes entirely.
 - `.min(n)` / `.max(n)` — numeric / string length bounds
 - `.email()` — email validation (string modifier: `t.string().email()`)
 

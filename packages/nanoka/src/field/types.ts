@@ -9,6 +9,7 @@ export interface FieldModifiers {
   unique?: boolean
   hasDefault?: boolean
   defaultValue?: unknown
+  defaultNow?: boolean
   format?: 'email' | 'uuid'
   min?: number
   max?: number

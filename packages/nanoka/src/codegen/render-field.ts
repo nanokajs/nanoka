@@ -41,7 +41,9 @@ export function renderField(
     column += '.unique()'
   }
 
-  if (field.modifiers.hasDefault) {
+  if (field.kind === 'timestamp' && field.modifiers.defaultNow) {
+    column += `.default(sql\`(cast((julianday('now') - 2440587.5)*86400000 as integer))\`)`
+  } else if (field.modifiers.hasDefault) {
     const defaultValue = field.modifiers.defaultValue
     if (typeof defaultValue === 'function') {
       console.warn(

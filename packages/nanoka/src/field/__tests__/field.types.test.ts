@@ -225,6 +225,20 @@ describe('Field: type inference', () => {
       const f = t.timestamp().default(() => new Date())
       expectTypeOf(f).toMatchTypeOf<Field>()
     })
+
+    it('t.timestamp().defaultNow() tsType is Date', () => {
+      expectTypeOf(t.timestamp().defaultNow().tsType).toEqualTypeOf<Date>()
+    })
+
+    it('t.timestamp().defaultNow() modifiers contain { defaultNow: true }', () => {
+      const f = t.timestamp().defaultNow()
+      expectTypeOf(f.modifiers).toMatchTypeOf<{ defaultNow: true }>()
+    })
+
+    it('t.timestamp().defaultNow().readOnly() chain is valid at type level', () => {
+      const f = t.timestamp().defaultNow().readOnly()
+      expectTypeOf(f).toMatchTypeOf<Field>()
+    })
   })
 
   describe('type-level negative cases', () => {
@@ -283,6 +297,30 @@ describe('Field: type inference', () => {
     it('integer().primary().optional() chain still rejects .email()', () => {
       // type-only test; runtime body empty to avoid TypeError
     })
+
+    it('string does not have .defaultNow()', () => {
+      // type-only test; runtime body empty to avoid TypeError
+    })
+
+    it('integer does not have .defaultNow()', () => {
+      // type-only test; runtime body empty to avoid TypeError
+    })
+
+    it('boolean does not have .defaultNow()', () => {
+      // type-only test; runtime body empty to avoid TypeError
+    })
+
+    it('uuid does not have .defaultNow()', () => {
+      // type-only test; runtime body empty to avoid TypeError
+    })
+
+    it('number does not have .defaultNow()', () => {
+      // type-only test; runtime body empty to avoid TypeError
+    })
+
+    it('json does not have .defaultNow()', () => {
+      // type-only test; runtime body empty to avoid TypeError
+    })
   })
 })
 
@@ -304,6 +342,12 @@ type _TypeGuardNegatives = {
   integer_min_email: () => void
   boolean_optional_min: () => void
   integer_primary_optional_email: () => void
+  string_defaultNow: () => void
+  integer_defaultNow: () => void
+  boolean_defaultNow: () => void
+  uuid_defaultNow: () => void
+  number_defaultNow: () => void
+  json_defaultNow: () => void
 }
 
 // Type-level checks (these don't execute, but TypeScript validates them)
@@ -359,5 +403,29 @@ const _typeGuards: _TypeGuardNegatives = {
   integer_primary_optional_email: () => {
     // @ts-expect-error
     t.integer().primary().optional().email()
+  },
+  string_defaultNow: () => {
+    // @ts-expect-error
+    t.string().defaultNow()
+  },
+  integer_defaultNow: () => {
+    // @ts-expect-error
+    t.integer().defaultNow()
+  },
+  boolean_defaultNow: () => {
+    // @ts-expect-error
+    t.boolean().defaultNow()
+  },
+  uuid_defaultNow: () => {
+    // @ts-expect-error
+    t.uuid().defaultNow()
+  },
+  number_defaultNow: () => {
+    // @ts-expect-error
+    t.number().defaultNow()
+  },
+  json_defaultNow: () => {
+    // @ts-expect-error
+    t.json(z.object({ x: z.string() })).defaultNow()
   },
 }
