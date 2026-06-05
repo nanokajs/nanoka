@@ -70,7 +70,7 @@ export const userFields = {
   age: t.integer().min(0).max(150),
   active: t.boolean().default(() => true),
   metadata: t.json(),
-  createdAt: t.timestamp().default(() => new Date()),
+  createdAt: t.timestamp().defaultNow().readOnly(), // DB DEFAULT clause (epoch ms)
   updatedAt: t.timestamp().default(() => new Date()),
 }
 ```
@@ -87,7 +87,8 @@ Modifiers:
 - `.primary()` — primary key (required, one per model)
 - `.unique()` — unique constraint
 - `.optional()` — nullable
-- `.default(value)` or `.default(() => value)` — default value (function or constant)
+- `.default(value)` or `.default(() => value)` — default value (function or constant); runtime-only, no SQL DEFAULT clause; function form produces a `nanoka generate` warning
+- `.defaultNow()` — **timestamp only**: DB DEFAULT clause as epoch-ms (no generate warning); combine with `.readOnly()` for server-managed timestamps
 - `.min(n)` / `.max(n)` — numeric / string length bounds
 - `.email()` — email validation (string-only modifier)
 
@@ -755,7 +756,7 @@ const postFields = {
   title: t.string().min(1).max(200),
   body: t.string().min(1),
   published: t.boolean().default(false),
-  createdAt: t.timestamp().default(() => new Date()).readOnly(),
+  createdAt: t.timestamp().defaultNow().readOnly(), // DB DEFAULT clause (epoch ms)
 }
 
 export interface Env {

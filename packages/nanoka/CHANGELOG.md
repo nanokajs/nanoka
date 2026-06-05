@@ -5,6 +5,16 @@ All notable changes to `@nanokajs/core` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.11.0] — 2026-06-05
+
+### Added
+
+- `t.timestamp().defaultNow()` — timestamp フィールドに DB の `DEFAULT` 句として現在時刻（epoch ミリ秒）を設定する糖衣。`nanoka generate` は `sql` `` `(cast((julianday('now') - 2440587.5)*86400000 as integer))` `` を `.default(...)` に出力し、`timestamp_ms` 列（epoch ms 整数）と整合する。`CURRENT_TIMESTAMP`（text を返す）は使わない。関数 default（`default(() => new Date())`）と異なり生成 SQL に `DEFAULT` 句が出力され、`nanoka generate` の警告が出ない。`readOnly()` との併用を推奨。
+
+### Changed
+
+- `create-nanoka-app` のデフォルトテンプレート（`posts.ts`）の `createdAt` を `t.timestamp().defaultNow().readOnly()` に更新。
+
 ## [1.10.2] — 2026-05-23
 
 ### Security

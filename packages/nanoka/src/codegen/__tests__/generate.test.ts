@@ -215,4 +215,66 @@ describe('generateDrizzleSchema', () => {
     expect(result).toContain('id')
     expect(result).toContain('name')
   })
+
+  it('defaultNow() generates sql default with zero warnings', () => {
+    const warnings: string[] = []
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation((...args: unknown[]) => {
+      warnings.push(args.join(' '))
+    })
+
+    try {
+      const models: ModelDef[] = [
+        {
+          name: 'posts',
+          fields: {
+            id: t.uuid().primary(),
+            title: t.string(),
+            createdAt: t.timestamp().defaultNow(),
+          },
+        },
+      ]
+
+      const result = generateDrizzleSchema(models)
+
+      expect(warnings.length).toBe(0)
+      expect(result).toContain(
+        ".default(sql`(cast((julianday('now') - 2440587.5)*86400000 as integer))`)",
+      )
+      expect(result).not.toContain('CURRENT_TIMESTAMP')
+      expect(result).toContain("import { sql } from 'drizzle-orm'")
+    } finally {
+      warnSpy.mockRestore()
+    }
+  })
+
+  it('defaultNow() snapshot matches expected output', () => {
+    const models: ModelDef[] = [
+      {
+        name: 'events',
+        fields: {
+          id: t.uuid().primary(),
+          name: t.string(),
+          createdAt: t.timestamp().defaultNow(),
+        },
+      },
+    ]
+
+    const result = generateDrizzleSchema(models)
+    expect(result).toMatchSnapshot()
+  })
+
+  it('defaultNow() absent: no sql import in output', () => {
+    const models: ModelDef[] = [
+      {
+        name: 'users',
+        fields: {
+          id: t.uuid().primary(),
+          name: t.string(),
+        },
+      },
+    ]
+
+    const result = generateDrizzleSchema(models)
+    expect(result).not.toContain("import { sql } from 'drizzle-orm'")
+  })
 })

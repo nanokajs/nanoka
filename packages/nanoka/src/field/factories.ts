@@ -1,3 +1,4 @@
+import { sql } from 'drizzle-orm'
 import type { SQLiteColumnBuilderBase } from 'drizzle-orm/sqlite-core'
 import { integer, real, text } from 'drizzle-orm/sqlite-core'
 import type { z } from 'zod'
@@ -751,7 +752,10 @@ class TimestampFieldBuilder<
     if (this.modifiers.unique) {
       col = col.unique()
     }
-    if (this.modifiers.hasDefault) {
+    if (this.modifiers.defaultNow) {
+      // biome-ignore lint/suspicious/noExplicitAny: Drizzle API
+      col = col.default(sql`(cast((julianday('now') - 2440587.5)*86400000 as integer))` as any)
+    } else if (this.modifiers.hasDefault) {
       const defaultValue = this.modifiers.defaultValue
       if (typeof defaultValue === 'function') {
         // biome-ignore lint/suspicious/noExplicitAny: Drizzle API
@@ -811,6 +815,17 @@ class TimestampFieldBuilder<
     const newMods = { ...this.modifiers, hasDefault: true, defaultValue: value } as Mods & {
       hasDefault: true
     }
+    return this.cloneWithModifiers(newMods)
+  }
+
+  /**
+   * Sets the DB DEFAULT clause to the current timestamp (epoch ms).
+   * Generates `sql\`(cast((julianday('now') - 2440587.5)*86400000 as integer))\`` in Drizzle schema.
+   */
+  defaultNow(
+    this: TimestampFieldBuilder<TS, Mods>,
+  ): TimestampFieldBuilder<TS, Mods & { defaultNow: true }> {
+    const newMods = { ...this.modifiers, defaultNow: true } as Mods & { defaultNow: true }
     return this.cloneWithModifiers(newMods)
   }
 

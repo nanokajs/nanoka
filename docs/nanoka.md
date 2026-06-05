@@ -253,6 +253,14 @@ app.post('/users', zValidator('json', CreateUserBody), async (c) => {
 
 注意: `User.inputSchema('create').extend({ ... })` で `passwordHash` のような `serverOnly` フィールドを再注入しないこと。`extend()` で再注入された場合、`inputSchema` 由来の自動 strip 保護は効かない。
 
+**デフォルト値の責務（ランタイム vs SQL）**
+
+`default(value)` / `default(fn)` は Zod の `.default()` に乗るランタイム補完（`$defaultFn`）として動作する。生成された Drizzle schema の SQL に DEFAULT 句は出ない。関数 default を `nanoka generate` すると警告が出る。
+
+`defaultNow()` は DB 側の DEFAULT 句として出力される。`nanoka generate` は `sql\`(cast((julianday('now') - 2440587.5)*86400000 as integer))\`` を `.default(...)` に渡す式を出力し、警告は出ない。timestamp 列は `timestamp_ms`（epoch ms 整数）のため、`CURRENT_TIMESTAMP`（text を返す SQLite 組み込み）ではなくこの Julian Day 変換式で整合性を保つ。
+
+`defaultNow()` は `.readOnly()` と組み合わせて使うことを推奨する（サーバーが管理するフィールドを API 入力から除外する）。
+
 **`t.json(zodSchema)` と codegen の関係（判断 E）**
 
 `t.json(zodSchema)` を渡しても、`nanoka generate` が出力する Drizzle schema TS は `$type<unknown>()` のまま。`app.db.select().from(User.table)` 経由で精緻型が欲しい場合は、生成された Drizzle schema TS を手動で `$type<{...}>()` に書き換えるか、ユーザー側で `as` を使う。API 層の zod runtime 検証は `t.json(zodSchema)` で正しく走る。
@@ -295,6 +303,7 @@ relation / Turso・libSQL adapter / route-level OpenAPI / `create-nanoka-app` / 
 - [x] Swagger UI middleware: `swaggerUI({ url, title? })`
 - [x] Turso / libSQL adapter: `tursoAdapter(client)`（`@nanokajs/core/turso` export）
 - [x] CLIスキャフォールダ: `create-nanoka-app`
+- [x] `t.timestamp().defaultNow()` — DB の DEFAULT 句として epoch-ms 式を出力。`nanoka generate` で警告ゼロ。`.readOnly()` との併用を推奨
 
 #### 次に残っている設計候補
 - [x] リレーション定義（`t.hasMany()` / `t.belongsTo()`）— v1限定スコープで採用（Issue #14、設計仕様は "Relations API" 節参照）

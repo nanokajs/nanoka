@@ -312,6 +312,45 @@ describe('Field: runtime behavior', () => {
       const col = field.drizzleColumn('createdAt')
       expect(col).toBeDefined()
     })
+
+    it('defaultNow() sets modifiers.defaultNow to true', () => {
+      const field = t.timestamp().defaultNow()
+      expect(field.modifiers.defaultNow).toBe(true)
+    })
+
+    it('defaultNow() does not set modifiers.hasDefault', () => {
+      const field = t.timestamp().defaultNow()
+      // modifiers type is { defaultNow: true } — cast to check absence of hasDefault at runtime
+      expect((field.modifiers as unknown as Record<string, unknown>).hasDefault).toBeUndefined()
+    })
+
+    it('defaultNow() drizzleColumn has DB default set', () => {
+      const field = t.timestamp().defaultNow()
+      const col = field.drizzleColumn('createdAt')
+      // biome-ignore lint/suspicious/noExplicitAny: introspecting internal Drizzle column config
+      expect((col as any).config?.hasDefault).toBe(true)
+    })
+
+    it('defaultNow() column remains timestamp_ms mode', () => {
+      const field = t.timestamp().defaultNow()
+      const col = field.drizzleColumn('createdAt')
+      // biome-ignore lint/suspicious/noExplicitAny: introspecting internal Drizzle column config
+      expect((col as any).config?.mode).toBe('timestamp_ms')
+    })
+
+    it('defaultNow().readOnly() chain works', () => {
+      const field = t.timestamp().defaultNow().readOnly()
+      expect(field.modifiers.defaultNow).toBe(true)
+      expect(field.modifiers.policy).toBe('readOnly')
+    })
+
+    it('existing default(fn) still uses $defaultFn (backward compat)', () => {
+      const field = t.timestamp().default(() => new Date())
+      const col = field.drizzleColumn('createdAt')
+      // $defaultFn sets hasDefault but not default sql
+      // biome-ignore lint/suspicious/noExplicitAny: introspecting internal Drizzle column config
+      expect((col as any).config?.hasDefault).toBe(true)
+    })
   })
 
   describe('json field', () => {
