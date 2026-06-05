@@ -622,3 +622,52 @@ describe('Model: inputSchema / outputSchema / toResponse', () => {
     })
   })
 })
+
+describe('defaultNow() — create input optional behavior', () => {
+  const TimestampModel = defineModel('events', {
+    id: t.uuid().primary().readOnly(),
+    title: t.string(),
+    createdAt: t.timestamp().defaultNow(),
+    publishedAt: t.timestamp().defaultNow().readOnly(),
+  })
+
+  describe('inputSchema("create") with defaultNow fields', () => {
+    it('succeeds when defaultNow field is omitted', () => {
+      const schema = TimestampModel.inputSchema('create')
+      const result = schema.safeParse({ title: 'Hello' })
+      expect(result.success).toBe(true)
+    })
+
+    it('succeeds when defaultNow field is provided', () => {
+      const schema = TimestampModel.inputSchema('create')
+      const result = schema.safeParse({ title: 'Hello', createdAt: new Date() })
+      expect(result.success).toBe(true)
+    })
+
+    it('excludes defaultNow().readOnly() field from create schema', () => {
+      const schema = TimestampModel.inputSchema('create')
+      const result = schema.safeParse({ title: 'Hello' })
+      expect(result.success).toBe(true)
+      expect(result.data).not.toHaveProperty('publishedAt')
+    })
+  })
+
+  describe('outputSchema() with defaultNow fields', () => {
+    it('requires defaultNow field in output (not optional)', () => {
+      const schema = TimestampModel.outputSchema()
+      const resultWithout = schema.safeParse({ title: 'Hello' })
+      expect(resultWithout.success).toBe(false)
+    })
+
+    it('succeeds when all required fields are present in output', () => {
+      const schema = TimestampModel.outputSchema()
+      const result = schema.safeParse({
+        id: validUuid,
+        title: 'Hello',
+        createdAt: new Date(),
+        publishedAt: new Date(),
+      })
+      expect(result.success).toBe(true)
+    })
+  })
+})

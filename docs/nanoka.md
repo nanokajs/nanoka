@@ -259,7 +259,7 @@ app.post('/users', zValidator('json', CreateUserBody), async (c) => {
 
 `defaultNow()` は DB 側の DEFAULT 句として出力される。`nanoka generate` は `sql\`(cast((julianday('now') - 2440587.5)*86400000 as integer))\`` を `.default(...)` に渡す式を出力し、警告は出ない。timestamp 列は `timestamp_ms`（epoch ms 整数）のため、`CURRENT_TIMESTAMP`（text を返す SQLite 組み込み）ではなくこの Julian Day 変換式で整合性を保つ。
 
-`defaultNow()` は `.readOnly()` と組み合わせて使うことを推奨する（サーバーが管理するフィールドを API 入力から除外する）。
+`defaultNow()` を使ったフィールドは `inputSchema('create')` で省略可能（DB が値を埋める）。クライアントに値の設定を一切許さない server-managed 列（`createdAt` など）には `.readOnly()` を併用する。
 
 **`t.json(zodSchema)` と codegen の関係（判断 E）**
 
@@ -303,7 +303,7 @@ relation / Turso・libSQL adapter / route-level OpenAPI / `create-nanoka-app` / 
 - [x] Swagger UI middleware: `swaggerUI({ url, title? })`
 - [x] Turso / libSQL adapter: `tursoAdapter(client)`（`@nanokajs/core/turso` export）
 - [x] CLIスキャフォールダ: `create-nanoka-app`
-- [x] `t.timestamp().defaultNow()` — DB の DEFAULT 句として epoch-ms 式を出力。`nanoka generate` で警告ゼロ。`.readOnly()` との併用を推奨
+- [x] `t.timestamp().defaultNow()` — DB の DEFAULT 句として epoch-ms 式を出力。`nanoka generate` で警告ゼロ。`inputSchema('create')` で省略可能（DB が値を埋める）。クライアントに設定させたくない場合は `.readOnly()` を併用
 
 #### 次に残っている設計候補
 - [x] リレーション定義（`t.hasMany()` / `t.belongsTo()`）— v1限定スコープで採用（Issue #14、設計仕様は "Relations API" 節参照）

@@ -220,7 +220,7 @@ type ServerOnlyKeys<
 /**
  * @internal
  * Determines if a field is required for create input.
- * A field is optional if it has a default, is optional, or is readOnly.
+ * A field is optional if it has a default, has defaultNow, is optional, or is readOnly.
  *
  * Uses direct shape matching (`Field<any, { hasDefault: true }, any>`) to avoid
  * the TypeScript infer-widening issue where `infer M` resolves to `FieldModifiers`
@@ -233,19 +233,22 @@ type IsRequired<F extends Field<any, any, any>> =
   F extends Field<any, { hasDefault: true }, any>
     ? false
     : // biome-ignore lint/suspicious/noExplicitAny: any is necessary for Field constraint
-      F extends Field<any, { optional: true }, any>
+      F extends Field<any, { defaultNow: true }, any>
       ? false
       : // biome-ignore lint/suspicious/noExplicitAny: any is necessary for Field constraint
-        F extends Field<any, { policy: 'readOnly' }, any>
+        F extends Field<any, { optional: true }, any>
         ? false
-        : true
+        : // biome-ignore lint/suspicious/noExplicitAny: any is necessary for Field constraint
+          F extends Field<any, { policy: 'readOnly' }, any>
+          ? false
+          : true
 
 /**
  * Create input with precise types:
  * - `readOnly` fields are optional (library internals can pass them; API callers
  *   are excluded via inputSchema — but CreateInput itself keeps them as optional
  *   so handlers can supply generated values like `id` or `createdAt`)
- * - fields with `default` are optional
+ * - fields with `default` or `defaultNow` are optional (DB or runtime fills the value)
  * - fields marked `optional` are optional
  * - all other fields are required
  * - `serverOnly` fields are completely excluded (cannot be passed even internally)

@@ -264,7 +264,7 @@ Modifiers:
 - `.unique()` — unique constraint
 - `.optional()` — nullable
 - `.default(fn)` — default value (function or constant); runtime-only (no SQL DEFAULT clause emitted — function defaults produce a warning from `nanoka generate`)
-- `.defaultNow()` — **timestamp only**: sets the DB DEFAULT clause to the current epoch-ms via `sql\`(cast((julianday('now') - 2440587.5)*86400000 as integer))\``. No `nanoka generate` warning. Combine with `.readOnly()` for server-managed timestamps.
+- `.defaultNow()` — **timestamp only**: sets the DB DEFAULT clause to the current epoch-ms via `sql\`(cast((julianday('now') - 2440587.5)*86400000 as integer))\``. No `nanoka generate` warning. Optional in `inputSchema('create')` (DB fills the value). Combine with `.readOnly()` to block client writes entirely.
 - `.min(n)` / `.max(n)` — numeric / string length bounds
 - `.email()` — email validation (string modifier: `t.string().email()`)
 

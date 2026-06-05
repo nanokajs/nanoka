@@ -75,7 +75,7 @@ const fields = {
 }
 \`\`\`
 
-Use \`.defaultNow()\` instead of \`.default(() => new Date())\` when you want the database to set the timestamp via a SQL \`DEFAULT\` clause. \`.default(fn)\` is runtime-only (\`$defaultFn\`) and produces a warning from \`nanoka generate\`.
+Use \`.defaultNow()\` instead of \`.default(() => new Date())\` when you want the database to set the timestamp via a SQL \`DEFAULT\` clause. \`.default(fn)\` is runtime-only (\`$defaultFn\`) and produces a warning from \`nanoka generate\`. A \`.defaultNow()\` field is optional in \`inputSchema('create')\` (the DB fills the value). To prevent clients from setting the value at all, combine with \`.readOnly()\`.
 
 ### t.json()
 
@@ -114,7 +114,7 @@ All field builders support the following chainable modifiers:
 | \`.optional()\` | Allows \`undefined\` / \`null\`; removes the \`NOT NULL\` constraint |
 | \`.default(val)\` | Sets a static default value (runtime only; no SQL DEFAULT clause) |
 | \`.default(fn)\` | Sets a dynamic default via \`$defaultFn\` (runtime only; \`nanoka generate\` warns) |
-| \`.defaultNow()\` | **timestamp only**: sets DB DEFAULT clause to current epoch-ms; no generate warning |
+| \`.defaultNow()\` | **timestamp only**: sets DB DEFAULT clause to current epoch-ms; no generate warning; optional in \`inputSchema('create')\` (DB fills the value) — combine with \`.readOnly()\` to block client writes entirely |
 | \`.min(n)\` | Minimum string length (string/uuid) or minimum value (number/integer) |
 | \`.max(n)\` | Maximum string length (string/uuid) or maximum value (number/integer) |
 | \`.email()\` | Adds email format validation (string only) |
@@ -225,7 +225,7 @@ const fields = {
 }
 \`\`\`
 
-SQL の \`DEFAULT\` 句として DB 側でタイムスタンプを設定したい場合は \`.default(() => new Date())\` の代わりに \`.defaultNow()\` を使ってください。\`.default(fn)\` はランタイムのみ（\`$defaultFn\`）であり、\`nanoka generate\` で警告が出ます。
+SQL の \`DEFAULT\` 句として DB 側でタイムスタンプを設定したい場合は \`.default(() => new Date())\` の代わりに \`.defaultNow()\` を使ってください。\`.default(fn)\` はランタイムのみ（\`$defaultFn\`）であり、\`nanoka generate\` で警告が出ます。\`.defaultNow()\` フィールドは \`inputSchema('create')\` で省略可能（DB が値を埋める）。クライアントに値の設定を一切許さない場合は \`.readOnly()\` を併用してください。
 
 ### t.json()
 
@@ -264,7 +264,7 @@ const fields = {
 | \`.optional()\` | \`undefined\` / \`null\` を許可する。\`NOT NULL\` 制約を削除する |
 | \`.default(val)\` | 静的なデフォルト値を設定する（ランタイムのみ。SQL DEFAULT 句は出力されない）|
 | \`.default(fn)\` | \`$defaultFn\` による動的なデフォルトを設定する（ランタイムのみ。\`nanoka generate\` で警告）|
-| \`.defaultNow()\` | **timestamp のみ**: DB の DEFAULT 句として現在の epoch-ms を設定する。generate 警告なし |
+| \`.defaultNow()\` | **timestamp のみ**: DB の DEFAULT 句として現在の epoch-ms を設定する。generate 警告なし。\`inputSchema('create')\` で省略可能（DB が値を埋める）— クライアント書き込みを完全にブロックするには \`.readOnly()\` を併用 |
 | \`.min(n)\` | 文字列の最小長（string/uuid）または最小値（number/integer）|
 | \`.max(n)\` | 文字列の最大長（string/uuid）または最大値（number/integer）|
 | \`.email()\` | メール形式バリデーションを追加する（string のみ）|

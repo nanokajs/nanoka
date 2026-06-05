@@ -88,7 +88,26 @@ export function defineModel<Fields extends Record<string, Field<any, any, any>>>
         accessor,
       )
       const baseSchema = buildBaseObject(fields)
-      return applySchemaOptions(baseSchema, merged)
+      let schema = applySchemaOptions(baseSchema, merged)
+      if (usage === 'create') {
+        // biome-ignore lint/suspicious/noExplicitAny: Zod shape access requires any
+        const shape = (schema as z.ZodObject<any>).shape
+        // biome-ignore lint/suspicious/noExplicitAny: patch record values are ZodTypeAny
+        const patch: Record<string, any> = {}
+        for (const [key, field] of Object.entries(fields)) {
+          if (
+            field.modifiers.defaultNow === true &&
+            field.modifiers.policy !== 'readOnly' &&
+            key in shape
+          ) {
+            patch[key] = shape[key].optional()
+          }
+        }
+        if (Object.keys(patch).length > 0) {
+          schema = schema.extend(patch)
+        }
+      }
+      return schema
     },
 
     outputSchema(

@@ -346,4 +346,34 @@ describe('inputSchema/outputSchema return types are precise', () => {
     const __: C = { title: 'x', id: '...', published: true }
     void __
   })
+
+  it('CreateInput makes defaultNow field optional', () => {
+    const Event = defineModel('events', {
+      id: t.uuid().primary().readOnly(),
+      title: t.string(),
+      createdAt: t.timestamp().defaultNow(),
+    })
+    type C = CreateInput<typeof Event.fields>
+    // createdAt is optional — omitting it must be valid
+    const _: C = { title: 'x' }
+    void _
+    // createdAt can also be provided explicitly
+    const __: C = { title: 'x', createdAt: new Date() }
+    void __
+  })
+
+  it('CreateInput makes defaultNow().readOnly() field optional (readOnly fields remain optional in CreateInput)', () => {
+    const Event = defineModel('events', {
+      id: t.uuid().primary().readOnly(),
+      title: t.string(),
+      createdAt: t.timestamp().defaultNow().readOnly(),
+    })
+    type C = CreateInput<typeof Event.fields>
+    // readOnly fields are optional in CreateInput (library internals can supply them;
+    // inputSchema('create') excludes them from the API surface at runtime)
+    const _: C = { title: 'x' }
+    void _
+    const __: C = { title: 'x', createdAt: new Date() }
+    void __
+  })
 })

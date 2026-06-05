@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- `t.timestamp().defaultNow()` — timestamp フィールドに DB の `DEFAULT` 句として現在時刻（epoch ミリ秒）を設定する糖衣。`nanoka generate` は `sql` `` `(cast((julianday('now') - 2440587.5)*86400000 as integer))` `` を `.default(...)` に出力し、`timestamp_ms` 列（epoch ms 整数）と整合する。`CURRENT_TIMESTAMP`（text を返す）は使わない。関数 default（`default(() => new Date())`）と異なり生成 SQL に `DEFAULT` 句が出力され、`nanoka generate` の警告が出ない。`readOnly()` との併用を推奨。
+- `t.timestamp().defaultNow()` — timestamp フィールドに DB の `DEFAULT` 句として現在時刻（epoch ミリ秒）を設定する糖衣。`nanoka generate` は `sql` `` `(cast((julianday('now') - 2440587.5)*86400000 as integer))` `` を `.default(...)` に出力し、`timestamp_ms` 列（epoch ms 整数）と整合する。`CURRENT_TIMESTAMP`（text を返す）は使わない。関数 default（`default(() => new Date())`）と異なり生成 SQL に `DEFAULT` 句が出力され、`nanoka generate` の警告が出ない。`inputSchema('create')` で省略可能（DB が値を埋める）。クライアントに値の設定を一切許さない場合は `readOnly()` を併用する。
 
 ### Changed
 
