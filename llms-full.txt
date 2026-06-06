@@ -257,9 +257,14 @@ Options: `{ offset?, orderBy?, where? }`. No `limit` parameter. Issues no LIMIT 
 
 **`findOne(idOrWhere)`** — fetch single row
 
+`idOrWhere` accepts a primary key scalar, a where equality object, a `{ field: { in: [...] } }` operator object, or a Drizzle SQL expression. Symmetric with `findMany` / `findAll` `where`.
+
 ```ts
 const user = await User.findOne(userId)  // by primary key
 const user = await User.findOne({ email: 'alice@example.com' })  // by where clause (AND all conditions)
+const user = await User.findOne({ role: { in: ['admin', 'mod'] } })  // in operator
+import { eq } from 'drizzle-orm'
+const user = await User.findOne(eq(User.table.email, 'alice@example.com'))  // Drizzle SQL
 ```
 
 **`create(input)`**
@@ -275,21 +280,38 @@ const user = await User.create({
 
 **`update(idOrWhere, data)`** — update single row(s)
 
+`idOrWhere` accepts a primary key scalar, a where equality object, a `{ field: { in: [...] } }` operator object, or a Drizzle SQL expression.
+
 ```ts
 const updated = await User.update(userId, { email: 'new@example.com' })
 // or by where clause:
 const updated = await User.update({ email: 'old@example.com' }, { email: 'new@example.com' })
+// or by in operator:
+await User.update({ id: { in: ['id-1', 'id-2'] } }, { role: 'suspended' })
+// or by Drizzle SQL expression:
+import { inArray } from 'drizzle-orm'
+await Session.update(inArray(Session.table.userId, userIds), { expired: true })
 ```
 
-**`delete(idOrWhere)`** — delete row(s) by id or where clause
+**`delete(idOrWhere)`** — delete row(s) by id, where clause, in operator, or Drizzle SQL expression
 
 ```ts
 await User.delete(userId)
 // or by where clause:
 await User.delete({ email: 'alice@example.com' })
+// or by in operator:
+await Session.delete({ userId: { in: expiredUserIds } })
+// inArray chunk splitting — avoids D1 bind limit (100 per query):
+import { inArray } from 'drizzle-orm'
+const chunkSize = 50
+for (let i = 0; i < ids.length; i += chunkSize) {
+  await Session.delete(inArray(Session.table.id, ids.slice(i, i + chunkSize)))
+}
 ```
 
 Returns `{ readonly deleted: number }`.
+
+**`in` operator notes:** `{ field: { in: [...] } }` is supported in all `where` positions (`findMany`, `findAll`, `findOne`, `update`, `delete`). `{ in: [] }` empty array matches 0 rows. JSON fields whose stored value happens to be `{ in: [...] }` in shape are always compared by equality at runtime — the `in` operator applies to non-JSON fields only.
 
 ### 4.9 `t.json(zodSchema)`
 

@@ -184,6 +184,10 @@ const result = await app.db
 - VSCode extension（TypeScript 言語サーバ + Biome + nanoka generate で十分。Issue #16 参照）
 - フィールドアクセサAPIをMVPに含めない（Phase 2以降）
 
+> **where 表現力の対称化（escape hatch 対称化、DSL 化ではない）**: `findOne` / `update` / `delete` の `idOrWhere` は `findMany` の `where` と対称に Drizzle `SQL` 式を受け付ける（`findOne(inArray(t.id, chunk))`）。`Where` オブジェクトの値に最小限の `{ in: [...] }` 演算子も追加した。これは `app.db` 直叩きを減らすための escape hatch 対称化であり、DSL 化ではない。サポートする演算子オブジェクトは `in` のみ（`and / or / lt / gt / like` は Drizzle 式か `app.db` で書く）。json フィールドは型上 `{ in: [...] }` を受け付けるが、ランタイムでは常に等値比較される（IN 演算子は非 json フィールドのみ）。
+> 
+> `where` 値はバリデータ（`c.req.valid(...)`）経由で構築し、生の query/param オブジェクトを直接渡さないこと。`{ field: { in: [...] } }` の `in` は配列を IN マッチに使うため、未検証入力を直接流すと意図しない IN セマンティクスや大量マッチを招きうる。— [#139](https://github.com/nanokajs/nanoka/issues/139)
+
 > **成長戦略**: 薄いラッパーとして始め、使われたらフレームワークに育てる。スコープを広げるタイミングはユーザーの声が判断基準。名乗るのは後でいい。
 
 ---

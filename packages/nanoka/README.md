@@ -17,7 +17,7 @@ Targets **Cloudflare Workers + D1 (SQLite)** as first-class. Hono-compatible rou
 
 ## Status
 
-**Stable (1.11.0).** Core API-boundary surface — field policies, `inputSchema` / `outputSchema`, validator presets, `t.json(zodSchema)`, field accessor API, Zod 3 / 4 support, OpenAPI component seed, `t.timestamp().defaultNow()` — is stable under SemVer.
+**Stable (1.12.0).** Core API-boundary surface — field policies, `inputSchema` / `outputSchema`, validator presets, `t.json(zodSchema)`, field accessor API, Zod 3 / 4 support, OpenAPI component seed, `t.timestamp().defaultNow()`, mutation/findOne SQL expression and `in` operator in `where` — is stable under SemVer.
 
 ## Stable API surface (1.0)
 
@@ -333,7 +333,19 @@ const specific = await User.findMany({
 })
 ```
 
+The `where` field also accepts `{ field: { in: [...] } }` for IN matching:
+
+```ts
+// IN operator — equality OR over a set of values
+const selected = await User.findMany({
+  limit: 50,
+  where: { role: { in: ['admin', 'moderator'] } },
+})
+```
+
 When passing a Drizzle SQL expression, SQL injection prevention follows Drizzle's parametrized binding rules — ensure all user-supplied values are passed as Drizzle operands (e.g., `like(col, value)`) rather than interpolated into raw strings. Never pass user input to `sql.raw()`, which skips parametrization entirely.
+
+Build `where` values from validated input (`c.req.valid(...)`); do not pass raw query/param objects directly. The `{ in: [...] }` operator uses the array for IN matching, so unvalidated input could trigger unintended IN semantics or large match sets.
 
 **`offset` runtime cap:** `offset` is capped at 100,000 to prevent read amplification and DoS. If you need to paginate deeper, use cursor pagination (e.g., `id > lastId`) instead of offset/limit.
 
@@ -355,6 +367,33 @@ return c.json(User.toResponseMany(users))
 `findAll` accepts `offset`, `orderBy`, and `where` — the same semantics as `findMany`. It does **not** accept `limit`.
 
 **Warning:** `findAll` issues no LIMIT to the database. For request handlers, enforce an app-level size guard or use `findMany` with an explicit `limit` instead.
+
+### `findOne` / `update` / `delete` — Drizzle SQL and `in` operator
+
+`findOne`, `update`, and `delete` accept the same where expression forms as `findMany`: a primary key scalar, a plain equality object, a `{ field: { in: [...] } }` operator object, or a Drizzle SQL expression.
+
+```ts
+import { eq, inArray } from 'drizzle-orm'
+
+// By primary key (unchanged)
+await Session.delete('session-id')
+
+// By equality object (unchanged)
+await User.findOne({ email: 'alice@example.com' })
+
+// By { in: [...] } operator
+await Session.delete({ userId: { in: ['u-1', 'u-2', 'u-3'] } })
+
+// By Drizzle SQL expression — e.g., inArray for D1 bind limit (100) workaround
+const ids = ['id-1', 'id-2', /* ... 110 ids total ... */]
+const chunkSize = 50
+for (let i = 0; i < ids.length; i += chunkSize) {
+  const chunk = ids.slice(i, i + chunkSize)
+  await Session.delete(inArray(Session.table.id, chunk))
+}
+```
+
+SQL injection prevention follows Drizzle's parametrized binding rules for all forms above. The `{ in: [] }` empty array is valid and matches 0 rows. JSON fields typed as `{ in: [...] }` by coincidence are always compared by equality at runtime — the `in` operator applies to non-JSON fields only.
 
 ## Escape hatch: raw Drizzle and D1 batch
 

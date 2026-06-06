@@ -83,6 +83,22 @@ function findPrimaryKey(
 }
 
 /**
+ * Detects whether a value is an `{ in: [...] }` operator object for a non-json field.
+ * @internal
+ */
+// biome-ignore lint/suspicious/noExplicitAny: field constraint
+function isInOperator(value: unknown, field: Field<any, any, any> | undefined): boolean {
+  return (
+    field?.kind !== 'json' &&
+    typeof value === 'object' &&
+    value !== null &&
+    !Array.isArray(value) &&
+    Object.hasOwn(value, 'in') &&
+    Array.isArray((value as { in: unknown }).in)
+  )
+}
+
+/**
  * Constructs a Drizzle where clause from an object.
  * All entries are combined with AND.
  * @internal
@@ -92,7 +108,7 @@ function buildWhereClause(
   fields: Record<string, Field<any, any, any>>,
   where: Where<Record<string, any>>,
 ): ReturnType<typeof and> | null {
-  const conditions: ReturnType<typeof eq>[] = []
+  const conditions: SQL[] = []
 
   for (const [key, value] of Object.entries(where)) {
     // Multi-layered guard against identifier injection
@@ -104,16 +120,22 @@ function buildWhereClause(
     }
     // biome-ignore lint/suspicious/noExplicitAny: table column access is runtime-guarded by hasOwn
     const col = (table as unknown as Record<string, any>)[key]
-    conditions.push(eq(col, value))
+    const field = fields[key]
+    if (isInOperator(value, field)) {
+      conditions.push(inArray(col, (value as { in: unknown[] }).in))
+    } else {
+      conditions.push(eq(col, value))
+    }
   }
 
   if (conditions.length === 0) {
     return null
   }
+  // conditions is SQL[] (inArray/eq both return SQL); cast to satisfy Drizzle's and()/return type which expects the narrower eq() result shape. Safe at runtime — all elements are SQL wrappers.
   if (conditions.length === 1) {
-    return conditions[0]
+    return conditions[0] as ReturnType<typeof eq>
   }
-  return and(...conditions)
+  return and(...(conditions as ReturnType<typeof eq>[]))
 }
 
 function resolveRelationTarget(field: RelationDef): RelationTargetLike {
@@ -437,20 +459,25 @@ export async function findOneImpl<Fields extends Record<string, Field<any, any, 
   idOrWhere: IdOrWhere<Fields>,
   options?: FindOneOptions<Fields>,
 ): Promise<RowType<Fields> | null> {
-  let where: Where<Fields> | null = null
+  let whereClause: SQL | ReturnType<typeof buildWhereClause>
 
-  if (typeof idOrWhere === 'string' || typeof idOrWhere === 'number') {
-    // PK mode
-    const pk = findPrimaryKey(fields)
-    if (!pk) {
-      throw new HTTPException(500, { message: 'model has no primary key' })
-    }
-    where = { [pk[0]]: idOrWhere } as Where<Fields>
+  if (idOrWhere instanceof SQL) {
+    whereClause = idOrWhere
   } else {
-    where = idOrWhere as Where<Fields>
+    let where: Where<Fields>
+    if (typeof idOrWhere === 'string' || typeof idOrWhere === 'number') {
+      // PK mode
+      const pk = findPrimaryKey(fields)
+      if (!pk) {
+        throw new HTTPException(500, { message: 'model has no primary key' })
+      }
+      where = { [pk[0]]: idOrWhere } as Where<Fields>
+    } else {
+      where = idOrWhere as Where<Fields>
+    }
+    whereClause = buildWhereClause(table, fields, where)
   }
 
-  const whereClause = buildWhereClause(table, fields, where)
   if (!whereClause) {
     throw new HTTPException(400, { message: 'where clause must not be empty' })
   }
@@ -500,20 +527,25 @@ export async function updateImpl<Fields extends Record<string, Field<any, any, a
   idOrWhere: IdOrWhere<Fields>,
   data: Partial<RowType<Fields>>,
 ): Promise<RowType<Fields> | null> {
-  let where: Where<Fields> | null = null
+  let whereClause: SQL | ReturnType<typeof buildWhereClause>
 
-  if (typeof idOrWhere === 'string' || typeof idOrWhere === 'number') {
-    // PK mode
-    const pk = findPrimaryKey(fields)
-    if (!pk) {
-      throw new HTTPException(500, { message: 'model has no primary key' })
-    }
-    where = { [pk[0]]: idOrWhere } as Where<Fields>
+  if (idOrWhere instanceof SQL) {
+    whereClause = idOrWhere
   } else {
-    where = idOrWhere as Where<Fields>
+    let where: Where<Fields>
+    if (typeof idOrWhere === 'string' || typeof idOrWhere === 'number') {
+      // PK mode
+      const pk = findPrimaryKey(fields)
+      if (!pk) {
+        throw new HTTPException(500, { message: 'model has no primary key' })
+      }
+      where = { [pk[0]]: idOrWhere } as Where<Fields>
+    } else {
+      where = idOrWhere as Where<Fields>
+    }
+    whereClause = buildWhereClause(table, fields, where)
   }
 
-  const whereClause = buildWhereClause(table, fields, where)
   if (!whereClause) {
     throw new HTTPException(400, { message: 'where clause must not be empty' })
   }
@@ -538,20 +570,25 @@ export async function deleteImpl<Fields extends Record<string, Field<any, any, a
   fields: Fields,
   idOrWhere: IdOrWhere<Fields>,
 ): Promise<{ readonly deleted: number }> {
-  let where: Where<Fields> | null = null
+  let whereClause: SQL | ReturnType<typeof buildWhereClause>
 
-  if (typeof idOrWhere === 'string' || typeof idOrWhere === 'number') {
-    // PK mode
-    const pk = findPrimaryKey(fields)
-    if (!pk) {
-      throw new HTTPException(500, { message: 'model has no primary key' })
-    }
-    where = { [pk[0]]: idOrWhere } as Where<Fields>
+  if (idOrWhere instanceof SQL) {
+    whereClause = idOrWhere
   } else {
-    where = idOrWhere as Where<Fields>
+    let where: Where<Fields>
+    if (typeof idOrWhere === 'string' || typeof idOrWhere === 'number') {
+      // PK mode
+      const pk = findPrimaryKey(fields)
+      if (!pk) {
+        throw new HTTPException(500, { message: 'model has no primary key' })
+      }
+      where = { [pk[0]]: idOrWhere } as Where<Fields>
+    } else {
+      where = idOrWhere as Where<Fields>
+    }
+    whereClause = buildWhereClause(table, fields, where)
   }
 
-  const whereClause = buildWhereClause(table, fields, where)
   if (!whereClause) {
     throw new HTTPException(400, { message: 'where clause must not be empty' })
   }

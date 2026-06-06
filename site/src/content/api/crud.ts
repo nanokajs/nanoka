@@ -70,7 +70,7 @@ In request handlers, always prefer \`findMany\` with an explicit limit.
 
 ## findOne
 
-Fetches a single row by primary key value or where clause. Returns \`null\` if no row matches.
+Fetches a single row by primary key value, where clause, or Drizzle SQL expression. Returns \`null\` if no row matches.
 
 \`\`\`typescript
 // By primary key value
@@ -78,6 +78,13 @@ const user = await User.findOne('uuid-value')
 
 // By where clause
 const user = await User.findOne({ email: 'alice@example.com' })
+
+// By { in: [...] } operator
+const user = await User.findOne({ role: { in: ['admin', 'moderator'] } })
+
+// By Drizzle SQL expression
+import { eq } from 'drizzle-orm'
+const user = await User.findOne(eq(User.table.email, 'alice@example.com'))
 
 // Typical 404 pattern
 import { HTTPException } from 'hono/http-exception'
@@ -115,7 +122,7 @@ await app.db.insert(User.table).values({ ...body, passwordHash })
 
 ## update
 
-Updates rows matching the given id or where clause. Returns the updated row, or \`null\` if no row matched.
+Updates rows matching the given id, where clause, or Drizzle SQL expression. Returns the updated row, or \`null\` if no row matched.
 
 \`\`\`typescript
 // By primary key value
@@ -124,6 +131,13 @@ const updated = await User.update('uuid-value', { name: 'Bob' })
 // By where clause
 const updated = await User.update({ email: 'alice@example.com' }, { name: 'Bob' })
 
+// By { in: [...] } operator
+await User.update({ id: { in: ['id-1', 'id-2'] } }, { role: 'suspended' })
+
+// By Drizzle SQL expression
+import { inArray } from 'drizzle-orm'
+await Session.update(inArray(Session.table.userId, userIds), { expired: true })
+
 // 404 if not found
 if (!updated) throw new HTTPException(404, { message: 'Not found' })
 return c.json(User.toResponse(updated))
@@ -131,11 +145,21 @@ return c.json(User.toResponse(updated))
 
 ## delete
 
-Deletes rows matching the given id or where clause. Returns \`{ deleted: number }\`.
+Deletes rows matching the given id, where clause, or Drizzle SQL expression. Returns \`{ deleted: number }\`.
 
 \`\`\`typescript
 const result = await User.delete('uuid-value')
 console.log(result.deleted) // number of deleted rows
+
+// By { in: [...] } operator
+await Session.delete({ userId: { in: expiredUserIds } })
+
+// inArray chunk splitting — avoids D1 bind limit (100 per query)
+import { inArray } from 'drizzle-orm'
+const chunkSize = 50
+for (let i = 0; i < ids.length; i += chunkSize) {
+  await Session.delete(inArray(Session.table.id, ids.slice(i, i + chunkSize)))
+}
 
 // 404 if nothing was deleted
 if (result.deleted === 0) throw new HTTPException(404, { message: 'Not found' })
@@ -285,7 +309,7 @@ const activeUsers = await User.findAll({ where: { isActive: true }, orderBy: 'na
 
 ## findOne
 
-主キーの値または where 句で単一の行を取得します。行が見つからない場合は \`null\` を返します。
+主キーの値、where 句、または Drizzle SQL 式で単一の行を取得します。行が見つからない場合は \`null\` を返します。
 
 \`\`\`typescript
 // 主キーの値で
@@ -293,6 +317,13 @@ const user = await User.findOne('uuid-value')
 
 // where 句で
 const user = await User.findOne({ email: 'alice@example.com' })
+
+// { in: [...] } 演算子で
+const user = await User.findOne({ role: { in: ['admin', 'moderator'] } })
+
+// Drizzle SQL 式で
+import { eq } from 'drizzle-orm'
+const user = await User.findOne(eq(User.table.email, 'alice@example.com'))
 
 // 典型的な 404 パターン
 import { HTTPException } from 'hono/http-exception'
@@ -330,7 +361,7 @@ await app.db.insert(User.table).values({ ...body, passwordHash })
 
 ## update
 
-指定した id または where 句に一致する行を更新します。更新された行を返し、一致する行がなければ \`null\` を返します。
+指定した id、where 句、または Drizzle SQL 式に一致する行を更新します。更新された行を返し、一致する行がなければ \`null\` を返します。
 
 \`\`\`typescript
 // 主キーの値で
@@ -339,6 +370,13 @@ const updated = await User.update('uuid-value', { name: 'Bob' })
 // where 句で
 const updated = await User.update({ email: 'alice@example.com' }, { name: 'Bob' })
 
+// { in: [...] } 演算子で
+await User.update({ id: { in: ['id-1', 'id-2'] } }, { role: 'suspended' })
+
+// Drizzle SQL 式で
+import { inArray } from 'drizzle-orm'
+await Session.update(inArray(Session.table.userId, userIds), { expired: true })
+
 // 見つからない場合は 404
 if (!updated) throw new HTTPException(404, { message: 'Not found' })
 return c.json(User.toResponse(updated))
@@ -346,11 +384,21 @@ return c.json(User.toResponse(updated))
 
 ## delete
 
-指定した id または where 句に一致する行を削除します。\`{ deleted: number }\` を返します。
+指定した id、where 句、または Drizzle SQL 式に一致する行を削除します。\`{ deleted: number }\` を返します。
 
 \`\`\`typescript
 const result = await User.delete('uuid-value')
 console.log(result.deleted) // 削除された行数
+
+// { in: [...] } 演算子で
+await Session.delete({ userId: { in: expiredUserIds } })
+
+// inArray チャンク分割 — D1 バインド上限（1 クエリ 100 件）を回避する
+import { inArray } from 'drizzle-orm'
+const chunkSize = 50
+for (let i = 0; i < ids.length; i += chunkSize) {
+  await Session.delete(inArray(Session.table.id, ids.slice(i, i + chunkSize)))
+}
 
 // 削除されなかった場合は 404
 if (result.deleted === 0) throw new HTTPException(404, { message: 'Not found' })
