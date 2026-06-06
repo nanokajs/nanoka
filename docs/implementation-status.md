@@ -40,6 +40,7 @@
 - `toOpenAPISchema('output', { with })` による relations nested 展開（spec-only、runtime は Zod のまま） — [#91](https://github.com/nanokajs/nanoka/issues/91)
 - `findMany` の `offset` runtime cap = 100_000 — [#18](https://github.com/nanokajs/nanoka/issues/18)
 - `t.timestamp().defaultNow()` — DB の DEFAULT 句として epoch-ms 式を出力。`nanoka generate` 警告ゼロ — [#135](https://github.com/nanokajs/nanoka/issues/135)
+- mutation/findOne の where に Drizzle SQL 式・最小 in 演算子 — [#139](https://github.com/nanokajs/nanoka/issues/139)
 
 ### AI coding support
 

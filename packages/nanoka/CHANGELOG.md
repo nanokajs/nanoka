@@ -5,6 +5,19 @@ All notable changes to `@nanokajs/core` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.12.0] — 2026-06-06
+
+### Added
+
+- `findOne` / `update` / `delete` の `idOrWhere` に Drizzle `SQL` 式を渡せるよう対称化（`findMany` / `findAll` の `where: SQL` と同等）。`Session.delete(inArray(Session.table.id, chunk))` のように D1 バインド上限（100）回避の `inArray` チャンク分割が Model API で書けるようになった。
+- `Where` 値型に最小 `{ in: [...] }` 演算子を追加（`WhereValue<T>` 型として export）。`findMany` / `findAll` / `findOne` / `update` / `delete` 全 where 経路で一貫して使える。空配列 `{ in: [] }` は 0 行マッチ。json フィールドの値が `{ in: [...] }` 形でも型上は演算子と区別できないが、ランタイムでは json フィールドは常に等値比較される。
+- `WhereValue<T>` 型を `@nanokajs/core` から export。
+
+### Notes
+
+- 後方互換。PK スカラー・等値 AND オブジェクト・空 where 400 ガード・prototype pollution ガードは従来どおり動作する。
+- サポートする演算子オブジェクトは `in` のみ（escape hatch 対称化）。`and / or / lt / gt / like` はDrizzle 式か `app.db` で書く。
+
 ## [1.11.0] — 2026-06-05
 
 ### Added

@@ -1,9 +1,17 @@
-import { like } from 'drizzle-orm'
+import { inArray, like } from 'drizzle-orm'
 import { describe, it } from 'vitest'
 import type { Adapter } from '../../adapter/types'
 import { t } from '../../field'
 import { defineModel } from '../define'
-import type { CreateInput, FindAllOptions, FindManyOptions, RowType, WithOptions } from '../types'
+import type {
+  CreateInput,
+  FindAllOptions,
+  FindManyOptions,
+  IdOrWhere,
+  RowType,
+  WhereValue,
+  WithOptions,
+} from '../types'
 
 describe('CRUD methods: type checking', () => {
   const User = defineModel('users', {
@@ -351,6 +359,110 @@ describe('CRUD methods: type checking', () => {
 
     it('accepts where object', () => {
       const _: Parameters<typeof User.delete>[1] = { email: 'test@example.com' }
+      void _
+    })
+  })
+})
+
+describe('SQL expression and in operator — type constraints', () => {
+  const User = defineModel('users_type_test', {
+    id: t.string().primary(),
+    name: t.string(),
+    role: t.string(),
+  })
+
+  const NumericUser = defineModel('numeric_users', {
+    id: t.integer().primary(),
+    name: t.string(),
+  })
+
+  describe('findOne/update/delete accept SQL expression', () => {
+    it('findOne accepts Drizzle SQL (like)', () => {
+      const _: IdOrWhere<typeof User.fields> = like(User.table.name, '%x%')
+      void _
+    })
+
+    it('findOne accepts Drizzle SQL (inArray)', () => {
+      const _: IdOrWhere<typeof User.fields> = inArray(User.table.id, ['a', 'b'])
+      void _
+    })
+
+    it('update accepts Drizzle SQL', () => {
+      const _: Parameters<typeof User.update>[1] = inArray(User.table.id, ['a', 'b'])
+      void _
+    })
+
+    it('delete accepts Drizzle SQL', () => {
+      const _: Parameters<typeof User.delete>[1] = inArray(User.table.id, ['a', 'b'])
+      void _
+    })
+  })
+
+  describe('accept { field: { in: [...] } } operator', () => {
+    it('findOne accepts { id: { in: [...] } }', () => {
+      const _: IdOrWhere<typeof User.fields> = { id: { in: ['a', 'b'] } }
+      void _
+    })
+
+    it('update accepts { id: { in: [...] } }', () => {
+      const _: Parameters<typeof User.update>[1] = { id: { in: ['a', 'b'] } }
+      void _
+    })
+
+    it('delete accepts { id: { in: [...] } }', () => {
+      const _: Parameters<typeof User.delete>[1] = { id: { in: ['a', 'b'] } }
+      void _
+    })
+
+    it('findMany accepts { role: { in: [...] } } in where', () => {
+      const opts: FindManyOptions<typeof User.fields> = {
+        limit: 10,
+        where: { role: { in: ['admin', 'user'] } },
+      }
+      void opts
+    })
+  })
+
+  describe('in element type is checked', () => {
+    it('rejects numeric in array for string id field', () => {
+      // @ts-expect-error - id is string but in contains numbers
+      const _: IdOrWhere<typeof User.fields> = { id: { in: [123] } }
+      void _
+    })
+
+    it('rejects string in array for numeric id field', () => {
+      // @ts-expect-error - id is number but in contains strings
+      const _: IdOrWhere<typeof NumericUser.fields> = { id: { in: ['a'] } }
+      void _
+    })
+  })
+
+  describe('WhereValue type', () => {
+    it('accepts scalar value', () => {
+      const _: WhereValue<string> = 'hello'
+      void _
+    })
+
+    it('accepts { in: [...] } operator', () => {
+      const _: WhereValue<string> = { in: ['a', 'b'] }
+      void _
+    })
+  })
+
+  describe('regression: existing type constraints', () => {
+    it('nonexistent field in where is rejected', () => {
+      // @ts-expect-error - 'nonexistent' is not a field
+      const _: Parameters<typeof User.findOne>[1] = { nonexistent: 'value' }
+      void _
+    })
+
+    it('scalar id still accepted by findOne', () => {
+      const _: Parameters<typeof User.findOne>[1] = 'some-id'
+      void _
+    })
+
+    it('scalar id still accepted by delete', () => {
+      const _: Parameters<typeof User.delete>[1] = 'some-id'
       void _
     })
   })

@@ -1,5 +1,5 @@
 import type { D1Database } from '@cloudflare/workers-types'
-import { eq, like, or, sql } from 'drizzle-orm'
+import { eq, inArray, like, or, sql } from 'drizzle-orm'
 import { HTTPException } from 'hono/http-exception'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { d1Adapter } from '../../adapter/d1'
@@ -899,5 +899,226 @@ describe('findAll', () => {
       // biome-ignore lint/suspicious/noExplicitAny: intentional invalid offset for guard test
       AllUser.findAll(adapter, { offset: 1.5 as any }),
     ).rejects.toThrow(HTTPException)
+  })
+})
+
+describe('SQL expression and in operator — findOne/update/delete', () => {
+  const SqlModel = defineModel('sql_users', {
+    id: t.string().primary(),
+    name: t.string(),
+    role: t.string(),
+  })
+
+  const JsonModel = defineModel('json_users', {
+    id: t.string().primary(),
+    // biome-ignore lint/suspicious/noExplicitAny: json field with unknown shape for test
+    meta: t.json<{ in: string[] } | unknown>(),
+  })
+
+  beforeEach(async () => {
+    const { env } = await import('cloudflare:test')
+    const adapter = d1Adapter(env.DB)
+
+    await adapter.drizzle.run(sql`DROP TABLE IF EXISTS sql_users`)
+    await adapter.drizzle.run(
+      sql`
+        CREATE TABLE sql_users (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          role TEXT NOT NULL
+        )
+      `,
+    )
+
+    await adapter.drizzle.run(sql`DROP TABLE IF EXISTS json_users`)
+    await adapter.drizzle.run(
+      sql`
+        CREATE TABLE json_users (
+          id TEXT PRIMARY KEY,
+          meta TEXT NOT NULL
+        )
+      `,
+    )
+
+    await SqlModel.create(adapter, { id: 'su-1', name: 'Alice', role: 'admin' })
+    await SqlModel.create(adapter, { id: 'su-2', name: 'Bob', role: 'user' })
+    await SqlModel.create(adapter, { id: 'su-3', name: 'Charlie', role: 'user' })
+    await SqlModel.create(adapter, { id: 'su-4', name: 'Diana', role: 'admin' })
+  })
+
+  it('findOne accepts SQL expression', async () => {
+    const { env } = await import('cloudflare:test')
+    const adapter = d1Adapter(env.DB)
+
+    const found = await SqlModel.findOne(adapter, eq(SqlModel.table.name, 'Alice'))
+    expect(found).not.toBeNull()
+    expect(found?.name).toBe('Alice')
+  })
+
+  it('update accepts SQL expression', async () => {
+    const { env } = await import('cloudflare:test')
+    const adapter = d1Adapter(env.DB)
+
+    const updated = await SqlModel.update(adapter, inArray(SqlModel.table.id, ['su-1', 'su-2']), {
+      role: 'moderator',
+    })
+    expect(updated).not.toBeNull()
+
+    const rows = await SqlModel.findMany(adapter, { limit: 10, where: { role: 'moderator' } })
+    const ids = rows.map((r) => r.id).sort()
+    expect(ids).toContain('su-1')
+  })
+
+  it('delete accepts SQL expression', async () => {
+    const { env } = await import('cloudflare:test')
+    const adapter = d1Adapter(env.DB)
+
+    const result = await SqlModel.delete(adapter, inArray(SqlModel.table.id, ['su-1', 'su-2']))
+    expect(result.deleted).toBe(2)
+
+    const remaining = await SqlModel.findMany(adapter, { limit: 10 })
+    expect(remaining.map((r) => r.id).sort()).toEqual(['su-3', 'su-4'])
+  })
+
+  it('delete with inArray chunk splitting (>100 ids)', async () => {
+    const { env } = await import('cloudflare:test')
+    const adapter = d1Adapter(env.DB)
+
+    // Create 110 additional rows
+    const extraIds: string[] = []
+    for (let i = 0; i < 110; i++) {
+      const id = `chunk-${String(i).padStart(3, '0')}`
+      extraIds.push(id)
+      await SqlModel.create(adapter, { id, name: `User${i}`, role: 'temp' })
+    }
+
+    // Split into chunks of 50 and delete
+    const chunkSize = 50
+    let totalDeleted = 0
+    for (let i = 0; i < extraIds.length; i += chunkSize) {
+      const chunk = extraIds.slice(i, i + chunkSize)
+      const result = await SqlModel.delete(adapter, inArray(SqlModel.table.id, chunk))
+      totalDeleted += result.deleted
+    }
+
+    expect(totalDeleted).toBe(110)
+
+    // Verify original rows remain
+    const remaining = await SqlModel.findMany(adapter, { limit: 20, where: { role: 'temp' } })
+    expect(remaining.length).toBe(0)
+  })
+
+  it('findOne with { in } operator', async () => {
+    const { env } = await import('cloudflare:test')
+    const adapter = d1Adapter(env.DB)
+
+    const found = await SqlModel.findOne(adapter, { id: { in: ['su-1', 'su-2', 'su-3'] } })
+    expect(found).not.toBeNull()
+    expect(['su-1', 'su-2', 'su-3']).toContain(found?.id)
+  })
+
+  it('update with { in } operator', async () => {
+    const { env } = await import('cloudflare:test')
+    const adapter = d1Adapter(env.DB)
+
+    await SqlModel.update(adapter, { id: { in: ['su-1', 'su-2'] } }, { role: 'updated' })
+
+    const updatedRows = await SqlModel.findMany(adapter, {
+      limit: 10,
+      where: { role: 'updated' },
+    })
+    expect(updatedRows.map((r) => r.id).sort()).toEqual(['su-1', 'su-2'])
+  })
+
+  it('delete with { in } operator', async () => {
+    const { env } = await import('cloudflare:test')
+    const adapter = d1Adapter(env.DB)
+
+    const result = await SqlModel.delete(adapter, { id: { in: ['su-3', 'su-4'] } })
+    expect(result.deleted).toBe(2)
+
+    const remaining = await SqlModel.findMany(adapter, { limit: 10 })
+    expect(remaining.map((r) => r.id).sort()).toEqual(['su-1', 'su-2'])
+  })
+
+  it('findMany with { in } operator', async () => {
+    const { env } = await import('cloudflare:test')
+    const adapter = d1Adapter(env.DB)
+
+    const rows = await SqlModel.findMany(adapter, {
+      limit: 10,
+      where: { role: { in: ['admin', 'user'] } },
+    })
+    expect(rows.length).toBe(4)
+
+    const adminRows = await SqlModel.findMany(adapter, {
+      limit: 10,
+      where: { role: { in: ['admin'] } },
+    })
+    expect(adminRows.length).toBe(2)
+    expect(adminRows.every((r) => r.role === 'admin')).toBe(true)
+  })
+
+  it('{ in: [] } empty array returns 0 rows', async () => {
+    const { env } = await import('cloudflare:test')
+    const adapter = d1Adapter(env.DB)
+
+    const found = await SqlModel.findOne(adapter, { id: { in: [] } })
+    expect(found).toBeNull()
+
+    const result = await SqlModel.delete(adapter, { id: { in: [] } })
+    expect(result.deleted).toBe(0)
+  })
+
+  it('json { in }-shaped value is treated as equality (not IN operator)', async () => {
+    const { env } = await import('cloudflare:test')
+    const adapter = d1Adapter(env.DB)
+
+    // Insert a row whose meta JSON value happens to have { in: ['x'] } shape
+    // json columns serialize/deserialize via JSON.stringify/parse
+    const inShapedValue = { in: ['x'] }
+    await JsonModel.create(adapter, { id: 'j-1', meta: inShapedValue })
+    await JsonModel.create(adapter, { id: 'j-2', meta: { foo: 'bar' } })
+
+    // findOne with meta: { in: ['x'] } should use equality (eq), not inArray
+    // The key invariant: isInOperator returns false for json fields, so eq(col, value) is used.
+    // Because the json column uses Drizzle's mode:'json', eq compares the serialized JSON string.
+    // biome-ignore lint/suspicious/noExplicitAny: intentional test of json equality vs in operator
+    const found = await JsonModel.findOne(adapter, { meta: inShapedValue as any })
+    // The invariant we're testing: the query does NOT become inArray(meta, ['x']).
+    // Drizzle's json-mode column will serialize inShapedValue via its own mapTo, so this
+    // equals the stored value — 1 row is expected.
+    expect(found).not.toBeNull()
+    expect(found?.id).toBe('j-1')
+  })
+
+  it('equality AND / PK scalar still works (regression)', async () => {
+    const { env } = await import('cloudflare:test')
+    const adapter = d1Adapter(env.DB)
+
+    const byEmail = await SqlModel.findOne(adapter, { name: 'Bob', role: 'user' })
+    expect(byEmail).not.toBeNull()
+    expect(byEmail?.id).toBe('su-2')
+
+    const byPk = await SqlModel.findOne(adapter, 'su-1')
+    expect(byPk).not.toBeNull()
+    expect(byPk?.name).toBe('Alice')
+  })
+
+  it('empty where object still rejected (regression)', async () => {
+    const { env } = await import('cloudflare:test')
+    const adapter = d1Adapter(env.DB)
+
+    // biome-ignore lint/suspicious/noExplicitAny: intentional empty where for guard test
+    await expect(SqlModel.delete(adapter, {} as any)).rejects.toThrow(HTTPException)
+  })
+
+  it('prototype pollution guard holds (regression)', async () => {
+    const { env } = await import('cloudflare:test')
+    const adapter = d1Adapter(env.DB)
+
+    const malicious = JSON.parse('{"toString": "x"}')
+    // biome-ignore lint/suspicious/noExplicitAny: intentionally passing invalid type to test runtime validation
+    await expect(SqlModel.findOne(adapter, malicious as any)).rejects.toThrow(HTTPException)
   })
 })

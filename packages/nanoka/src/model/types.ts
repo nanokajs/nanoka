@@ -111,22 +111,32 @@ export type OrderBy<
     >
 
 /**
- * Where clause object: each key is a field name, each value is the desired equality.
+ * A single where value: either an equality value or an `{ in: [...] }` operator for IN matching.
+ * Note: json fields whose stored value happens to be `{ in: [...] }` in shape are still treated
+ * as equality at runtime — the IN operator is applied to non-json fields only.
+ */
+export type WhereValue<T> = T | { readonly in: readonly T[] }
+
+/**
+ * Where clause object: each key is a field name, each value is the desired equality, or an
+ * `{ in: [...] }` operator for IN matching.
+ * json フィールドの値が偶然 `{ in: [...] }` 形でも型上は演算子と区別できないが、ランタイムでは
+ * json フィールドは常に等値比較される（IN 演算子は非 json フィールドのみ）。
  */
 export type Where<
   // biome-ignore lint/suspicious/noExplicitAny: any is necessary for Field constraint
   Fields extends Record<string, Field<any, any, any>>,
 > = {
-  readonly [K in NonRelationKeys<Fields>]?: InferFieldType<Fields[K]>
+  readonly [K in NonRelationKeys<Fields>]?: WhereValue<InferFieldType<Fields[K]>>
 }
 
 /**
- * Identifier or Where clause: can be a primary key value or a Where object.
+ * Identifier or Where clause: can be a primary key value, a Where object, or a Drizzle SQL expression.
  */
 export type IdOrWhere<
   // biome-ignore lint/suspicious/noExplicitAny: any is necessary for Field constraint
   Fields extends Record<string, Field<any, any, any>>,
-> = string | number | Where<Fields>
+> = string | number | Where<Fields> | SQL
 
 /**
  * Row type: full record type from fields, excluding relation fields.
