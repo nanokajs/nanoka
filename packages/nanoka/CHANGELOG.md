@@ -5,6 +5,12 @@ All notable changes to `@nanokajs/core` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.12.1] — 2026-07-02
+
+### Fixed
+
+- リリース CI 修正のための再公開。`1.10.0`〜`1.12.0` は publish ワークフローの `publish-core` ジョブが `examples/basic` の typecheck 前に `@nanokajs/auth` をビルドしておらず、`TS2307 (Cannot find module '@nanokajs/auth')` で publish が中断し npm 未公開だった。ライブラリ本体のコード変更はなく、`1.12.0` と機能的に同一。
+
 ## [1.12.0] — 2026-06-06
 
 ### Added

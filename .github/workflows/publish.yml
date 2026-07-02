@@ -89,6 +89,9 @@ jobs:
 
       - run: pnpm -C packages/nanoka typecheck
 
+      # examples/basic が @nanokajs/auth に依存するため、typecheck 前に型定義をビルドする
+      - run: pnpm -C packages/nanoka-auth build
+
       - run: pnpm -C examples/basic typecheck
 
       - run: pnpm -C examples/basic test
