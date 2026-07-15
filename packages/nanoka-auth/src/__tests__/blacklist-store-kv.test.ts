@@ -2,10 +2,12 @@ import { env } from 'cloudflare:test'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { kvBlacklistStore } from '../blacklist-stores/kv.js'
 
-declare module 'cloudflare:test' {
-  interface ProvidedEnv {
-    // biome-ignore lint/suspicious/noExplicitAny: KVNamespace is provided by miniflare at runtime
-    BLACKLIST_KV: any
+declare global {
+  namespace Cloudflare {
+    interface Env {
+      // biome-ignore lint/suspicious/noExplicitAny: KVNamespace is provided by miniflare at runtime
+      BLACKLIST_KV: any
+    }
   }
 }
 

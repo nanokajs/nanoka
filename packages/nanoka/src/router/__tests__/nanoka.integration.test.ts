@@ -6,9 +6,11 @@ import { d1Adapter } from '../../adapter'
 import { t } from '../../field'
 import { nanoka } from '../nanoka'
 
-declare module 'cloudflare:test' {
-  interface ProvidedEnv {
-    DB: D1Database
+declare global {
+  namespace Cloudflare {
+    interface Env {
+      DB: D1Database
+    }
   }
 }
 

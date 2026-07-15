@@ -24,13 +24,13 @@ describe('CRUD methods: type checking', () => {
     it('requires limit parameter', () => {
       // @ts-expect-error - limit is required
       // biome-ignore lint/suspicious/noExplicitAny: intentional test for type constraint
-      User.findMany({} as any, {})
+      User.findMany({} as any, {}).catch(() => {})
     })
 
     it('rejects findMany with no options argument', () => {
       // @ts-expect-error - options argument is required
       // biome-ignore lint/suspicious/noExplicitAny: intentional test for type constraint
-      User.findMany({} as any)
+      User.findMany({} as any).catch(() => {})
     })
 
     it('allows findMany with limit', () => {
@@ -140,7 +140,7 @@ describe('CRUD methods: type checking', () => {
           RowType<typeof UserWithPosts.fields> & { readonly posts: RowType<typeof Post.fields>[] }
         >
       > = UserWithPosts.findMany({} as Adapter, { limit: 10, with: { posts: true } })
-      void result
+      void result.catch(() => {})
     })
 
     it('findOne with belongsTo returns row with nullable relation', () => {
@@ -148,7 +148,7 @@ describe('CRUD methods: type checking', () => {
         | (RowType<typeof Post.fields> & { readonly author: RowType<typeof Author.fields> | null })
         | null
       > = Post.findOne({} as Adapter, 'post-1', { with: { author: true } })
-      void result
+      void result.catch(() => {})
     })
 
     it('rejects nested with', () => {
@@ -171,7 +171,7 @@ describe('CRUD methods: type checking', () => {
   describe('findAll type constraints', () => {
     it('allows findAll with no options (options omitted)', () => {
       // biome-ignore lint/suspicious/noExplicitAny: intentional adapter stub
-      User.findAll({} as any)
+      User.findAll({} as any).catch(() => {})
     })
 
     it('allows findAll with offset', () => {
@@ -210,7 +210,7 @@ describe('CRUD methods: type checking', () => {
 
     it('findAll return type is Promise<RowType<Fields>[]>', async () => {
       const result: Promise<RowType<typeof User.fields>[]> = User.findAll({} as Adapter)
-      void result
+      void result.catch(() => {})
     })
   })
 
@@ -344,7 +344,7 @@ describe('CRUD methods: type checking', () => {
     it('requires idOrWhere parameter', () => {
       // @ts-expect-error - idOrWhere is required
       // biome-ignore lint/suspicious/noExplicitAny: intentional test for type constraint
-      User.delete({} as any)
+      User.delete({} as any).catch(() => {})
     })
 
     it('accepts id as string', () => {

@@ -4,11 +4,13 @@ import { beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { postFields, postTableName } from '../src/models/post'
 import { userFields, userTableName } from '../src/models/user'
 
-declare module 'cloudflare:test' {
-  interface ProvidedEnv {
-    DB: D1Database
-    TEST_MIGRATIONS: import('cloudflare:test').D1Migration[]
-    ENVIRONMENT: string
+declare global {
+  namespace Cloudflare {
+    interface Env {
+      DB: D1Database
+      TEST_MIGRATIONS: import('cloudflare:test').D1Migration[]
+      ENVIRONMENT: string
+    }
   }
 }
 

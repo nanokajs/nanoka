@@ -5,6 +5,14 @@ All notable changes to `@nanokajs/core` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.13.1] — 2026-07-15
+
+### Changed
+
+- テスト/開発ツールチェーンを一括更新: `wrangler` 3.114 → 4.111、`vitest` 2.1 → 4.1、`@cloudflare/vitest-pool-workers` 0.5 → 0.18（Vite プラグイン方式 `cloudflareTest()` へ移行）。ライブラリ本体（`dist` / 公開 API / peerDependencies）に変更なし。
+- monorepo ルートの `pnpm.overrides` から `wrangler <4` / `undici <6` の固定を解除（undici 7 / ws 8.21 / vite 8 / esbuild 0.28 系に更新され、vitest-pool-workers 経由の transitive advisory を解消）。
+- `create-nanoka-app` テンプレートの `wrangler` を `^3.80.0` → `^4.111.0` に更新。
+
 ## [1.12.1] — 2026-07-02
 
 ### Fixed
