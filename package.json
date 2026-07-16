@@ -15,7 +15,8 @@
   },
   "pnpm": {
     "overrides": {
-      "devalue": ">=5.8.1"
+      "devalue": ">=5.8.1",
+      "esbuild": ">=0.25.0"
     }
   }
 }
