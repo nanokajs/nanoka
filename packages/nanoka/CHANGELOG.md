@@ -5,6 +5,12 @@ All notable changes to `@nanokajs/core` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.12.2] — 2026-07-15
+
+### Changed
+
+- `drizzle-kit` の推奨バージョンを 0.31 系に更新（`create-nanoka-app` テンプレートの devDependency を `^0.28.0` → `^0.31.10`、`examples/basic` も `^0.31.10` に追従）。example スキーマで 0.28.1 と 0.31.10 の `drizzle-kit generate` 出力（SQL）がバイト一致すること、および 0.28 世代の既存 journal / snapshot を 0.31 がそのまま読めること（spurious diff なし）を確認済み。`drizzle-orm` は `^0.45.2` のまま変更なし。
+
 ## [1.12.1] — 2026-07-02
 
 ### Fixed
