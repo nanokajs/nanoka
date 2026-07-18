@@ -1,6 +1,6 @@
 {
   "name": "@nanokajs/auth",
-  "version": "1.6.3",
+  "version": "2.0.0",
   "type": "module",
   "description": "Authentication utilities for Nanoka on Cloudflare Workers.",
   "author": "Eiichiro Iriguchi <eiichiro_iriguchi@a-1ro.dev>",
@@ -21,7 +21,7 @@
     "d1"
   ],
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "sideEffects": false,
   "exports": {
