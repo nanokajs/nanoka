@@ -5,6 +5,12 @@ All notable changes to `@nanokajs/auth` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] — 2026-07-18
+
+### Changed
+
+- **BREAKING**: `engines.node` を `>= 20` から `>= 22` に引き上げ（core / create-nanoka-app と同時実施）。開発ツールチェーン（wrangler 4 / vite 8）が既に Node 22+ を要求しており、宣言を実態に合わせた。ランタイム（Cloudflare Workers）への影響はなし。
+
 ## [1.6.3] — 2026-07-15
 
 ### Changed
