@@ -5,6 +5,12 @@ All notable changes to `@nanokajs/core` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.13.0] — 2026-07-15
+
+### Changed
+
+- `@libsql/client`（optional peer）の対応範囲を `^0.14.0` から `>=0.14.0 <0.18.0` に拡張。0.17 系（libsql core 0.5 系）で Turso adapter（`createClient` / `execute` / `batch` / CRUD round-trip）の動作をテストで確認済み。既存の 0.14 系ユーザーは peer warning なしでそのまま利用可能。新規利用時の推奨は `@libsql/client@^0.17.4`。開発用 devDependency も `^0.17.4` に更新。
+
 ## [1.12.2] — 2026-07-15
 
 ### Changed
