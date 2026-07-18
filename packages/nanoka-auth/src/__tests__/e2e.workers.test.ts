@@ -7,12 +7,14 @@ import { createAuth } from '../create-auth.js'
 import { pbkdf2Hasher } from '../hashers/pbkdf2.js'
 import { verify } from '../jwt.js'
 
-declare module 'cloudflare:test' {
-  interface ProvidedEnv {
-    // biome-ignore lint/suspicious/noExplicitAny: D1Database is provided by miniflare at runtime
-    DB: any
-    TEST_MIGRATIONS: D1Migration[]
-    AUTH_SECRET: string
+declare global {
+  namespace Cloudflare {
+    interface Env {
+      // biome-ignore lint/suspicious/noExplicitAny: D1Database is provided by miniflare at runtime
+      DB: any
+      TEST_MIGRATIONS: D1Migration[]
+      AUTH_SECRET: string
+    }
   }
 }
 

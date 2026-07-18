@@ -1,9 +1,11 @@
 import { applyD1Migrations, env, SELF } from 'cloudflare:test'
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest'
 
-declare module 'cloudflare:test' {
-  interface ProvidedEnv {
-    AUTH_SECRET: string
+declare global {
+  namespace Cloudflare {
+    interface Env {
+      AUTH_SECRET: string
+    }
   }
 }
 

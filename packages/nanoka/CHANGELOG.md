@@ -5,6 +5,16 @@ All notable changes to `@nanokajs/core` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.13.1] — 2026-07-15
+
+### Changed
+
+- テスト/開発ツールチェーンを一括更新: `wrangler` 3.114 → 4.111、`vitest` 2.1 → 4.1、`@cloudflare/vitest-pool-workers` 0.5 → 0.18（Vite プラグイン方式 `cloudflareTest()` へ移行）。ライブラリ本体（`dist` / 公開 API / peerDependencies）に変更なし。
+- monorepo ルートの `pnpm.overrides` から `wrangler <4` / `undici <6` の固定を解除（undici 7 / ws 8.21 / vite 8 / esbuild 0.28 系に更新され、vitest-pool-workers 経由の transitive advisory を解消）。
+- monorepo ルートの `pnpm.overrides` に `esbuild >= 0.25.0` を追加（`drizzle-kit` → `esbuild` 0.19.12 / `@esbuild-kit/core-utils` → `esbuild` 0.18.20 が GHSA-67mh-4wv8-2f99 の対象範囲 `<= 0.24.2` に残るため。`drizzle-kit` 0.31 でも `@esbuild-kit` 経由の 0.18.20 は残るので override で恒久解消）。
+- `create-nanoka-app` テンプレートの `wrangler` を `^3.80.0` → `^4.111.0` に更新。
+- **開発ツールチェーンに Node.js 22 以上が必要**（`wrangler` 4 は `engines.node >= 22`、`vite` 8 は `>= 22.12`）。`create-nanoka-app` のテンプレートに `"engines": { "node": ">=22" }` を追加。`@nanokajs/core` 自体の `engines` は `>= 20` のまま（ランタイムは Cloudflare Workers であり、ライブラリ本体に変更はないため。`>= 22` への引き上げは major 判断として別途検討）。
+
 ## [1.13.0] — 2026-07-15
 
 ### Changed

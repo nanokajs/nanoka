@@ -4,9 +4,11 @@ import { describe, expect, expectTypeOf, it } from 'vitest'
 import { d1Adapter } from '../d1'
 import type { Adapter } from '../types'
 
-declare module 'cloudflare:test' {
-  interface ProvidedEnv {
-    DB: D1Database
+declare global {
+  namespace Cloudflare {
+    interface Env {
+      DB: D1Database
+    }
   }
 }
 

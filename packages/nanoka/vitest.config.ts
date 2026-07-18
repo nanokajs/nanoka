@@ -1,6 +1,16 @@
-import { defineWorkersConfig } from '@cloudflare/vitest-pool-workers/config'
+import { cloudflareTest } from '@cloudflare/vitest-pool-workers'
+import { defineConfig } from 'vitest/config'
 
-export default defineWorkersConfig({
+export default defineConfig({
+  plugins: [
+    cloudflareTest({
+      miniflare: {
+        compatibilityDate: '2025-04-01',
+        compatibilityFlags: ['nodejs_compat'],
+        d1Databases: ['DB'],
+      },
+    }),
+  ],
   test: {
     include: ['src/**/__tests__/**/*.test.ts'],
     exclude: [
@@ -9,14 +19,5 @@ export default defineWorkersConfig({
       'src/cli/__tests__/**',
       'src/adapter/__tests__/turso.test.ts',
     ],
-    poolOptions: {
-      workers: {
-        miniflare: {
-          compatibilityDate: '2025-04-01',
-          compatibilityFlags: ['nodejs_compat'],
-          d1Databases: ['DB'],
-        },
-      },
-    },
   },
 })
