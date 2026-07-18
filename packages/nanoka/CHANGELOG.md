@@ -15,6 +15,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `create-nanoka-app` テンプレートの `wrangler` を `^3.80.0` → `^4.111.0` に更新。
 - **開発ツールチェーンに Node.js 22 以上が必要**（`wrangler` 4 は `engines.node >= 22`、`vite` 8 は `>= 22.12`）。`create-nanoka-app` のテンプレートに `"engines": { "node": ">=22" }` を追加。`@nanokajs/core` 自体の `engines` は `>= 20` のまま（ランタイムは Cloudflare Workers であり、ライブラリ本体に変更はないため。`>= 22` への引き上げは major 判断として別途検討）。
 
+## [1.13.0] — 2026-07-15
+
+### Changed
+
+- `@libsql/client`（optional peer）の対応範囲を `^0.14.0` から `>=0.14.0 <0.18.0` に拡張。0.17 系（libsql core 0.5 系）で Turso adapter（`createClient` / `execute` / `batch` / CRUD round-trip）の動作をテストで確認済み。既存の 0.14 系ユーザーは peer warning なしでそのまま利用可能。新規利用時の推奨は `@libsql/client@^0.17.4`。開発用 devDependency も `^0.17.4` に更新。
+
+## [1.12.2] — 2026-07-15
+
+### Changed
+
+- `drizzle-kit` の推奨バージョンを 0.31 系に更新（`create-nanoka-app` テンプレートの devDependency を `^0.28.0` → `^0.31.10`、`examples/basic` も `^0.31.10` に追従）。example スキーマで 0.28.1 と 0.31.10 の `drizzle-kit generate` 出力（SQL）がバイト一致すること、および 0.28 世代の既存 journal / snapshot を 0.31 がそのまま読めること（spurious diff なし）を確認済み。`drizzle-orm` は `^0.45.2` のまま変更なし。
+
 ## [1.12.1] — 2026-07-02
 
 ### Fixed
