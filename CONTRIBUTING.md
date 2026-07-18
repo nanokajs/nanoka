@@ -18,7 +18,7 @@ Nanoka is organized as a `pnpm` workspace:
 
 ## Prerequisites
 
-- **Node.js >=20** — per `packages/nanoka/package.json` `engines.node` field
+- **Node.js >=22** — per `packages/nanoka/package.json` `engines.node` field
 - **pnpm 9.15.x** — pinned in `packageManager` field; we recommend `corepack enable` to use it automatically
 
 ## Development workflow

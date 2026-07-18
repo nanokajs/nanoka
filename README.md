@@ -6,7 +6,7 @@
 
 A thin wrapper over Hono + Drizzle + Zod for Cloudflare Workers + D1, with Turso/libSQL support through the adapter layer.
 
-**Stable 1.x.** Supports Zod 3 and Zod 4.
+**Stable 2.x.** Supports Zod 3 and Zod 4.
 
 ## What is this
 
