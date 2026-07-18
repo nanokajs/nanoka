@@ -17,7 +17,7 @@ Targets **Cloudflare Workers + D1 (SQLite)** as first-class. Hono-compatible rou
 
 ## Status
 
-**Stable (1.12.1).** Core API-boundary surface — field policies, `inputSchema` / `outputSchema`, validator presets, `t.json(zodSchema)`, field accessor API, Zod 3 / 4 support, OpenAPI component seed, `t.timestamp().defaultNow()`, mutation/findOne SQL expression and `in` operator in `where` — is stable under SemVer.
+**Stable (2.0.0).** Core API-boundary surface — field policies, `inputSchema` / `outputSchema`, validator presets, `t.json(zodSchema)`, field accessor API, Zod 3 / 4 support, OpenAPI component seed, `t.timestamp().defaultNow()`, mutation/findOne SQL expression and `in` operator in `where` — is stable under SemVer.
 
 ## Stable API surface (1.0)
 

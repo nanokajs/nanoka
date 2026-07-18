@@ -10,7 +10,7 @@ Provides credential validation, JWT issuance, and Hono middleware — built on `
 pnpm add @nanokajs/auth
 ```
 
-Peer dependencies: `@nanokajs/core ^1.0.0`, `hono ^4.0.0`.
+Peer dependencies: `@nanokajs/core ^1.0.0 || ^2.0.0`, `hono ^4.0.0`.
 
 ## Usage
 
