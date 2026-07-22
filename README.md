@@ -8,6 +8,10 @@ A thin wrapper over Hono + Drizzle + Zod for Cloudflare Workers + D1, with Turso
 
 **Stable 2.x.** Supports Zod 3 and Zod 4.
 
+> Zero to running API in 41 seconds — model, migration, and dev server in one command chain.
+
+![nanoka scaffold demo: npx create-nanoka-app -> pnpm install -> nanoka generate -> pnpm dev](assets/scaffold-demo.gif)
+
 ## What is this
 
 Nanoka solves the repetitive wiring of Hono routing, Drizzle ORM, and Zod validation in Cloudflare Workers projects. Define a model once, and nanoka derives the DB schema, TypeScript types, and request validators from it. The remaining 20% — what your API exposes versus what the DB stores — stays explicit in each route handler.
