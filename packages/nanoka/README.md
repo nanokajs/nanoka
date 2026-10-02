@@ -45,7 +45,7 @@ pnpm add @nanokajs/core drizzle-orm zod
 pnpm add -D typescript drizzle-kit @cloudflare/workers-types
 ```
 
-> **Node.js 22 or later is required for the development toolchain.** `wrangler` 4 declares `engines.node >= 22` (and `vite` 8 requires `>= 22.12`), so local dev / test tooling needs Node 22+. As of v2.0.0, `@nanokajs/core` also declares `engines.node >= 22`, matching the toolchain requirement (the library still runs on Cloudflare Workers; the runtime surface is unchanged).
+> **Node.js 22.12 or later is required for this repository’s development/test toolchain.** `wrangler` 4 declares `engines.node >= 22` (and `vite` 8 requires `>= 22.12`), so use Node 22.12+ on the Node 22 line. As of v2.0.0, `@nanokajs/core` also declares `engines.node >= 22`, raising the declared minimum for local development (the library still runs on Cloudflare Workers; the runtime surface is unchanged).
 
 Then add a `types` entry to `tsconfig.json` so `D1Database`, `Request`, `ExecutionContext`, and `crypto` resolve as ambient globals (no per-file imports needed):
 

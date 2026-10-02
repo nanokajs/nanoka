@@ -46,6 +46,18 @@ jobs:
 
       - run: pnpm -C packages/nanoka-auth build
 
+      - run: pnpm -C packages/nanoka-auth test
+
+      - run: pnpm -C packages/nanoka-auth typecheck
+
+      - run: pnpm -C packages/create-nanoka-app build
+
+      - run: pnpm -C packages/create-nanoka-app test
+
+      - run: pnpm -C packages/create-nanoka-app typecheck
+
+      - run: pnpm -C site typecheck
+
       - run: pnpm -C examples/basic typecheck
 
       - run: pnpm -C examples/basic test

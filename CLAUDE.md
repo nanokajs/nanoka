@@ -57,7 +57,7 @@ Phase 2後半 and Phase 3 became partially mixed during implementation. Treat th
 
 These remain unimplemented or intentionally out of scope. If a task appears to require one of them, confirm scope before expanding the public API:
 
-- Relations: `t.hasMany()`, `t.belongsTo()`. — Issue #14、設計確定済み・実装中（設計仕様は `docs/nanoka.md` の "Relations API" 節参照）
+- Nested relations (depth 2+). `t.hasMany()`, `t.belongsTo()` and depth-1 `with` queries are shipped; remaining examples/docs are tracked in Issues #14 / #85.
 - Typed query helper: `User.where(f => eq(f.email, x)).limit(10)`. — non-goal, Issue #15
 - Codex or Claude Code plugin.
 - Auth (provided as `@nanokajs/auth` separate package — Issue #74 / #75), full-stack React, or a complex query DSL that replaces Drizzle.

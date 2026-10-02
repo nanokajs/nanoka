@@ -5,6 +5,16 @@ All notable changes to `@nanokajs/core` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.1] — 2026-10-02
+
+### Security
+
+- Update Hono to 4.13.12 and Vitest to 4.1.11. Pin vulnerable development-tool dependencies (esbuild, Undici, PostCSS, nanoid, fflate, and Miniflare’s Sharp) to patched releases; update the site’s Sharp to 0.35.5. Public APIs and peer dependency ranges are unchanged.
+
+### Changed
+
+- Add missing auth/scaffolder checks and site typechecking to PR CI; synchronize maintenance and development documentation. The scaffolder now recommends patched Hono releases.
+
 ## [2.0.0] — 2026-07-18
 
 ### Changed
