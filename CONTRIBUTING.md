@@ -18,7 +18,7 @@ Nanoka is organized as a `pnpm` workspace:
 
 ## Prerequisites
 
-- **Node.js >=22** — per `packages/nanoka/package.json` `engines.node` field
+- **Node.js >=22.12** for repository development/test tooling (Vite 8 on Node 22). Published package `engines.node` remains `>=22`.
 - **pnpm 9.15.x** — pinned in `packageManager` field; we recommend `corepack enable` to use it automatically
 
 ## Development workflow
@@ -67,10 +67,9 @@ pnpm format
 Make sure these all pass:
 
 ```bash
-pnpm -C packages/nanoka test
-pnpm -C packages/nanoka typecheck
-pnpm -C examples/basic typecheck
-pnpm -C examples/basic test
+pnpm build
+pnpm -r --if-present typecheck
+pnpm test
 pnpm lint
 ```
 
@@ -78,32 +77,27 @@ These checks also run automatically on every pull request and on pushes to `main
 
 ## Release process (automated via tag push)
 
-Releases are automated. Pushing a `v*` tag to GitHub triggers `.github/workflows/publish.yml`,
+Releases are automated. Core/scaffolder `v*` tags and auth `auth-v*` tags trigger `.github/workflows/publish.yml`,
 which builds, tests, type-checks, and publishes the package to npm using
 **npm Trusted Publisher (OIDC)** — no `NPM_TOKEN` is stored in this repository.
 
-### Step 1: Bump version on main
+### Step 1: Prepare a versioned pull request
 
-Edit `packages/nanoka/package.json` and increment the `version` field following [Semantic Versioning](https://semver.org/). Commit this change to main:
-
-```bash
-git commit -am "chore: bump version to X.Y.Z"
-git push origin main
-```
+Changes to core or the scaffolder must bump both `packages/nanoka/package.json`
+and `packages/create-nanoka-app/package.json` to the same version. Auth changes bump
+`packages/nanoka-auth/package.json` independently. Update the relevant changelog and
+run the checks above before review.
 
 ### Step 2: Optional dry-run
 
-Trigger the **Publish dry-run** workflow from the GitHub Actions UI (`workflow_dispatch`)
-to inspect the tarball contents before tagging. This does not authenticate with npm, so it can be run anytime.
+The **Publish dry-run** workflow (`workflow_dispatch`) checks package contents without
+publishing. For local inspection, build first and use `pnpm pack` in each package.
 
-### Step 3: Tag and push
+### Step 3: Merge and automatic tagging
 
-```bash
-git tag vX.Y.Z
-git push origin main vX.Y.Z
-```
-
-The publish workflow runs automatically. Watch its progress under the **Actions** tab.
+After an authorized merge to `main`, `.github/workflows/tag.yml` detects versions without an existing release tag, creates `vX.Y.Z` (core/scaffolder) or `auth-vX.Y.Z` (auth), and
+triggers the matching publish workflow. A version-bump merge can therefore start a
+release automatically; do not push a second manual tag in the normal flow.
 
 ### Step 4: Verify
 

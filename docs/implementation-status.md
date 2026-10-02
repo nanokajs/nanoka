@@ -1,6 +1,6 @@
 # Implementation Status
 
-2026-05-04 時点の実装整理。このファイルを Nanoka の shipped / pending split の入口にする。
+2026-10-02 時点の実装整理。このファイルを Nanoka の shipped / pending split の入口にする。
 
 過去の phase plan と backlog は GitHub Issues へ移管済み。これらは履歴ファイルであり、削除しても現在の作業入口としては使わない。
 
@@ -56,7 +56,9 @@
 - API Reference コンテンツ執筆（Field Types / Field Policies / Schema & Validator / CRUD Methods / Response Shaping / OpenAPI / Escape Hatch / Adapters） — [#61](https://github.com/nanokajs/nanoka/issues/61)
 - Guides / CLI Reference コンテンツ執筆（Migration Workflow / Error Handling / Using with Turso / CLI Reference） — [#62](https://github.com/nanokajs/nanoka/issues/62)
 
-## 実装中（設計確定済み）
+## Relations: 実装済み API と残作業
+
+depth 1 の Relations API は実装済み。親 Issue #14 と examples/docs の #85 は未完了として追跡を継続する。depth 2+ は未対応。
 
 - Relations API (`t.hasMany()` / `t.belongsTo()` / `findMany({ with })`) — [#14](https://github.com/nanokajs/nanoka/issues/14)
   - 設計仕様: `docs/nanoka.md` "Relations API" 節

@@ -57,7 +57,7 @@ Phase 2後半 and Phase 3 became partially mixed during implementation. Treat th
 
 These remain unimplemented or intentionally out of scope. If a task appears to require one of them, confirm scope before expanding the public API:
 
-- Relations: `t.hasMany()`, `t.belongsTo()`. — Issue #14 で実装検討中（non-goal から復帰）
+- Nested relations (depth 2+). `t.hasMany()`, `t.belongsTo()` and depth-1 `with` queries are shipped; remaining examples/docs are tracked in Issues #14 / #85.
 - Typed query helper: `User.where(f => eq(f.email, x)).limit(10)`. — non-goal, Issue #15
 - Codex or Claude Code plugin.
 - Auth, full-stack React, or a complex query DSL that replaces Drizzle.

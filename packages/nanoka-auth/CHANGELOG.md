@@ -5,6 +5,16 @@ All notable changes to `@nanokajs/auth` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.1] — 2026-10-02
+
+### Security
+
+- Refresh Hono and Vitest development dependencies and pin vulnerable transitive development dependencies to patched releases. Public APIs and peer dependency ranges are unchanged.
+
+### Changed
+
+- Run auth tests and typechecking in PR CI, in addition to the existing release checks.
+
 ## [2.0.0] — 2026-07-18
 
 ### Changed

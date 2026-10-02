@@ -52,14 +52,18 @@ Implemented:
 - Model-level and route-level OpenAPI generation, plus Swagger UI
 - Turso/libSQL adapter
 - `create-nanoka-app` scaffold CLI
+- Relations (`t.hasMany()` / `t.belongsTo()`) with depth-1 eager loading
+- Authentication through the separate `@nanokajs/auth` add-on
 
 Still pending or intentionally out of scope:
 
-- Relations (`t.hasMany()` / `t.belongsTo()`)
+- Nested relations (depth 2+); remaining relation examples/docs are tracked in #14 / #85
 - Codex or Claude Code plugin
-- Auth, full-stack React, or a query DSL that replaces Drizzle
+- Auth in core, full-stack React, or a query DSL that replaces Drizzle
 
 ## Development
+
+Use Node.js 22.12 or later for this repository’s development/test toolchain (Vite 8 requires Node 22.12+ on the Node 22 line), with pnpm 9.15.9. Published packages declare Node >=22; the Cloudflare Workers runtime is unchanged.
 
 ```bash
 # Install all workspace dependencies
@@ -68,8 +72,8 @@ pnpm install
 # Build the library (ESM + type declarations)
 pnpm build
 
-# Run all tests
-pnpm -C packages/nanoka test
+# Run all workspace tests (build first)
+pnpm test
 
 # Test the scaffolder
 pnpm -C packages/create-nanoka-app test

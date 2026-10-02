@@ -40,7 +40,7 @@ jobs:
           node-version: '22'
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
-      - name: Run onboarding zod@^4 regression E2E (expects typecheck failure)
+      - name: Run onboarding zod@^4 regression E2E (expects typecheck success)
         run: bash e2e/onboarding/scripts/run-onboarding-zod4.sh
 
   onboarding-scaffold:
