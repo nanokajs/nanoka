@@ -6,6 +6,11 @@ on:
     paths:
       - '.github/workflows/publish.yml'
       - '.github/workflows/publish-dry-run.yml'
+      - 'packages/nanoka/**'
+      - 'packages/create-nanoka-app/**'
+      - 'scripts/package-bin.test.mjs'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
 
 permissions:
   contents: read
@@ -41,6 +46,9 @@ jobs:
 
       - name: Build create-nanoka-app
         run: pnpm -C packages/create-nanoka-app build
+
+      - name: Verify packed CLI entry points
+        run: pnpm test:pack
 
       - name: Publish create-nanoka-app (dry run)
         working-directory: packages/create-nanoka-app
