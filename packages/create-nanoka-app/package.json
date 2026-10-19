@@ -1,10 +1,10 @@
 {
   "name": "create-nanoka-app",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "Create a new Nanoka (Hono + D1) project",
   "type": "module",
   "bin": {
-    "create-nanoka-app": "./dist/index.js"
+    "create-nanoka-app": "dist/index.js"
   },
   "files": [
     "dist",
@@ -32,7 +32,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/nanokajs/nanoka.git"
+    "url": "git+https://github.com/nanokajs/nanoka.git"
   },
   "license": "MIT"
 }
