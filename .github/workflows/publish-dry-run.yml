@@ -2,6 +2,10 @@ name: Publish dry-run
 
 on:
   workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/publish.yml'
+      - '.github/workflows/publish-dry-run.yml'
 
 permissions:
   contents: read
@@ -16,26 +20,34 @@ jobs:
         with:
           version: 9.15.9
 
-      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: '22'
+          node-version: '22.14.0'
+          registry-url: 'https://registry.npmjs.org'
           cache: 'pnpm'
+
+      - run: |
+          npm install -g npm@^11.5.1
+          npm --version
 
       - run: pnpm install --frozen-lockfile
 
       - run: pnpm -C packages/nanoka build
 
-      - run: pnpm -C packages/nanoka publish --dry-run --no-git-checks
+      # --force skips npm's already-published-version guard; --dry-run still prevents publishing.
+      - name: Publish @nanokajs/core (dry run)
+        working-directory: packages/nanoka
+        run: npm publish --dry-run --force
 
       - name: Build create-nanoka-app
         run: pnpm -C packages/create-nanoka-app build
 
       - name: Publish create-nanoka-app (dry run)
         working-directory: packages/create-nanoka-app
-        run: pnpm publish --dry-run --no-git-checks
+        run: npm publish --dry-run --force
 
       - run: pnpm -C packages/nanoka-auth build
 
       - name: Publish @nanokajs/auth (dry run)
         working-directory: packages/nanoka-auth
-        run: pnpm publish --dry-run --no-git-checks
+        run: npm publish --dry-run --force
