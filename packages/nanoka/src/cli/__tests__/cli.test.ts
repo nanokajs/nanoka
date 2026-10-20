@@ -1,3 +1,6 @@
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { main } from '../index'
 
@@ -33,9 +36,24 @@ describe('CLI', () => {
     expect(exitCode).toBe(1)
   })
 
-  it('returns error with missing --output if config.output is not defined', async () => {
-    const exitCode = await main(['generate', '--config', '/tmp/fake.ts'])
-    expect(exitCode).toBe(1)
+  it('uses the default output when --output and config.output are omitted', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'nanoka-default-output-'))
+    const originalCwd = process.cwd()
+    try {
+      const configPath = join(dir, 'nanoka.config.ts')
+      await writeFile(configPath, 'export default { models: [] }')
+      process.chdir(dir)
+
+      const exitCode = await main(['generate', '--config', configPath, '--no-migrate'])
+
+      expect(exitCode).toBe(0)
+      expect(await readFile(join(dir, 'drizzle/schema.ts'), 'utf8')).toContain('drizzle-orm')
+      expect(runModule.runDrizzleKitGenerate).not.toHaveBeenCalled()
+      expect(runModule.runWranglerApply).not.toHaveBeenCalled()
+    } finally {
+      process.chdir(originalCwd)
+      await rm(dir, { recursive: true, force: true })
+    }
   })
 })
 
