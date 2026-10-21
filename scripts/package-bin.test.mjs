@@ -1,12 +1,14 @@
 import assert from 'node:assert/strict'
 import { execFileSync } from 'node:child_process'
 import {
+  closeSync,
+  fstatSync,
   mkdirSync,
   mkdtempSync,
+  openSync,
   readdirSync,
   readFileSync,
   rmSync,
-  statSync,
   symlinkSync,
 } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -52,9 +54,15 @@ for (const { directory, command, target } of packages) {
       assert.deepEqual(packedManifest.bin, expectedBin, 'bin paths must already be normalized')
 
       const executable = join(extracted, target)
-      assert.ok(statSync(executable).isFile())
-      assert.match(readFileSync(executable, 'utf8'), /^#!\/usr\/bin\/env node\r?\n/)
-      assert.ok(statSync(executable).mode & 0o111, 'packed CLI must be executable')
+      const executableFd = openSync(executable, 'r')
+      try {
+        const executableStat = fstatSync(executableFd)
+        assert.ok(executableStat.isFile())
+        assert.match(readFileSync(executableFd, 'utf8'), /^#!\/usr\/bin\/env node\r?\n/)
+        assert.ok(executableStat.mode & 0o111, 'packed CLI must be executable')
+      } finally {
+        closeSync(executableFd)
+      }
 
       // Reuse installed runtime dependencies, but execute only code extracted from the tarball.
       // This is a packaging smoke test, not a fresh-install or dependency-resolution test.
