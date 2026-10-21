@@ -81,7 +81,7 @@
     "@cloudflare/vitest-pool-workers": "^0.18.5",
     "@cloudflare/workers-types": "^4.20260523.1",
     "@libsql/client": "^0.17.4",
-    "@types/node": "^25.9.1",
+    "@types/node": "^26.6.5",
     "drizzle-orm": "^0.45.2",
     "hono": "^4.13.12",
     "tsup": "^8.5.1",
