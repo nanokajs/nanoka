@@ -170,11 +170,11 @@ importers:
         specifier: ^4.13.12
         version: 4.13.12
       marked:
-        specifier: ^14.1.4
-        version: 14.1.4
+        specifier: ^18.1.1
+        version: 18.1.1
       marked-highlight:
         specifier: ^2.2.4
-        version: 2.2.4(marked@14.1.4)
+        version: 2.2.4(marked@18.1.1)
     devDependencies:
       '@cloudflare/workers-types':
         specifier: ^4.20260523.1
@@ -1384,9 +1384,9 @@ packages:
     peerDependencies:
       marked: '>=4 <19'
 
-  marked@14.1.4:
-    resolution: {integrity: sha512-vkVZ8ONmUdPnjCKc5uTRvmkRbx4EAi2OkTOXmfTDhZz3OFqMNBM1oTTWwTr4HY4uAEojhzPf+Fy8F1DWa3Sndg==}
-    engines: {node: '>= 18'}
+  marked@18.1.1:
+    resolution: {integrity: sha512-zEGgrtUG8crk+TrMacJSVABU4DYDDkS8uqgU3ohrn/2fW9C2AEfUrO3m6IhpIpQpl7YcVpiXXC9cSMWDANT3dg==}
+    engines: {node: '>= 20'}
     hasBin: true
 
   miniflare@4.20260714.0:
@@ -2604,11 +2604,11 @@ snapshots:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.5.5
 
-  marked-highlight@2.2.4(marked@14.1.4):
+  marked-highlight@2.2.4(marked@18.1.1):
     dependencies:
-      marked: 14.1.4
+      marked: 18.1.1
 
-  marked@14.1.4: {}
+  marked@18.1.1: {}
 
   miniflare@4.20260714.0(@types/node@26.6.5):
     dependencies:
