@@ -77,7 +77,12 @@ pnpm add -D typescript drizzle-kit @cloudflare/workers-types
 
 The tsconfig `types` entry above still applies if you're targeting Cloudflare Workers.
 
-Peer dependency ranges: `hono ^4.0.0`, `drizzle-orm ^0.45.2`, `zod ^3.23.0 || ^4.0.0`, `@cloudflare/workers-types ^4.20240925.0`.
+Peer dependency ranges: `hono ^4.13.12`, `drizzle-orm ^0.45.2`, `zod ^3.23.0 || ^4.0.0`, `@cloudflare/workers-types ^4.20240925.0`.
+
+Existing applications must update Hono to 4.13.12 or later in the 4.x line. The peer
+minimum excludes older releases affected by published Hono advisories, including
+[static-path middleware bypass](https://github.com/honojs/hono/security/advisories/GHSA-5r4p-p66f-jhc7).
+The repository lockfile does not control the Hono version installed by consumers.
 
 ## Quickstart
 

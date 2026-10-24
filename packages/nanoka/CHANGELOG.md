@@ -5,6 +5,13 @@ All notable changes to `@nanokajs/core` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.4] — 2026-10-25
+
+### Security
+
+- Require Hono `^4.13.12` as a peer dependency so existing applications are no longer declared compatible with older releases affected by published Hono advisories, including GHSA-5r4p-p66f-jhc7. The workspace already used 4.13.12; consumers must update their own Hono installation. Zod 3/4 support and runtime APIs are unchanged.
+- Keep `create-nanoka-app` on the matching 2.0.4 version; its template already requires patched Hono releases.
+
 ## [2.0.3] — 2026-10-19
 
 ### Fixed

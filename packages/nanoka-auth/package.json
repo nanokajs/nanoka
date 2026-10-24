@@ -1,6 +1,6 @@
 {
   "name": "@nanokajs/auth",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "type": "module",
   "description": "Authentication utilities for Nanoka on Cloudflare Workers.",
   "author": "Eiichiro Iriguchi <eiichiro_iriguchi@a-1ro.dev>",
@@ -50,7 +50,7 @@
   },
   "peerDependencies": {
     "@nanokajs/core": "^1.0.0 || ^2.0.0",
-    "hono": "^4.0.0"
+    "hono": "^4.13.12"
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.18.5",
