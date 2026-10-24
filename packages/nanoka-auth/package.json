@@ -56,7 +56,7 @@
     "@cloudflare/vitest-pool-workers": "^0.18.5",
     "@cloudflare/workers-types": "^4.20260523.1",
     "@nanokajs/core": "workspace:*",
-    "@types/node": "^25.9.1",
+    "@types/node": "^26.6.5",
     "hono": "^4.13.12",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3",
