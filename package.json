@@ -8,7 +8,9 @@
     "test": "pnpm -r test",
     "lint": "biome check .",
     "format": "biome format --write .",
-    "test:pack": "node --test scripts/package-bin.test.mjs"
+    "test:pack": "node --test scripts/package-bin.test.mjs",
+    "security:report": "node scripts/collect-security-report.mjs",
+    "test:security-report": "node --test scripts/collect-security-report.test.mjs"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.15",
