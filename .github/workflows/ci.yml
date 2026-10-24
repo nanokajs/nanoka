@@ -29,6 +29,8 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      - run: pnpm test:security-report
+
       - name: Verify LICENSE files are in sync
         run: |
           if ! diff -q LICENSE packages/nanoka/LICENSE >/dev/null; then

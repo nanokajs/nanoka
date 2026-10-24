@@ -20,8 +20,8 @@ advisory details and the job summary includes severity counts. The error title
 `Dependency vulnerabilities detected` means a completed scan found issues;
 `Dependency audit could not complete` means a registry, command, or report error.
 Setup failures/timeouts also mean incomplete coverage. A failed scan is never a
-clean security result. No automatic fixes, suppressions, or ignored registry
-errors are configured. Findings require separate review and remediation.
+clean security result. This CI job does not modify dependencies, suppress findings,
+or ignore registry errors. Remediation runs separately as described below.
 Only dependencies represented in the committed lockfile are covered; generated
 projects, unlocked fixtures, system packages, and vulnerabilities without a
 published advisory are outside this check.
@@ -46,6 +46,38 @@ push protection, and CodeQL default setup) are managed separately. This workflow
 does not change those settings or grant new account/app access. Before enabling
 CodeQL default setup later, reconcile it with this advanced workflow to avoid
 overlapping configurations. Secret scanning is outside this workflow's scope.
+
+## Remediation pipeline
+
+The Codex automation for this repository uses
+[`nanoka-security-remediation`](../.agents/skills/nanoka-security-remediation/SKILL.md)
+to collect current public advisories, assess Nanoka's actual exposure, make scoped
+fixes, run checks, and open PRs against `main`. Scheduling belongs to the Codex
+automation attached to its chat, not to this CI workflow. The workflow alone
+does not enable that automation. Existing Dependabot PRs are checked for overlap.
+Merging, releases, and production changes remain outside the automation.
+
+For a repeatable input report, put the repository-pinned pnpm on PATH and run:
+
+```sh
+node scripts/collect-security-report.mjs > /tmp/nanoka-security-report.json
+```
+
+Exit codes: **0** = no actionable npm findings, **1** = findings, **2** = incomplete
+inventory/audit (including wrong pnpm, network failures, or malformed responses).
+Read the JSON even on nonzero exit. The collector does not install dependencies
+or execute lifecycle scripts. It records revision, lockfile hash, declared
+dependencies/peers/templates and workflow Action/Node inputs, without environment
+variables or credentials. Do not commit generated reports.
+
+Public advisory bodies, peer/template version ranges, Node.js security releases,
+GitHub Actions, and Cloudflare Workers/tooling are reviewed separately by the
+agent using official sources. `pendingReview` deliberately lists that work even
+when the npm audit finds nothing. Missing sources or tests must stay visible in
+the PR/report; they are never treated as a clean scan. The scheduled task reports
+new actionable results and failures, and stays quiet on unchanged non-actionable
+results. Regression tests for report classification run in CI via
+`pnpm test:security-report`.
 
 ## References
 
