@@ -58,7 +58,7 @@
     "@nanokajs/core": "workspace:*",
     "@types/node": "^26.6.5",
     "hono": "^4.13.12",
-    "tsup": "^8.5.1",
+    "tsup": "^9.0.0",
     "typescript": "^5.9.3",
     "vite": "^8.1.4",
     "vitest": "^4.1.11",
