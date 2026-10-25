@@ -457,14 +457,14 @@ describe('findMany SQL where + toResponseMany', () => {
       .insert(SecureUser.table)
       .values([
         {
-          id: '11111111-1111-1111-1111-111111111111',
+          id: '11111111-1111-4111-8111-111111111111',
           name: 'Heidi',
           email: 'heidi@example.com',
           passwordHash: 'secret9',
           // biome-ignore lint/suspicious/noExplicitAny: inserting serverOnly field directly via escape hatch
         } as any,
         {
-          id: '22222222-2222-2222-2222-222222222222',
+          id: '22222222-2222-4222-8222-222222222222',
           name: 'Ivan',
           email: 'ivan@example.com',
           passwordHash: 'secret10',

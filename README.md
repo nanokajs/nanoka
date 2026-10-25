@@ -6,7 +6,7 @@
 
 A thin wrapper over Hono + Drizzle + Zod for Cloudflare Workers + D1, with Turso/libSQL support through the adapter layer.
 
-**Stable 2.x.** Supports Zod 3 and Zod 4.
+**Stable 3.x.** Requires Zod 4.6.6 or later in the 4.x line; Zod 3 is no longer supported.
 
 > Zero to running API in 41 seconds — model, migration, and dev server in one command chain.
 
@@ -48,7 +48,7 @@ docs/                     # Design documents and current implementation status
 Implemented:
 
 - Model DSL, `nanoka generate`, D1 adapter, CRUD, schema / validator derivation
-- Field policies, input/output schemas, response shaping, Zod 3/4 support
+- Field policies, input/output schemas, response shaping, Zod 4.6.6+ support
 - Model-level and route-level OpenAPI generation, plus Swagger UI
 - Turso/libSQL adapter
 - `create-nanoka-app` scaffold CLI

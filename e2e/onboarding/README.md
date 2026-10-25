@@ -23,7 +23,10 @@ bash e2e/onboarding/scripts/run-onboarding-zod4.sh
 
 The first script exercises the happy path: `nanoka generate`, `drizzle-kit generate`, and `tsc --noEmit` must all succeed.
 
-The second script verifies the zod@^4 regression: after installing `zod@^4.0.0`, `tsc --noEmit` must fail (the script inverts the exit code, so a typecheck failure is a script success).
+The second script verifies that `t.json(schema)` rejects schemas from actual Zod
+3.25.76 and 4.6.5 installations, including when pnpm installs separate peer copies,
+then installs the supported minimum `zod@4.6.6` and requires `tsc --noEmit` to
+succeed. Nanoka 3 no longer supports Zod 3 or `zod/v3`.
 
 ## Updating the fixture
 

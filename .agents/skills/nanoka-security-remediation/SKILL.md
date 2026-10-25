@@ -28,6 +28,10 @@ auto-merge, tag, publish packages, deploy, or change remote databases.
    Keep the configured proxy and CA. For network calls, use the execution tool's
    supported network permission; do not bypass the proxy on connection failure.
    GitHub tools may be used if CLI/API access is unavailable. Never print secrets.
+4. Check the executing Node version against official security releases, separately
+   from CI pins. If the host default is affected, select a patched official runtime
+   under a writable task directory (verify its official archive checksum) and put
+   its bin directory on PATH for commands. Do not change host-wide configuration.
 
 ## Collect and reconcile
 
@@ -94,7 +98,7 @@ Keep pnpm overrides narrow and retain all unrelated constraints. Refresh the
 lockfile with the pinned pnpm and inspect all resolved versions.
 
 Follow versioning in AGENTS.md: changes under core/scaffolder bump both packages
-together; auth changes bump independently. Maintain dual Zod 3/4 support and
+together; auth changes bump independently. Nanoka 3 requires Zod 4.6.6+; do not restore Zod 3 or `zod/v3` support. Preserve
 public API boundaries unless an explicitly approved change says otherwise. If a
 fix requires an unresolved breaking design decision, finish independent fixes and
 report that concrete decision with evidence instead of silently breaking users.

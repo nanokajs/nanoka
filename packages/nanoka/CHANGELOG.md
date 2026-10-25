@@ -5,12 +5,20 @@ All notable changes to `@nanokajs/core` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.0.4] — 2026-10-25
+## [3.0.0] — 2026-10-25
+
+### Changed
+
+- **BREAKING**: Require Zod `^4.6.6`; remove Zod 3 / `zod/v3` support. Upgrade `@hono/zod-validator` to the Zod 4-compatible 0.9 line. Core/scaffolder versions move together to 3.0.0.
+- `t.json(schema)` rejects directly supplied schemas from unsupported Zod versions during initialization, including when a package manager installs multiple Zod copies.
+- Derived schemas and validator errors now use Zod 4. Consumers must migrate Zod 3-only APIs (for example, `z.record(value)` becomes `z.record(key, value)`) and review Zod 4's stricter UUID/email validation and error format.
+- In Zod 4, brands are type-only and no longer make a schema unsupported for OpenAPI. Custom refinements remain marked unsupported and rejected in strict mode.
 
 ### Security
 
-- Require Hono `^4.13.12` as a peer dependency so existing applications are no longer declared compatible with older releases affected by published Hono advisories, including GHSA-5r4p-p66f-jhc7. The workspace already used 4.13.12; consumers must update their own Hono installation. Zod 3/4 support and runtime APIs are unchanged.
-- Keep `create-nanoka-app` on the matching 2.0.4 version; its template already requires patched Hono releases.
+- Use the patched Zod 4 parser throughout the dependency graph, including Workers test tooling. Bounded arrays reject oversized inputs before walking their elements. Unbounded inputs still require application-level body and collection limits; a clean audit is not a resource-limit policy.
+- Preserve PATCH omission semantics: omitted fields never populate defaults, and serverOnly fields stay excluded from API input/output schemas.
+- Require Hono `^4.13.12` as a peer to exclude older releases affected by published Hono advisories. Consumers must update their own Hono installation.
 
 ## [2.0.3] — 2026-10-19
 

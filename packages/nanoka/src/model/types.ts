@@ -446,7 +446,7 @@ type ApplyOmitToRecord<R, OmitOpt> =
  * @internal
  * Apply pick/omit/partial transformations to a TypeScript record type.
  * Mirrors ApplyShape but operates on TS types directly, not Zod shapes.
- * Used for Zod v3/v4 compatible middleware input/output type computation.
+ * Used for precise Zod 4 middleware input/output type computation.
  */
 type ApplyToRecord<R, Opts extends SchemaOptions | undefined> = Opts extends SchemaOptions
   ? HasOpt<Opts['pick']> extends true
@@ -514,7 +514,7 @@ export type ValidatorInput<
  * Provides proper type narrowing for c.req.valid(target).
  *
  * Uses RowType<Fields> directly for input/output type computation
- * to ensure Zod v3/v4 compatibility (z.input<ZodTypeAny> returns unknown in Zod v4).
+ * to preserve field types (z.input<ZodTypeAny> returns unknown in Zod 4).
  */
 export type ModelValidatorReturn<
   // biome-ignore lint/suspicious/noExplicitAny: any is necessary for Field constraint

@@ -7,16 +7,12 @@ import { toOpenAPISchema } from '../generate'
 describe('zodToOpenAPISchema — unsupported Zod types', () => {
   const unsupportedCases = [
     {
-      name: 'ZodEffects (refine)',
+      name: 'custom refinement',
       schema: z.string().refine(() => true),
     },
     {
-      name: 'ZodEffects (preprocess)',
+      name: 'preprocess pipe',
       schema: z.preprocess((v) => v, z.string()),
-    },
-    {
-      name: 'ZodBranded',
-      schema: z.string().brand<'MyBrand'>(),
     },
     {
       name: 'ZodDiscriminatedUnion',
@@ -38,6 +34,12 @@ describe('zodToOpenAPISchema — unsupported Zod types', () => {
       schema: z.lazy(() => z.string()),
     },
   ]
+
+  it('represents a branded string because Zod 4 brands do not change runtime validation', () => {
+    const Model = defineModel('branded_model', { field: t.json(z.string().brand<'MyBrand'>()) })
+    const result = toOpenAPISchema(Model.fields, 'create', { strict: true })
+    expect(result.properties).toHaveProperty('field', { type: 'string' })
+  })
 
   for (const { name, schema } of unsupportedCases) {
     it(`default: includes x-nanoka-zod-unsupported for ${name}`, () => {

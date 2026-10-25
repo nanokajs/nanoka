@@ -1,6 +1,6 @@
 # Implementation Status
 
-2026-10-02 時点の実装整理。このファイルを Nanoka の shipped / pending split の入口にする。
+2026-10-25 時点の実装整理。このファイルを Nanoka の shipped / pending split の入口にする。
 
 過去の phase plan と backlog は GitHub Issues へ移管済み。これらは履歴ファイルであり、削除しても現在の作業入口としては使わない。
 
@@ -20,7 +20,7 @@
 - Response helper: `toResponse(row)`
 - `t.json(zodSchema)` runtime validation
 - Schema / validator 用 field accessor: `{ pick: f => [f.name] }` / `{ omit: f => [f.passwordHash] }`
-- Zod 3 / 4 peer dependency support
+- Nanoka 3.0: Zod `^4.6.6` peer dependency support（Zod 3対応終了）
 - Model-level OpenAPI component generation
 
 ### 1.x として追加済み

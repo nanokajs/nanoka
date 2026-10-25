@@ -26,7 +26,7 @@ describe('OpenAPI component generation', () => {
           foo: z.string(),
           count: z.number().int().optional(),
           flags: z.array(z.boolean()).default([]),
-          labels: z.record(z.string()),
+          labels: z.record(z.string(), z.string()),
           note: z.string().nullable().optional(),
         }),
       )

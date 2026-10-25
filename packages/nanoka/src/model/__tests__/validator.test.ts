@@ -1,9 +1,29 @@
 import { Hono } from 'hono'
 import { describe, expect, it } from 'vitest'
+import { z } from 'zod'
 import { t } from '../../field'
 import { defineModel } from '../define'
 
 describe('Model: validator() Hono integration', () => {
+  it('preserves Zod 4 transform output types through the Hono validator', async () => {
+    const Model = defineModel('transformed', {
+      payload: t.json(z.string().transform((value) => value.length)),
+      secret: t.string().serverOnly(),
+    })
+    const app = new Hono()
+    app.post('/', Model.validator('json', 'create'), (c) => {
+      const length: number = c.req.valid('json').payload
+      return c.json({ length })
+    })
+    const response = await app.request('/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ payload: 'hello', secret: 'must-not-be-injected' }),
+    })
+    expect(response.status).toBe(200)
+    expect(await response.json()).toEqual({ length: 5 })
+  })
+
   const User = defineModel('users', {
     id: t.uuid().primary(),
     name: t.string(),

@@ -1,5 +1,7 @@
 # Nanoka — AI Reference (llms-full.txt)
 
+Nanoka 3 requires Zod ^4.6.6. Zod 3 and zod/v3 are unsupported.
+
 Self-contained reference for AI coding agents (Claude Code, Cursor, Copilot, etc.) working with Nanoka projects.
 
 ## What Nanoka is
@@ -9,7 +11,7 @@ Nanoka is a thin wrapper over Hono + Drizzle + Zod targeting Cloudflare Workers 
 ## Install
 
 ```bash
-pnpm add @nanokajs/core hono drizzle-orm zod
+pnpm add @nanokajs/core hono drizzle-orm zod@^4.6.6
 pnpm add -D drizzle-kit wrangler @cloudflare/workers-types typescript
 ```
 

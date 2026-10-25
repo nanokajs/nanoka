@@ -1024,6 +1024,18 @@ function jsonField<S extends z.ZodTypeAny>(schema: S): JsonFieldBuilder<z.infer<
 function jsonField<T = unknown>(): JsonFieldBuilder<T, T, {}>
 // biome-ignore lint/complexity/noBannedTypes: {} is used intentionally for the default empty modifiers
 function jsonField<T = unknown>(schema?: z.ZodTypeAny): JsonFieldBuilder<T, T, {}> {
+  if (schema !== undefined) {
+    const version = schema._zod?.version
+    if (
+      !version ||
+      version.major !== 4 ||
+      version.minor < 6 ||
+      (version.minor === 6 && version.patch < 6)
+    ) {
+      throw new TypeError('t.json(schema) requires Zod 4.6.6 or later in the 4.x line')
+    }
+  }
+  // biome-ignore lint/complexity/noBannedTypes: {} represents the initial field modifiers
   return new JsonFieldBuilder<T, T, {}>(undefined, schema)
 }
 

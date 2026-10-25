@@ -158,7 +158,7 @@ export function applySchemaOptions(
 
   // Apply pick
   if (resolvedPick !== undefined) {
-    const pickArray = Array.from(resolvedPick)
+    const pickArray = Array.from(resolvedPick).filter((key) => Object.hasOwn(schema.shape, key))
     schema = schema.pick(
       // biome-ignore lint/suspicious/noExplicitAny: Zod API
       Object.fromEntries(pickArray.map((k) => [k, true])) as any,
@@ -167,7 +167,7 @@ export function applySchemaOptions(
 
   // Apply omit
   if (resolvedOmit !== undefined) {
-    const omitArray = Array.from(resolvedOmit)
+    const omitArray = Array.from(resolvedOmit).filter((key) => Object.hasOwn(schema.shape, key))
     schema = schema.omit(
       // biome-ignore lint/suspicious/noExplicitAny: Zod API
       Object.fromEntries(omitArray.map((k) => [k, true])) as any,
@@ -177,9 +177,28 @@ export function applySchemaOptions(
   // Apply partial
   // `partial: false` を渡してもこの条件で何もしない。スキーマは required のまま。
   if (opts.partial === true) {
-    schema = schema.partial()
+    // Zod 4 applies inner defaults even through optional(). An omitted PATCH
+    // field must stay omitted, rather than overwriting stored data with a default.
+    schema = z
+      .object(
+        Object.fromEntries(
+          Object.entries(schema.shape).map(([key, value]) => [
+            key,
+            withoutDefaults(value as z.ZodType),
+          ]),
+        ),
+      )
+      .partial()
   }
 
   // biome-ignore lint/suspicious/noExplicitAny: Cast to Apply type at call site
   return schema as any
+}
+
+function withoutDefaults(schema: z.core.$ZodType): z.core.$ZodType {
+  if (schema instanceof z.ZodDefault) return withoutDefaults(schema.removeDefault())
+  if (schema instanceof z.ZodPrefault) return withoutDefaults(schema.unwrap())
+  if (schema instanceof z.ZodOptional) return z.optional(withoutDefaults(schema.unwrap()))
+  if (schema instanceof z.ZodNullable) return z.nullable(withoutDefaults(schema.unwrap()))
+  return schema
 }

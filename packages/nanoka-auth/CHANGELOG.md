@@ -5,11 +5,15 @@ All notable changes to `@nanokajs/auth` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.0.2] — 2026-10-25
+## [2.1.0] — 2026-10-25
+
+### Added
+
+- Accept `@nanokajs/core` 3.x as a peer, in addition to existing 1.x/2.x ranges. Auth remains independently versioned; core 3 applications require Zod 4.6.6+.
 
 ### Security
 
-- Require Hono `^4.13.12` as a peer dependency to exclude older releases affected by published Hono advisories. The workspace already used 4.13.12; existing applications must update their own Hono installation. Authentication behavior is unchanged.
+- Require Hono `^4.13.12` as a peer to exclude older releases affected by published Hono advisories. Authentication behavior is unchanged.
 
 ## [2.0.1] — 2026-10-02
 
