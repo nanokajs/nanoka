@@ -1,8 +1,49 @@
 import { describe, expect, it } from 'vitest'
+import { z } from 'zod'
 import { t } from '../../field'
 import { defineModel } from '../define'
 
 const validUuid = '550e8400-e29b-41d4-a716-446655440000'
+
+describe('Zod 4 migration boundaries', () => {
+  it('does not populate defaulted fields omitted from PATCH schemas', () => {
+    const Model = defineModel('defaults', {
+      name: t.string().default('untitled'),
+      active: t.boolean().optional().default(true),
+      secret: t.string().serverOnly().default('internal'),
+    })
+    expect(Model.inputSchema('create').parse({})).toEqual({ name: 'untitled', active: true })
+    expect(Model.inputSchema('update').parse({})).toEqual({})
+    expect(Model.inputSchema('update').parse({ name: 'provided', active: false })).toEqual({
+      name: 'provided',
+      active: false,
+    })
+    expect(Model.schema({ partial: true }).parse({})).toEqual({})
+  })
+
+  it('rejects oversized bounded collections before validating their elements', () => {
+    let visited = 0
+    const Model = defineModel('bounded', {
+      payload: t.json(
+        z
+          .array(
+            z.string().refine(() => {
+              visited++
+              return false
+            }),
+          )
+          .max(2),
+      ),
+    })
+    const result = Model.inputSchema('create').safeParse({ payload: ['a', 'b', 'c'] })
+    expect(result.success).toBe(false)
+    expect(visited).toBe(0)
+    if (!result.success) {
+      expect(result.error.issues).toHaveLength(1)
+      expect(result.error.issues[0]?.code).toBe('too_big')
+    }
+  })
+})
 
 describe('Model: schema() runtime behavior', () => {
   const User = defineModel('users', {

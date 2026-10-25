@@ -131,6 +131,21 @@ function zodToOpenAPISchema(schema: unknown, strict = false): OpenAPISchemaObjec
 
   const typeName = getZodTypeName(def)
 
+  // Refinements are inline checks in Zod 4, rather than ZodEffects wrappers.
+  // Preserve the unsupported marker/strict rejection for custom runtime rules.
+  const hasCustomChecks = getZodChecks(def).some((check) => {
+    const kind = getZodCheckDef(check).check
+    return kind === 'custom' || kind === 'overwrite'
+  })
+  if (hasCustomChecks) {
+    if (strict) {
+      throw new Error(
+        `Unsupported Zod type for strict OpenAPI generation: ${typeName ?? 'unknown'}`,
+      )
+    }
+    return { 'x-nanoka-zod-unsupported': true, 'x-nanoka-zod-type': typeName ?? 'unknown' }
+  }
+
   if (typeName === 'ZodOptional' || typeName === 'optional') {
     return zodToOpenAPISchema(def.innerType, strict)
   }

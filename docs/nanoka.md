@@ -277,7 +277,7 @@ app.post('/users', zValidator('json', CreateUserBody), async (c) => {
 
 #### Phase 2B — 型と互換性
 - [x] フィールドアクセサAPI（まず `pick` / `omit` / validator 用途から: `User.schema({ pick: f => [f.name] })`）
-- [x] **Zod 4 サポート**（`peerDependencies.zod` は `^3.23.0 || ^4.0.0`）
+- [x] **Zod 4 サポート**（Nanoka 3 以降の `peerDependencies.zod` は `^4.6.6`。Zod 3 / `zod/v3` は非サポート）
 - [x] create / update input の必須・任意フィールド精緻化
 - [x] **Phase 1.5 持ち越しの型精緻化**: `noExplicitAny` warning は大幅削減、`noNonNullAssertion` は 0 件化
 

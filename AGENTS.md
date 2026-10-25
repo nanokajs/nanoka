@@ -31,6 +31,8 @@ Nanoka is a thin wrapper over Hono + Drizzle + Zod targeting Cloudflare Workers 
 
 The core thesis: a single model definition is the source of truth for DB schema, TypeScript types, and base validation, but API validation is a deliberate derivation, not an automatic mirror. DB shape and API shape can diverge, for example `passwordHash` may exist in the DB but must not appear in responses.
 
+Nanoka 3 requires Zod `^4.6.6`; Zod 3 and `zod/v3` are no longer supported.
+
 The design phrase is "80% automatic, 20% explicit". When in doubt, prefer making the explicit 20% obvious in the route handler instead of hiding it in the framework.
 
 ## Load-bearing architectural rules

@@ -17,7 +17,7 @@ Targets **Cloudflare Workers + D1 (SQLite)** as first-class. Hono-compatible rou
 
 ## Status
 
-**Stable (2.0.0).** Core API-boundary surface — field policies, `inputSchema` / `outputSchema`, validator presets, `t.json(zodSchema)`, field accessor API, Zod 3 / 4 support, OpenAPI component seed, `t.timestamp().defaultNow()`, mutation/findOne SQL expression and `in` operator in `where` — is stable under SemVer.
+**Stable (3.0.0).** Core API-boundary surface — field policies, `inputSchema` / `outputSchema`, validator presets, `t.json(zodSchema)`, field accessor API, Zod 4.6.6+ support, OpenAPI component seed, `t.timestamp().defaultNow()`, mutation/findOne SQL expression and `in` operator in `where` — is stable under SemVer.
 
 ## Stable API surface (1.0)
 
@@ -41,7 +41,7 @@ The following APIs are stable. Breaking changes require a major version bump.
 Nanoka assumes a Hono + Cloudflare Workers project. The standard starting point is `pnpm create hono@latest` (Cloudflare Workers template), which scaffolds `wrangler` and `hono` but **not** TypeScript, `@cloudflare/workers-types`, or `drizzle-kit`. From a fresh scaffold, add Nanoka and the missing pieces:
 
 ```bash
-pnpm add @nanokajs/core drizzle-orm zod
+pnpm add @nanokajs/core drizzle-orm zod@^4.6.6
 pnpm add -D typescript drizzle-kit @cloudflare/workers-types
 ```
 
@@ -62,7 +62,7 @@ Without `types`, you would have to `import { D1Database, Request, ... } from '@c
 
 After this, the [Minimal example](#minimal-example-model--1-route) below works as written.
 
-Zod 3 and 4 are both supported (`peerDependencies.zod: ^3.23.0 || ^4.0.0`).
+Nanoka 3 requires Zod `^4.6.6`. Zod 3 and the `zod/v3` compatibility entry point are no longer supported. Upgrade existing applications with `pnpm add @nanokajs/core@^3 zod@^4.6.6`.
 
 `drizzle-kit` is required at install time (not a peer dep) because `npx drizzle-kit generate` is the supported migration step — see Quickstart step 3.
 
@@ -71,13 +71,34 @@ Zod 3 and 4 are both supported (`peerDependencies.zod: ^3.23.0 || ^4.0.0`).
 If you're integrating into an existing TypeScript project (no `create hono`), `hono` itself is also a peer dep — add it to the runtime install:
 
 ```bash
-pnpm add @nanokajs/core hono drizzle-orm zod
+pnpm add @nanokajs/core hono drizzle-orm zod@^4.6.6
 pnpm add -D typescript drizzle-kit @cloudflare/workers-types
 ```
 
 The tsconfig `types` entry above still applies if you're targeting Cloudflare Workers.
 
-Peer dependency ranges: `hono ^4.0.0`, `drizzle-orm ^0.45.2`, `zod ^3.23.0 || ^4.0.0`, `@cloudflare/workers-types ^4.20240925.0`.
+Peer dependency ranges: `hono ^4.13.12`, `drizzle-orm ^0.45.2`, `zod ^4.6.6`, `@cloudflare/workers-types ^4.20240925.0`.
+
+Existing applications must update Hono to 4.13.12 or later in the 4.x line. The peer
+minimum excludes older releases affected by published Hono advisories, including
+[static-path middleware bypass](https://github.com/honojs/hono/security/advisories/GHSA-5r4p-p66f-jhc7).
+The repository lockfile does not control the Hono version installed by consumers.
+
+## Migrating from Nanoka 2
+
+Use Zod `^4.6.6` with Nanoka 3. Zod 3 schemas and `zod/v3` are unsupported. Auth
+users should also upgrade to `@nanokajs/auth@^2.1`, which accepts core 3.
+`t.json(schema)` rejects directly supplied schemas from unsupported versions at
+initialization, even if a package manager installs multiple Zod copies.
+Schema and validator results now follow Zod 4: review custom error handling,
+`z.record(key, value)`, and stricter UUID/email checks. PATCH schemas continue to
+leave omitted fields absent instead of applying their defaults. Runtime brands
+are erased by Zod 4; custom refinements remain unsupported in strict OpenAPI output.
+
+For untrusted arrays, sets and maps, specify a collection size bound and apply a
+request body limit before validation. Zod 4.6.6 rejects oversized **bounded**
+collections before parsing their elements; upgrading does not impose limits on
+unbounded collections. Do not treat generated OpenAPI as runtime enforcement.
 
 ## Quickstart
 

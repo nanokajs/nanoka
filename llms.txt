@@ -1,5 +1,7 @@
 # Nanoka
 
+Nanoka 3 requires Zod ^4.6.6. Zod 3 and zod/v3 are unsupported.
+
 > Thin wrapper over Hono + Drizzle + Zod for Cloudflare Workers + D1. 80% automatic, 20% explicit.
 
 Nanoka places a single model definition at the center: the model is the source of truth for DB schema, TypeScript types, and base validation. API validation is a deliberate derivation, not an automatic mirror — DB shape and API shape diverge (e.g. `passwordHash` exists in the DB but must not appear in responses). Nanoka targets Cloudflare Workers + D1 first-class, with Turso/libSQL via adapter.

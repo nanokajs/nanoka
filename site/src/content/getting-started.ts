@@ -16,9 +16,11 @@ cd my-api
 ## 2. Install dependencies
 
 \`\`\`bash
-pnpm add @nanokajs/core drizzle-orm zod
+pnpm add @nanokajs/core drizzle-orm zod@^4.6.6
 pnpm add -D drizzle-kit @cloudflare/workers-types
 \`\`\`
+
+Nanoka 3 requires Zod 4.6.6+; Zod 3 and \`zod/v3\` are unsupported. Use body and collection size limits for untrusted data.
 
 ## 3. Configure TypeScript
 
@@ -202,9 +204,11 @@ cd my-api
 ## 2. 依存パッケージのインストール
 
 \`\`\`bash
-pnpm add @nanokajs/core drizzle-orm zod
+pnpm add @nanokajs/core drizzle-orm zod@^4.6.6
 pnpm add -D drizzle-kit @cloudflare/workers-types
 \`\`\`
+
+Nanoka 3 は Zod 4.6.6+ が必要です。Zod 3 / \`zod/v3\` は非サポートです。外部入力にはボディとコレクションのサイズ上限も設定してください。
 
 ## 3. TypeScript の設定
 
