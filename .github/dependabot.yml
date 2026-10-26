@@ -17,7 +17,23 @@ updates:
       interval: weekly
     open-pull-requests-limit: 5
     groups:
+      biome:
+        patterns:
+          - "@biomejs/biome"
+        update-types: [minor, patch]
+      libsql:
+        patterns:
+          - "@libsql/client"
+        update-types: [minor, patch]
+      satori:
+        patterns:
+          - "satori"
+        update-types: [minor, patch]
       minor-and-patch:
+        exclude-patterns:
+          - "@biomejs/biome"
+          - "@libsql/client"
+          - "satori"
         update-types:
           - minor
           - patch
