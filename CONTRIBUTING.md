@@ -18,7 +18,7 @@ Nanoka is organized as a `pnpm` workspace:
 
 ## Prerequisites
 
-- **Node.js >=22.12** for repository development/test tooling (Vite 8 on Node 22). Published package `engines.node` remains `>=22`.
+- **Node.js >=22.18** for repository development/test tooling (tsup 9 and Vite 8 on Node 22). Published package `engines.node` remains `>=22`.
 - **pnpm 9.15.x** — pinned in `packageManager` field; we recommend `corepack enable` to use it automatically
 
 ## Development workflow
