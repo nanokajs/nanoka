@@ -1,6 +1,6 @@
 {
   "name": "@nanokajs/core",
-  "version": "3.0.3",
+  "version": "3.0.4",
   "type": "module",
   "description": "Thin wrapper over Hono + Drizzle + Zod for Cloudflare Workers + D1. 80% automatic, 20% explicit.",
   "author": "Eiichiro Iriguchi <eiichiro_iriguchi@a-1ro.dev>",
@@ -88,7 +88,7 @@
     "typescript": "^5.9.3",
     "vite": "^8.3.5",
     "vitest": "^4.1.11",
-    "wrangler": "^4.151.3",
+    "wrangler": "^4.152.0",
     "zod": "^4.6.6"
   }
 }
