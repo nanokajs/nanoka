@@ -5,11 +5,11 @@ updates:
     schedule:
       interval: weekly
     commit-message:
-      prefix: "chore(actions)"
+      prefix: 'chore(actions)'
     groups:
       codeql:
         patterns:
-          - "github/codeql-action/*"
+          - 'github/codeql-action/*'
 
   - package-ecosystem: npm
     directory: /
@@ -19,21 +19,21 @@ updates:
     groups:
       biome:
         patterns:
-          - "@biomejs/biome"
+          - '@biomejs/biome'
         update-types: [minor, patch]
       libsql:
         patterns:
-          - "@libsql/client"
+          - '@libsql/client'
         update-types: [minor, patch]
       satori:
         patterns:
-          - "satori"
+          - 'satori'
         update-types: [minor, patch]
       minor-and-patch:
         exclude-patterns:
-          - "@biomejs/biome"
-          - "@libsql/client"
-          - "satori"
+          - '@biomejs/biome'
+          - '@libsql/client'
+          - 'satori'
         update-types:
           - minor
           - patch
