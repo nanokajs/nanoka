@@ -1,6 +1,6 @@
 {
   "name": "create-nanoka-app",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "Create a new Nanoka (Hono + D1) project",
   "type": "module",
   "bin": {
@@ -25,7 +25,7 @@
   },
   "devDependencies": {
     "@types/node": "^26.6.5",
-    "tsup": "^8.5.1",
+    "tsup": "^9.0.0",
     "typescript": "^5.9.3",
     "vite": "^8.1.4",
     "vitest": "^4.1.11"
