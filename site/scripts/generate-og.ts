@@ -17,7 +17,24 @@ async function fetchFont(family: string, weight: number): Promise<ArrayBuffer> {
 }
 
 function token(text: string, color: string) {
-  return { type: 'span', key: null, props: { style: { color, whiteSpace: 'pre' }, children: text } }
+  // JetBrains Mono advances each space by 0.6em. Explicit spacers preserve code
+  // indentation when Satori shapes each syntax token independently.
+  return {
+    type: 'span',
+    key: null,
+    props: {
+      style: { color, display: 'flex' },
+      children: text
+        .split(/( +)/)
+        .filter(Boolean)
+        .map((part) => ({
+          type: 'span',
+          props: part.startsWith(' ')
+            ? { style: { width: `${part.length * 0.6}em`, flexShrink: 0 } }
+            : { children: part },
+        })),
+    },
+  }
 }
 
 function codeLine(tokens: Array<{ type: string; key: null; props: object }>, indent = false) {
