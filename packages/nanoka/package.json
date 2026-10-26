@@ -80,7 +80,7 @@
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "0.23.0",
     "@cloudflare/workers-types": "^4.20260523.1",
-    "@libsql/client": "^0.17.4",
+    "@libsql/client": "^0.18.0",
     "@types/node": "^26.6.5",
     "drizzle-orm": "^0.45.4",
     "hono": "^4.13.13",
