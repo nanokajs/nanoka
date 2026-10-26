@@ -50,18 +50,18 @@
   },
   "peerDependencies": {
     "@nanokajs/core": "^1.0.0 || ^2.0.0 || ^3.0.0",
-    "hono": "^4.13.12"
+    "hono": "^4.13.13"
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "0.23.0",
     "@cloudflare/workers-types": "^4.20260523.1",
     "@nanokajs/core": "workspace:*",
     "@types/node": "^26.6.5",
-    "hono": "^4.13.12",
+    "hono": "^4.13.13",
     "tsup": "^9.0.0",
     "typescript": "^5.9.3",
-    "vite": "^8.1.4",
+    "vite": "^8.3.5",
     "vitest": "^4.1.11",
-    "wrangler": "^4.111.0"
+    "wrangler": "^4.152.0"
   }
 }
