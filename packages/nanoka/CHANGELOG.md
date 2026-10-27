@@ -5,6 +5,13 @@ All notable changes to `@nanokajs/core` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.5] — 2026-10-27
+
+### Security
+
+- Pin the repository and newly scaffolded applications to workerd 1.20261027.1, which builds against Brotli 1.2.1 and fixes CVE-2026-111497 in local Workers tooling. Preserve other dependency overrides and the Zod 4 policy.
+- Include a scoped pnpm override and pnpm 9.15.9 in generated package metadata so fresh installs also select the patched native runtime. Existing applications need their own lockfile/tooling update; installing core alone does not update an application's Wrangler.
+
 ## [3.0.0] — 2026-10-25
 
 ### Changed

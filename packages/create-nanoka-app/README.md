@@ -25,3 +25,12 @@ pnpm exec nanoka generate
 pnpm exec drizzle-kit generate
 pnpm dev
 ```
+
+## Local Workers runtime security
+
+Generated projects pin pnpm 9.15.9 and include a scoped pnpm override for
+workerd 1.20261027.1 (Brotli 1.2.1), addressing
+[CVE-2026-111497](https://github.com/google/brotli/releases/tag/v1.2.1).
+Keep these overrides until your Wrangler/Miniflare dependencies themselves require
+a patched workerd. Existing projects must update their own tooling and lockfile;
+upgrading the scaffold CLI does not rewrite existing projects.
