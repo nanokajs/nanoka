@@ -5,6 +5,13 @@ All notable changes to `@nanokajs/core` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.6] — 2026-10-28
+
+### Security
+
+- Raise Wrangler to 4.155.0 in the workspace and generated applications to escape terminal control characters in tail and the main remote-preview printer. A separate retained remote-bindings printer is outside that fix. Scope the pnpm override to older Wrangler 4 releases so Workers test tooling also receives the fix. Keep the workerd Brotli override and public API unchanged.
+- Add a scoped esbuild <=0.24.2 override in generated projects for GHSA-67mh-4wv8-2f99. Workspace overrides do not protect applications created outside the workspace. The affected esbuild development server is not used by schema generation.
+
 ## [3.0.5] — 2026-10-27
 
 ### Security

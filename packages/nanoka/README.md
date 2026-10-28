@@ -102,6 +102,13 @@ unbounded collections. Do not treat generated OpenAPI as runtime enforcement.
 
 ## Local Workers tooling
 
+Use Wrangler 4.155.0 or later for escaped terminal controls in Worker/Pages tail
+and the main remote-preview log printer. Existing applications must update their
+own Wrangler dependency and lockfile; updating core alone does not update it.
+Wrangler 4.155.0 still contains a separate retained remote-bindings printer that
+forwards controls unchanged. See the [upstream tail fix](https://github.com/cloudflare/workers-sdk/pull/16526)
+for its scope; this update does not cover every logging path.
+
 [CVE-2026-111497](https://github.com/google/brotli/releases/tag/v1.2.1) affects the
 native Brotli decoder bundled in older workerd builds. Nanoka 3.0.5 scaffolds and
 this repository use workerd 1.20261027.1, built with Brotli 1.2.1. Installing core
@@ -114,11 +121,17 @@ settings, then refresh and commit its lockfile with the selected package manager
   "packageManager": "pnpm@9.15.9",
   "pnpm": {
     "overrides": {
-      "workerd@>=1.0.0 <1.20261027.1": "1.20261027.1"
+      "workerd@>=1.0.0 <1.20261027.1": "1.20261027.1",
+      "esbuild@<=0.24.2": "0.28.2"
     }
   }
 }
 ```
+
+The esbuild override also covers old build helpers pulled in by drizzle-kit
+([GHSA-67mh-4wv8-2f99](https://github.com/evanw/esbuild/security/advisories/GHSA-67mh-4wv8-2f99)).
+The advisory concerns esbuild's development server; schema generation does not
+start that server, but generated installations should still resolve patched tools.
 
 Use pnpm 9 as specified by packageManager. Verify the resolved workerd version in
 your lockfile, including every transitive copy.

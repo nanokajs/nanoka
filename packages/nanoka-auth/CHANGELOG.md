@@ -5,6 +5,12 @@ All notable changes to `@nanokajs/auth` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.4] — 2026-10-28
+
+### Security
+
+- Update development-only Wrangler to 4.155.0 for escaped terminal control characters in tail and the main remote-preview printer. Authentication behavior and peer dependencies are unchanged.
+
 ## [2.1.0] — 2026-10-25
 
 ### Added
