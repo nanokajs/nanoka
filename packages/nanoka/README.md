@@ -100,6 +100,31 @@ request body limit before validation. Zod 4.6.6 rejects oversized **bounded**
 collections before parsing their elements; upgrading does not impose limits on
 unbounded collections. Do not treat generated OpenAPI as runtime enforcement.
 
+## Local Workers tooling
+
+[CVE-2026-111497](https://github.com/google/brotli/releases/tag/v1.2.1) affects the
+native Brotli decoder bundled in older workerd builds. Nanoka 3.0.5 scaffolds and
+this repository use workerd 1.20261027.1, built with Brotli 1.2.1. Installing core
+alone does not update an existing application's Wrangler or Miniflare. Add the
+following settings to your application's package.json, preserving existing
+settings, then refresh and commit its lockfile with the selected package manager:
+
+```json
+{
+  "packageManager": "pnpm@9.15.9",
+  "pnpm": {
+    "overrides": {
+      "workerd@>=1.0.0 <1.20261027.1": "1.20261027.1"
+    }
+  }
+}
+```
+
+Use pnpm 9 as specified by packageManager. Verify the resolved workerd version in
+your lockfile, including every transitive copy.
+Cloudflare-managed production Workers are updated by Cloudflare independently of
+these local binaries; this change does not deploy or reconfigure production.
+
 ## Quickstart
 
 ### 3 commands to a working API
