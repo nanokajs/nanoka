@@ -31,6 +31,8 @@ jobs:
 
       - run: pnpm test:security-report
 
+      - run: pnpm test:workerd-rpc
+
       - name: Verify LICENSE files are in sync
         run: |
           if ! diff -q LICENSE packages/nanoka/LICENSE >/dev/null; then

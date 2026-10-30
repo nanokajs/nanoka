@@ -102,6 +102,12 @@ unbounded collections. Do not treat generated OpenAPI as runtime enforcement.
 
 ## Local Workers tooling
 
+Nanoka 3.0.7 scaffolds and this repository use workerd 1.20261030.1, which
+[fixes RPC error stack disclosure between legacy and enhanced serializers](https://github.com/cloudflare/workerd/pull/8087).
+This pin updates local multi-Worker RPC tooling. Existing applications must update
+their own override and lockfile. Cloudflare controls managed Workers patching;
+this local pin does not verify it.
+
 Use Wrangler 4.155.0 or later for escaped terminal controls in Worker/Pages tail
 and the main remote-preview log printer. Existing applications must update their
 own Wrangler dependency and lockfile; updating core alone does not update it.
@@ -110,8 +116,8 @@ forwards controls unchanged. See the [upstream tail fix](https://github.com/clou
 for its scope; this update does not cover every logging path.
 
 [CVE-2026-111497](https://github.com/google/brotli/releases/tag/v1.2.1) affects the
-native Brotli decoder bundled in older workerd builds. Nanoka 3.0.5 scaffolds and
-this repository use workerd 1.20261027.1, built with Brotli 1.2.1. Installing core
+native Brotli decoder bundled in older workerd builds. Nanoka 3.0.5 introduced the
+Brotli fix; the current workerd override also retains Brotli 1.2.1. Installing core
 alone does not update an existing application's Wrangler or Miniflare. Add the
 following settings to your application's package.json, preserving existing
 settings, then refresh and commit its lockfile with the selected package manager:
@@ -121,7 +127,7 @@ settings, then refresh and commit its lockfile with the selected package manager
   "packageManager": "pnpm@9.15.9",
   "pnpm": {
     "overrides": {
-      "workerd@>=1.0.0 <1.20261027.1": "1.20261027.1",
+      "workerd@>=1.0.0 <1.20261030.1": "1.20261030.1",
       "esbuild@<=0.24.2": "0.28.2"
     }
   }
