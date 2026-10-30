@@ -28,6 +28,12 @@ pnpm dev
 
 ## Local Workers runtime security
 
+Nanoka 3.0.7 scaffolds and this repository use workerd 1.20261030.1, which
+[fixes RPC error stack disclosure between legacy and enhanced serializers](https://github.com/cloudflare/workerd/pull/8087).
+This pin updates local multi-Worker RPC tooling. Existing applications must update
+their own override and lockfile. Cloudflare controls managed Workers patching;
+this local pin does not verify it.
+
 Use Wrangler 4.155.0 or later for escaped terminal controls in Worker/Pages tail
 and the main remote-preview log printer. Existing applications must update their
 own Wrangler dependency and lockfile; updating core alone does not update it.
@@ -36,7 +42,7 @@ forwards controls unchanged. See the [upstream tail fix](https://github.com/clou
 for its scope; this update does not cover every logging path.
 
 Generated projects pin pnpm 9.15.9 and include a scoped pnpm override for
-workerd 1.20261027.1 (Brotli 1.2.1), addressing
+workerd 1.20261030.1 (Brotli 1.2.1), addressing
 [CVE-2026-111497](https://github.com/google/brotli/releases/tag/v1.2.1).
 Keep these overrides until your Wrangler/Miniflare dependencies themselves require
 a patched workerd. Existing projects must update their own tooling and lockfile;
