@@ -5,6 +5,13 @@ All notable changes to `@nanokajs/core` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.7] — 2026-10-30
+
+### Security
+
+- Update the workspace and scaffold workerd override to 1.20261030.1. Mixed legacy/enhanced RPC error serialization no longer exposes a callee's stack to an untrusted caller. This updates local development/test tooling; it does not establish the patch state of managed Workers. Keep the Brotli fix and other overrides.
+- Add a native-runtime regression check in CI for all four legacy/enhanced RPC serialization pairings, including nested error stacks.
+
 ## [3.0.6] — 2026-10-28
 
 ### Security
