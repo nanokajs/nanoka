@@ -5,6 +5,13 @@ All notable changes to `@nanokajs/core` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.8] — 2026-10-31
+
+### Security
+
+- Update the workspace and scaffold workerd override to 1.20261031.1. When experimental TypeScript Streams are enabled, internal native stream brands and extraction hooks now use V8-private slots instead of reflection-visible symbols. Nanoka's tracked configurations do not enable this experimental feature. This updates local tooling and preserves the earlier RPC and Brotli fixes; it does not establish managed Workers patch status.
+- Add a native-runtime regression check for hidden stream internals and ordinary stream operations, with both default and experimental stream implementations.
+
 ## [3.0.7] — 2026-10-30
 
 ### Security
