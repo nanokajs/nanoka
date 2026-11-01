@@ -5,6 +5,12 @@ All notable changes to `@nanokajs/core` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.9] — 2026-11-01
+
+### Security
+
+- Require Hono ^4.13.16 in public peers, workspace tools, and generated/onboarding applications. This includes the November 1 fixes for wildcard middleware coverage, mounted paths, multipart validation, text/ping CSRF checks, and CSS interpolation. Preserve Zod 4 and all existing overrides. Add behavior regressions through Nanoka for middleware, mounts, form validation, and CSRF composition.
+
 ## [3.0.8] — 2026-10-31
 
 ### Security
