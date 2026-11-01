@@ -11,7 +11,8 @@
     "test:pack": "node --test scripts/package-bin.test.mjs",
     "security:report": "node scripts/collect-security-report.mjs",
     "test:security-report": "node --test scripts/collect-security-report.test.mjs",
-    "test:workerd-rpc": "node --test scripts/workerd-rpc-security.test.mjs"
+    "test:workerd-rpc": "node --test scripts/workerd-rpc-security.test.mjs",
+    "test:workerd-streams": "node --test scripts/workerd-stream-security.test.mjs"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.6.2",
@@ -28,7 +29,7 @@
       "fflate@>=0.7.0 <0.7.5": "0.7.5",
       "miniflare>sharp": "0.35.5",
       "zod@>=4.0.0 <4.6.6": "4.6.7",
-      "workerd@>=1.0.0 <1.20261030.1": "1.20261030.1",
+      "workerd@>=1.0.0 <1.20261031.1": "1.20261031.1",
       "wrangler@>=4.0.0 <4.155.0": "4.155.0"
     }
   }
