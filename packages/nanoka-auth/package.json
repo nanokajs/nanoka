@@ -54,7 +54,7 @@
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "0.23.0",
-    "@cloudflare/workers-types": "^4.20260523.1",
+    "@cloudflare/workers-types": "^5.20261029.1",
     "@nanokajs/core": "workspace:*",
     "@types/node": "^26.6.5",
     "hono": "^4.13.13",
