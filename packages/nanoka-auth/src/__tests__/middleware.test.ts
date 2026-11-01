@@ -6,6 +6,18 @@ import { authMiddleware } from '../middleware.js'
 const SECRET = 'test-secret-key'
 
 describe('authMiddleware', () => {
+  it.each([
+    '/private/item',
+    ...['%0A', '%0D', '%E2%80%A8', '%E2%80%A9'].map((s) => `/private/item${s}`),
+  ])('does not bypass wildcard authentication for %s', async (path) => {
+    const app = new Hono()
+    app.use('/private/*', authMiddleware({ secret: SECRET }))
+    app.get('/private*', (c) => c.text('must not run'))
+    app.notFound((c) => c.text('must not run', 404))
+
+    expect((await app.request(path)).status).toBe(401)
+  })
+
   it('valid token passes through and sets user on context', async () => {
     type AuthVars = { user: { sub: string } }
     const app = new Hono<{ Variables: AuthVars }>()
