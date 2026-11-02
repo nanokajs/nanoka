@@ -10,11 +10,15 @@ Provides credential validation, JWT issuance, and Hono middleware — built on `
 pnpm add @nanokajs/auth
 ```
 
-Peer dependencies: `@nanokajs/core ^1.0.0 || ^2.0.0 || ^3.0.0`, `hono ^4.13.12`.
+Peer dependencies: `@nanokajs/core ^1.0.0 || ^2.0.0 || ^3.0.0`, `hono ^4.13.16`.
 
-Existing applications must update Hono to 4.13.12 or later in the 4.x line. This
+Existing applications must update Hono to 4.13.16 or later in the 4.x line. This
 minimum excludes older releases affected by published Hono advisories; updating
 Nanoka's development lockfile alone does not update a consumer's Hono installation.
+In particular, Hono 4.13.16 fixes [wildcard middleware coverage](https://github.com/honojs/hono/security/advisories/GHSA-h7mg-cq63-vhpq);
+a valid authentication middleware cannot protect a route if the router skips it.
+Register authentication inside a mounted application as well when it has its own
+protected routes.
 
 ## Usage
 

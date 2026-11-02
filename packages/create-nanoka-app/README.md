@@ -26,9 +26,13 @@ pnpm exec drizzle-kit generate
 pnpm dev
 ```
 
+Generated projects require Hono `^4.13.16`, including the November 1 middleware
+and form-validation fixes. Existing applications must update their own Hono
+dependency and lockfile; the scaffolder does not rewrite them.
+
 ## Local Workers runtime security
 
-Nanoka 3.0.8 scaffolds and this repository use workerd 1.20261031.1, which
+Nanoka 3.0.9 scaffolds and this repository use workerd 1.20261031.1, which
 [fixes RPC error stack disclosure between legacy and enhanced serializers](https://github.com/cloudflare/workerd/pull/8087).
 This pin updates local multi-Worker RPC tooling. Existing applications must update
 their own override and lockfile. Cloudflare controls managed Workers patching;
