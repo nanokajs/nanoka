@@ -5,6 +5,12 @@ All notable changes to `@nanokajs/core` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.10] — 2026-11-02
+
+### Security
+
+- Update workspace and scaffold Wrangler to 4.156.2, including the 4.156.1 fixes for Pages ASSETS directory boundaries, Pages middleware lookup, requested Pages deployment directories, and OAuth callback validation/error rendering. Add a local ASSETS boundary regression to CI. Align all workerd copies and its optional peer to 1.20261102.1, as required by Wrangler, preserving Brotli/RPC/Streams protections, Hono/Zod peers, and other overrides.
+
 ## [3.0.9] — 2026-11-01
 
 ### Security

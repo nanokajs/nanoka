@@ -35,6 +35,8 @@ jobs:
 
       - run: pnpm test:workerd-streams
 
+      - run: pnpm test:wrangler-assets
+
       - name: Verify LICENSE files are in sync
         run: |
           if ! diff -q LICENSE packages/nanoka/LICENSE >/dev/null; then
