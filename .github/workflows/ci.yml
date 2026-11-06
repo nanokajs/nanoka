@@ -35,6 +35,8 @@ jobs:
 
       - run: pnpm test:workerd-streams
 
+      - run: pnpm test:workerd-d1
+
       - run: pnpm test:undici-integrity
 
       - run: pnpm test:wrangler-assets
