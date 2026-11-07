@@ -16,7 +16,7 @@
     "test:wrangler-assets": "node --test scripts/wrangler-assets-security.test.mjs"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.6.2",
+    "@biomejs/biome": "^2.6.5",
     "typescript": "^5.9.3"
   },
   "pnpm": {
