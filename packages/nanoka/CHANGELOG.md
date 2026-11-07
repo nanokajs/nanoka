@@ -5,13 +5,15 @@ All notable changes to `@nanokajs/core` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.0.11] — 2026-11-06
+## [3.0.11] — 2026-11-07
 
 ### Security
 
-- Hide D1 binding service/session handles in the local native runtime with workerd 1.20261106.1. Add a native D1 reflection/query regression to CI. The upstream custom-binding issue does not establish exploitation of a managed Nanoka deployment.
+- Update the local native runtime to workerd 1.20261107.1 for request-cancellation ownership fixes involving accepted WebSockets and pending response bodies. Add bounded real-HTTP WebSocket echo, close-handshake, and client-disconnect checks; the precise CPU-limit race is covered by upstream native tests rather than this local compatibility check. This does not establish managed Workers patch status.
 
-- Update Wrangler to 4.158.0 and Miniflare to 5.20261104.0-beta for bundled dependency security fixes. Update installed undici to 7.30.2 and add an ASCII-whitespace SRI regression. Replace the renamed Workers test integration with @cloudflare/vitest-plugin 1.6.0, keeping Vitest 4 and the same configuration API, to remove the old Miniflare alpha. Align workerd to 1.20261106.1 and retain public APIs, Hono/Zod peers, and unrelated overrides.
+- Hide D1 binding service/session handles in the local native runtime (fixed since workerd 1.20261106.1). Add a native D1 reflection/query regression to CI. The upstream custom-binding issue does not establish exploitation of a managed Nanoka deployment.
+
+- Update Wrangler to 4.158.0 and Miniflare to 5.20261104.0-beta for bundled dependency security fixes. Update installed undici to 7.30.2 and add an ASCII-whitespace SRI regression. Replace the renamed Workers test integration with @cloudflare/vitest-plugin 1.6.0, keeping Vitest 4 and the same configuration API, to remove the old Miniflare alpha. Align workerd to 1.20261107.1 and retain public APIs, Hono/Zod peers, and unrelated overrides.
 
 ## [3.0.10] — 2026-11-02
 
