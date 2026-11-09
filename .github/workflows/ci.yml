@@ -37,6 +37,8 @@ jobs:
 
       - run: pnpm test:workerd-websocket
 
+      - run: pnpm test:miniflare-r2-xml
+
       - run: pnpm test:workerd-d1
 
       - run: pnpm test:undici-integrity

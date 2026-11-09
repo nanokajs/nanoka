@@ -53,7 +53,7 @@
     "hono": "^4.13.16"
   },
   "devDependencies": {
-    "@cloudflare/vitest-plugin": "1.6.0",
+    "@cloudflare/vitest-plugin": "1.6.1",
     "@cloudflare/workers-types": "^4.20260523.1",
     "@nanokajs/core": "workspace:*",
     "@types/node": "^26.6.5",
@@ -62,6 +62,6 @@
     "typescript": "^5.9.3",
     "vite": "^8.3.5",
     "vitest": "^4.1.11",
-    "wrangler": "^4.158.0"
+    "wrangler": "^4.159.0"
   }
 }
