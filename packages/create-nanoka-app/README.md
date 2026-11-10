@@ -4,7 +4,7 @@ Create a new Nanoka (Hono + Drizzle + D1) project in seconds.
 
 ## Requirements
 
-- **Node.js 22.12 or later for generated project tooling.** Wrangler 4.159 requires Node 22.12+, so generated projects declare `"engines": { "node": ">=22.12" }`. The scaffolder package itself retains `engines.node >=22`.
+- **Node.js 22.12 or later for generated project tooling.** Wrangler 4.160 requires Node 22.12+, so generated projects declare `"engines": { "node": ">=22.12" }`. The scaffolder package itself retains `engines.node >=22`.
 
 ## Usage
 

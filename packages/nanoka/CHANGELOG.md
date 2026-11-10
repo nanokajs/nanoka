@@ -5,9 +5,11 @@ All notable changes to `@nanokajs/core` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.0.11] — 2026-11-09
+## [3.0.11] — 2026-11-10
 
 ### Security
+
+- Update Wrangler to 4.160.0 and the Workers test plugin to 1.7.0 for diagnostic-header redaction and local Artifacts credential forwarding fixes. Align native workerd to 1.20261110.1, including request-owned volatile-cache fallback spans, copied stdio input before JavaScript logging callbacks, and corrected BlockList address comparisons. Add bounded address-classification regressions. Tracked configurations do not use volatile caches or Containers; memory-corruption and managed-platform patch status are not established by local tests.
 
 - Update Wrangler to 4.159.0, Workers Vitest plugin to 1.6.1, and Miniflare to 5.20261109.0-beta for bundled Hono, XML, proxy, and browser-installer fixes. Use workerd 1.20261109.1, including reduced tracing-message allocation overhead. Repository tooling already requires Node 22.18+; these upstream tools require Node 22.12+. Declare Node 22.12+ for generated project tooling while preserving published core/scaffolder engines and APIs.
 
@@ -17,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Hide D1 binding service/session handles in the local native runtime (fixed since workerd 1.20261106.1). Add a native D1 reflection/query regression to CI. The upstream custom-binding issue does not establish exploitation of a managed Nanoka deployment.
 
-- Update Wrangler to 4.158.0 and Miniflare to 5.20261104.0-beta for bundled dependency security fixes. Update installed undici to 7.30.2 and add an ASCII-whitespace SRI regression. Replace the renamed Workers test integration with @cloudflare/vitest-plugin 1.6.0, keeping Vitest 4 and the same configuration API, to remove the old Miniflare alpha. Align workerd to 1.20261109.1 and retain public APIs, Hono/Zod peers, and unrelated overrides.
+- Update Wrangler to 4.158.0 and Miniflare to 5.20261104.0-beta for bundled dependency security fixes. Update installed undici to 7.30.2 and add an ASCII-whitespace SRI regression. Replace the renamed Workers test integration with @cloudflare/vitest-plugin 1.6.0, keeping Vitest 4 and the same configuration API, to remove the old Miniflare alpha. Align workerd to 1.20261110.1 and retain public APIs, Hono/Zod peers, and unrelated overrides.
 
 ## [3.0.10] — 2026-11-02
 
