@@ -5,9 +5,11 @@ All notable changes to `@nanokajs/auth` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.1.7] — 2026-11-10
+## [2.1.7] — 2026-11-11
 
 ### Security
+
+- Require Hono ^4.13.18 in public peers and development dependencies for the November 11 JSON/form media-type validation, body-limit buffering, opt-in static-path decoding, and custom mounted-path fixes. Preserve Zod 4 and public APIs.
 
 - Update development Wrangler to 4.160.0 and the renamed Workers test integration to @cloudflare/vitest-plugin 1.7.0 for bundled dependency security fixes. Authentication APIs and session behavior are unchanged.
 

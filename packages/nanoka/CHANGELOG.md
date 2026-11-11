@@ -5,9 +5,13 @@ All notable changes to `@nanokajs/core` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.0.11] — 2026-11-10
+## [3.0.11] — 2026-11-11
 
 ### Security
+
+- Update generated Hono to ^4.13.18 and CI Node to 22.23.5. Add bounded validator/body-limit and Node permission regressions. Native workerd remains 1.20261110.1 until the newer upstream fixes are published as an installable package.
+
+- Require Hono ^4.13.18 in public peers and development dependencies for the November 11 JSON/form media-type validation, body-limit buffering, opt-in static-path decoding, and custom mounted-path fixes. Preserve Zod 4 and public APIs.
 
 - Update Wrangler to 4.160.0 and the Workers test plugin to 1.7.0 for diagnostic-header redaction and local Artifacts credential forwarding fixes. Align native workerd to 1.20261110.1, including request-owned volatile-cache fallback spans, copied stdio input before JavaScript logging callbacks, and corrected BlockList address comparisons. Add bounded address-classification regressions. Tracked configurations do not use volatile caches or Containers; memory-corruption and managed-platform patch status are not established by local tests.
 
