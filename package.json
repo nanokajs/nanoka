@@ -20,6 +20,7 @@
     "test:workerd-d1": "node --test scripts/workerd-d1-security.test.mjs",
     "test:undici-integrity": "node --test scripts/undici-integrity-security.test.mjs",
     "test:wrangler-headers": "node --test scripts/wrangler-header-security.test.mjs",
+    "test:wrangler-redirects": "node --test scripts/wrangler-redirect-security.test.mjs",
     "test:wrangler-assets": "node --test scripts/wrangler-assets-security.test.mjs"
   },
   "devDependencies": {
@@ -37,8 +38,8 @@
       "fflate@>=0.7.0 <0.7.5": "0.7.5",
       "miniflare>sharp": "0.35.5",
       "zod@>=4.0.0 <4.6.6": "4.6.7",
-      "workerd@>=1.0.0 <1.20261110.1": "1.20261110.1",
-      "wrangler@>=4.0.0 <4.160.0": "4.160.0"
+      "workerd@>=1.0.0 <1.20261112.1": "1.20261112.1",
+      "wrangler@>=4.0.0 <4.161.0": "4.161.0"
     }
   }
 }

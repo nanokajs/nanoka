@@ -5,9 +5,11 @@ All notable changes to `@nanokajs/auth` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.1.7] — 2026-11-11
+## [2.1.7] — 2026-11-12
 
 ### Security
+
+- Update Wrangler to 4.161.0 and the Workers test plugin to 1.8.1 for shared Pages/Workers relative-redirect normalization and remote binding session credential selection. Add bounded local redirect regressions without following external locations. Tracked configurations have no custom _redirects or remote:true bindings.
 
 - Require Hono ^4.13.18 in public peers and development dependencies for the November 11 JSON/form media-type validation, body-limit buffering, opt-in static-path decoding, and custom mounted-path fixes. Preserve Zod 4 and public APIs.
 

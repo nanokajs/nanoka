@@ -5,11 +5,13 @@ All notable changes to `@nanokajs/core` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.0.11] — 2026-11-11
+## [3.0.11] — 2026-11-12
 
 ### Security
 
-- Update generated Hono to ^4.13.18 and CI Node to 22.23.5. Add bounded validator/body-limit and Node permission regressions. Native workerd remains 1.20261110.1 until the newer upstream fixes are published as an installable package.
+- Update Wrangler to 4.161.0 and the Workers test plugin to 1.8.1 for shared Pages/Workers relative-redirect normalization and remote binding session credential selection. Add bounded local redirect regressions without following external locations. Tracked configurations have no custom _redirects or remote:true bindings.
+
+- Update generated Hono to ^4.13.18 and CI Node to 22.23.5. Add bounded validator/body-limit and Node permission regressions. Align native workerd to the published 1.20261112.1, including isolate teardown unbinding, lock-guarded Rust JSG references and deferred cross-context action memory accounting. Outgoing WebSocket queue accounting remains controlled by its upstream autogate; CPU-limit reporting and native races are assessed from upstream tests, not stress-tested locally.
 
 - Require Hono ^4.13.18 in public peers and development dependencies for the November 11 JSON/form media-type validation, body-limit buffering, opt-in static-path decoding, and custom mounted-path fixes. Preserve Zod 4 and public APIs.
 
