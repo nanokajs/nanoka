@@ -16,16 +16,16 @@
     "@nanokajs/auth": "workspace:*",
     "@nanokajs/core": "workspace:*",
     "drizzle-orm": "^0.45.4",
-    "hono": "^4.13.16",
+    "hono": "^4.13.18",
     "zod": "^4.6.6"
   },
   "devDependencies": {
-    "@cloudflare/vitest-pool-workers": "0.23.0",
+    "@cloudflare/vitest-plugin": "1.8.2",
     "@cloudflare/workers-types": "^4.20260523.1",
     "drizzle-kit": "^0.31.11",
     "typescript": "^5.9.3",
     "vite": "^8.3.5",
     "vitest": "^4.1.11",
-    "wrangler": "^4.156.2"
+    "wrangler": "^4.162.0"
   }
 }

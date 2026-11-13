@@ -10,9 +10,18 @@
     "format": "biome format --write .",
     "test:pack": "node --test scripts/package-bin.test.mjs",
     "security:report": "node scripts/collect-security-report.mjs",
+    "test:node-permission": "node --test scripts/node-permission-security.test.mjs",
     "test:security-report": "node --test scripts/collect-security-report.test.mjs",
+    "test:workerd-cross-request": "node --test scripts/workerd-cross-request-security.test.mjs",
     "test:workerd-rpc": "node --test scripts/workerd-rpc-security.test.mjs",
     "test:workerd-streams": "node --test scripts/workerd-stream-security.test.mjs",
+    "test:workerd-websocket": "node --test scripts/workerd-websocket-lifetime.test.mjs",
+    "test:miniflare-r2-xml": "node --test scripts/miniflare-r2-xml.test.mjs",
+    "test:workerd-blocklist": "node --test scripts/workerd-blocklist-security.test.mjs",
+    "test:workerd-d1": "node --test scripts/workerd-d1-security.test.mjs",
+    "test:undici-integrity": "node --test scripts/undici-integrity-security.test.mjs",
+    "test:wrangler-headers": "node --test scripts/wrangler-header-security.test.mjs",
+    "test:wrangler-redirects": "node --test scripts/wrangler-redirect-security.test.mjs",
     "test:wrangler-assets": "node --test scripts/wrangler-assets-security.test.mjs"
   },
   "devDependencies": {
@@ -23,15 +32,15 @@
     "overrides": {
       "devalue": ">=5.8.1",
       "esbuild": ">=0.28.1 <0.29.0",
-      "undici@>=7.0.0 <7.30.1": "7.30.1",
+      "undici@>=7.0.0 <7.30.2": "7.30.2",
       "vitest@>=4.1.0 <4.1.12": "4.1.12",
       "postcss@>=8.0.0 <8.5.23": "8.5.28",
       "nanoid@>=3.0.0 <3.3.18": "3.3.19",
       "fflate@>=0.7.0 <0.7.5": "0.7.5",
       "miniflare>sharp": "0.35.5",
       "zod@>=4.0.0 <4.6.6": "4.6.7",
-      "workerd@>=1.0.0 <1.20261102.1": "1.20261102.1",
-      "wrangler@>=4.0.0 <4.156.2": "4.156.2"
+      "workerd@>=1.0.0 <1.20261113.1": "1.20261113.1",
+      "wrangler@>=4.0.0 <4.162.0": "4.162.0"
     }
   }
 }

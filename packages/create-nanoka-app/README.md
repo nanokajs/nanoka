@@ -4,7 +4,10 @@ Create a new Nanoka (Hono + Drizzle + D1) project in seconds.
 
 ## Requirements
 
-- **Node.js 22 or later.** The generated project ships `wrangler` 4 (engines `node >= 22`), so scaffolded projects declare `"engines": { "node": ">=22" }`.
+- **Node.js 22.12 or later for generated project tooling.** Wrangler 4.162 requires Node 22.12+, so generated projects declare `"engines": { "node": ">=22.12" }`. The scaffolder package itself retains `engines.node >=22`.
+
+Use a security-patched Node.js release: 22.23.5+ in the 22.x line, or a patched
+supported newer line. The engine range is a feature floor, not a security guarantee.
 
 ## Usage
 
@@ -26,8 +29,8 @@ pnpm exec drizzle-kit generate
 pnpm dev
 ```
 
-Generated projects require Hono `^4.13.16`, including the November 1 middleware
-and form-validation fixes. Existing applications must update their own Hono
+Generated projects require Hono `^4.13.18`, including the November 11 JSON/form media-type, body-limit,
+opt-in static-path, and custom mount-path fixes. Existing applications must update their own Hono
 dependency and lockfile; the scaffolder does not rewrite them.
 
 ## Local Workers runtime security

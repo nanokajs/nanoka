@@ -1,6 +1,6 @@
 {
   "name": "@nanokajs/auth",
-  "version": "2.1.6",
+  "version": "2.1.7",
   "type": "module",
   "description": "Authentication utilities for Nanoka on Cloudflare Workers.",
   "author": "Eiichiro Iriguchi <eiichiro_iriguchi@a-1ro.dev>",
@@ -50,18 +50,18 @@
   },
   "peerDependencies": {
     "@nanokajs/core": "^1.0.0 || ^2.0.0 || ^3.0.0",
-    "hono": "^4.13.16"
+    "hono": "^4.13.18"
   },
   "devDependencies": {
-    "@cloudflare/vitest-pool-workers": "0.23.0",
+    "@cloudflare/vitest-plugin": "1.8.2",
     "@cloudflare/workers-types": "^4.20260523.1",
     "@nanokajs/core": "workspace:*",
     "@types/node": "^26.6.5",
-    "hono": "^4.13.16",
+    "hono": "^4.13.18",
     "tsup": "^9.0.0",
     "typescript": "^5.9.3",
     "vite": "^8.3.5",
     "vitest": "^4.1.11",
-    "wrangler": "^4.156.2"
+    "wrangler": "^4.162.0"
   }
 }
