@@ -78,7 +78,7 @@
     "jiti": "^2.7.0"
   },
   "devDependencies": {
-    "@cloudflare/vitest-plugin": "1.8.1",
+    "@cloudflare/vitest-plugin": "1.8.2",
     "@cloudflare/workers-types": "^4.20260523.1",
     "@libsql/client": "^0.18.0",
     "@types/node": "^26.6.5",
@@ -88,7 +88,7 @@
     "typescript": "^5.9.3",
     "vite": "^8.3.5",
     "vitest": "^4.1.11",
-    "wrangler": "^4.161.0",
+    "wrangler": "^4.162.0",
     "zod": "^4.6.6"
   }
 }

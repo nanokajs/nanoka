@@ -44,6 +44,8 @@ jobs:
 
       - run: pnpm test:security-report
 
+      - run: pnpm test:workerd-cross-request
+
       - run: pnpm test:workerd-rpc
 
       - run: pnpm test:workerd-streams

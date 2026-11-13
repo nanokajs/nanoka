@@ -12,6 +12,7 @@
     "security:report": "node scripts/collect-security-report.mjs",
     "test:node-permission": "node --test scripts/node-permission-security.test.mjs",
     "test:security-report": "node --test scripts/collect-security-report.test.mjs",
+    "test:workerd-cross-request": "node --test scripts/workerd-cross-request-security.test.mjs",
     "test:workerd-rpc": "node --test scripts/workerd-rpc-security.test.mjs",
     "test:workerd-streams": "node --test scripts/workerd-stream-security.test.mjs",
     "test:workerd-websocket": "node --test scripts/workerd-websocket-lifetime.test.mjs",
@@ -38,8 +39,8 @@
       "fflate@>=0.7.0 <0.7.5": "0.7.5",
       "miniflare>sharp": "0.35.5",
       "zod@>=4.0.0 <4.6.6": "4.6.7",
-      "workerd@>=1.0.0 <1.20261112.1": "1.20261112.1",
-      "wrangler@>=4.0.0 <4.161.0": "4.161.0"
+      "workerd@>=1.0.0 <1.20261113.1": "1.20261113.1",
+      "wrangler@>=4.0.0 <4.162.0": "4.162.0"
     }
   }
 }

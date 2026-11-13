@@ -5,9 +5,11 @@ All notable changes to `@nanokajs/auth` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.1.7] — 2026-11-12
+## [2.1.7] — 2026-11-13
 
 ### Security
+
+- Align Wrangler to 4.162.0, Miniflare to 5.20261113.0-beta, the Workers test plugin to 1.8.2, and native workerd to 1.20261113.1. The runtime now rejects cross-request awaits whose owning request has ended, and requires Send for lock-guarded Rust JSG state. Add bounded default/legacy Promise regressions while retaining public APIs and compatibility dates.
 
 - Update Wrangler to 4.161.0 and the Workers test plugin to 1.8.1 for shared Pages/Workers relative-redirect normalization and remote binding session credential selection. Add bounded local redirect regressions without following external locations. Tracked configurations have no custom _redirects or remote:true bindings.
 
