@@ -5,9 +5,11 @@ All notable changes to `@nanokajs/core` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.0.11] — 2026-11-13
+## [3.0.11] — 2026-11-14
 
 ### Security
+
+- Align native workerd and generated project overrides to 1.20261114.1 for Rust bridge bounds/ownership checks, continuation lifetime fixes, streaming-tail onset memory accounting, and TS stream output-gate ordering. Preserve public APIs and compatibility dates. Some Rust-only cases have no production callers; native fault/DoS reproduction is not established by JavaScript integration tests.
 
 - Align Wrangler to 4.162.0, Miniflare to 5.20261113.0-beta, the Workers test plugin to 1.8.2, and native workerd to 1.20261113.1. The runtime now rejects cross-request awaits whose owning request has ended, and requires Send for lock-guarded Rust JSG state. Add bounded default/legacy Promise regressions while retaining public APIs and compatibility dates.
 
