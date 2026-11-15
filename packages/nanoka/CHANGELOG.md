@@ -5,9 +5,11 @@ All notable changes to `@nanokajs/core` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.0.11] — 2026-11-14
+## [3.0.11] — 2026-11-15
 
 ### Security
+
+- Update workerd to 1.20261115.1 for Rust JSG GC-reference bounds and detaching resource references before Drop.
 
 - Align native workerd and generated project overrides to 1.20261114.1 for Rust bridge bounds/ownership checks, continuation lifetime fixes, streaming-tail onset memory accounting, and TS stream output-gate ordering. Preserve public APIs and compatibility dates. Some Rust-only cases have no production callers; native fault/DoS reproduction is not established by JavaScript integration tests.
 
