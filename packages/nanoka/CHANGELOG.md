@@ -5,9 +5,11 @@ All notable changes to `@nanokajs/core` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.0.11] — 2026-11-15
+## [3.0.11] — 2026-11-16
 
 ### Security
+
+- Align Wrangler 4.163.0, Miniflare 5.20261116.0-beta, Workers Vitest plugin 1.8.3 and workerd 1.20261116.1. Bound legacy module-fallback redirects and avoid redundant OAuth refreshes after a sibling updates credentials. Preserve public APIs and compatibility dates.
 
 - Update workerd to 1.20261115.1 for Rust JSG GC-reference bounds and detaching resource references before Drop.
 
