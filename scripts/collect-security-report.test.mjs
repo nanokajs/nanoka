@@ -51,6 +51,45 @@ test('process failure, timeout, and missing executable never become no-findings'
   }
 })
 
+test('one advisory affecting two versions retains both findings regardless of path count', () => {
+  const advisories = {
+    1: {
+      module_name: 'example',
+      severity: 'high',
+      url: 'https://github.com/advisories/GHSA-example',
+      findings: [
+        { version: '4.0.5', paths: ['core > tool > example', 'auth > tool > example'] },
+        { version: '4.0.7', paths: ['site > tool > example'] },
+      ],
+    },
+  }
+  const result = classifyAudit(response({ high: 2 }, advisories, 1))
+  assert.equal(result.status, 'findings')
+  assert.equal(result.counts.high, 2)
+  assert.deepEqual(result.advisories, advisories)
+  for (const high of [0, 1, 3]) {
+    assert.equal(classifyAudit(response({ high }, advisories, 1)).status, 'incomplete')
+  }
+})
+
+test('a version count cannot make missing version or path details complete', () => {
+  for (const finding of [
+    null,
+    {},
+    { version: '', paths: [] },
+    { version: '1.0.0' },
+    { version: '1.0.0', paths: [null] },
+  ]) {
+    const advisory = {
+      module_name: 'example',
+      severity: 'high',
+      url: 'https://github.com/advisories/GHSA-example',
+      findings: [finding],
+    }
+    assert.equal(classifyAudit(response({ high: 1 }, { 1: advisory }, 1)).status, 'incomplete')
+  }
+})
+
 test('registry errors, HTML, null, and unsupported report shapes remain incomplete', () => {
   for (const stdout of [
     '<html>502 Bad Gateway</html>',

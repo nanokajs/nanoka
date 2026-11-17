@@ -5,9 +5,11 @@ All notable changes to `@nanokajs/core` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.0.11] — 2026-11-16
+## [3.0.11] — 2026-11-17
 
 ### Security
+
+- Align Wrangler 4.164.0, Miniflare 5.20261117.0-beta, Workers Vitest plugin 1.8.4 and workerd 1.20261117.1 for native string-buffer initialization, Rust bridge guards and delayed RPC token rejection. Upstream reverted #8216 CPU-limit reporting; managed runtime enforcement is not verified here.
 
 - Align Wrangler 4.163.0, Miniflare 5.20261116.0-beta, Workers Vitest plugin 1.8.3 and workerd 1.20261116.1. Bound legacy module-fallback redirects and avoid redundant OAuth refreshes after a sibling updates credentials. Preserve public APIs and compatibility dates.
 
