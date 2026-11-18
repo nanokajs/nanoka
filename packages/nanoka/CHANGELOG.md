@@ -5,9 +5,11 @@ All notable changes to `@nanokajs/core` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.0.11] — 2026-11-17
+## [3.0.11] — 2026-11-18
 
 ### Security
+
+- Align Wrangler 4.165.0, Miniflare 5.20261118.0-beta, Workers Vitest plugin 1.8.5 and workerd 1.20261118.1 for DigestStream lifetime, Rust tracing/drop, external-memory accounting and delayed RPC token ownership fixes. Pending-stream tracing remains behind the upstream GC autogate; tracked projects do not use standalone clusters.
 
 - Align Wrangler 4.164.0, Miniflare 5.20261117.0-beta, Workers Vitest plugin 1.8.4 and workerd 1.20261117.1 for native string-buffer initialization, Rust bridge guards and delayed RPC token rejection. Upstream reverted #8216 CPU-limit reporting; managed runtime enforcement is not verified here.
 

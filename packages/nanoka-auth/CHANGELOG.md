@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+- Align the Workers development/test runtime to Wrangler 4.165.0, Vitest plugin 1.8.5 and workerd 1.20261118.1 for GC lifetime and memory-accounting fixes.
+
 - Align the Workers development/test runtime to Wrangler 4.164.0, Vitest plugin 1.8.4 and workerd 1.20261117.1 for native string and bridge fixes.
 
 - Align Wrangler to 4.163.0, Workers Vitest plugin to 1.8.3 and workerd to 1.20261116.1 for module-fallback redirect bounds and OAuth refresh snapshot consistency.
