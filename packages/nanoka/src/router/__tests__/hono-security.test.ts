@@ -1,4 +1,5 @@
 import { env } from 'cloudflare:test'
+import { bodyLimit } from 'hono/body-limit'
 import { csrf } from 'hono/csrf'
 import { describe, expect, it } from 'vitest'
 import { d1Adapter } from '../../adapter'
@@ -8,6 +9,72 @@ import { nanoka } from '../nanoka'
 const createApp = () => nanoka(d1Adapter(env.DB))
 
 describe('Hono security boundaries through Nanoka', () => {
+  it.each([
+    'application/json ; charset=utf-8',
+    'application/json;',
+    'application/json; x_y=1',
+    'application/vnd.fixture2+json',
+  ])('validates JSON fields for media type %s', async (contentType) => {
+    const app = createApp()
+    const Item = app.model('json_header_fixture', { name: t.string().max(8) })
+    let handled = false
+    app.patch('/items', Item.validator('json', 'update'), (c) => {
+      handled = true
+      return c.json(c.req.valid('json'))
+    })
+    for (const [name, status] of [
+      ['long fixture value', 400],
+      ['short', 200],
+    ] as const) {
+      handled = false
+      const response = await app.request('/items', {
+        method: 'PATCH',
+        headers: { 'Content-Type': contentType },
+        body: JSON.stringify({ name }),
+      })
+      expect(response.status).toBe(status)
+      expect(handled).toBe(status === 200)
+      if (status === 200) expect(await response.json()).toEqual({ name })
+    }
+  })
+
+  it.each([
+    'application/x-www-form-urlencoded ; charset=utf-8',
+    'application/x-www-form-urlencoded;',
+    'application/x-www-form-urlencoded; x_y=1',
+  ])('validates URL-encoded fields for media type %s', async (contentType) => {
+    const app = createApp()
+    const Item = app.model('form_header_fixture', { name: t.string().max(8) })
+    app.patch('/items', Item.validator('form', 'update'), (c) => c.json(c.req.valid('form')))
+    for (const [name, status] of [
+      ['long fixture value', 400],
+      ['short', 200],
+    ] as const) {
+      const response = await app.request('/items', {
+        method: 'PATCH',
+        headers: { 'Content-Type': contentType },
+        body: new URLSearchParams({ name }).toString(),
+      })
+      expect(response.status).toBe(status)
+      if (status === 200) expect(await response.json()).toEqual({ name })
+    }
+  })
+
+  it.each([8, 9])('enforces a body limit on %i tiny chunks', async (size) => {
+    const app = createApp()
+    app.use('/upload', bodyLimit({ maxSize: 8 }))
+    app.post('/upload', async (c) => c.text(await c.req.text()))
+    const body = new ReadableStream<Uint8Array>({
+      start(controller) {
+        for (let i = 0; i < size; i++) controller.enqueue(new Uint8Array([97]))
+        controller.close()
+      },
+    })
+    const response = await app.request('/upload', { method: 'POST', body })
+    expect(response.status).toBe(size <= 8 ? 200 : 413)
+    if (size <= 8) expect(await response.text()).toBe('a'.repeat(size))
+  })
+
   it('keeps wildcard middleware on a route ending in a segment wildcard', async () => {
     const app = createApp()
     app.use('/private/*', async (c) => c.text('blocked', 401))

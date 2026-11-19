@@ -5,6 +5,42 @@ All notable changes to `@nanokajs/core` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.11] — 2026-11-19
+
+### Security
+
+- Align all workerd resolutions and generated overrides to 1.20261119.1 for repeated RPC callback reentry, per-call Node descriptor isolation, Rust callback trampolines and integer conversion boundaries. Native-object memory reporting remains behind its upstream autogate. Add a bounded local Durable Object/RPC regression.
+
+- Align Wrangler 4.165.0, Miniflare 5.20261118.0-beta, Workers Vitest plugin 1.8.5 and workerd 1.20261118.1 for DigestStream lifetime, Rust tracing/drop, external-memory accounting and delayed RPC token ownership fixes. Pending-stream tracing remains behind the upstream GC autogate; tracked projects do not use standalone clusters.
+
+- Align Wrangler 4.164.0, Miniflare 5.20261117.0-beta, Workers Vitest plugin 1.8.4 and workerd 1.20261117.1 for native string-buffer initialization, Rust bridge guards and delayed RPC token rejection. Upstream reverted #8216 CPU-limit reporting; managed runtime enforcement is not verified here.
+
+- Align Wrangler 4.163.0, Miniflare 5.20261116.0-beta, Workers Vitest plugin 1.8.3 and workerd 1.20261116.1. Bound legacy module-fallback redirects and avoid redundant OAuth refreshes after a sibling updates credentials. Preserve public APIs and compatibility dates.
+
+- Update workerd to 1.20261115.1 for Rust JSG GC-reference bounds and detaching resource references before Drop.
+
+- Align native workerd and generated project overrides to 1.20261114.1 for Rust bridge bounds/ownership checks, continuation lifetime fixes, streaming-tail onset memory accounting, and TS stream output-gate ordering. Preserve public APIs and compatibility dates. Some Rust-only cases have no production callers; native fault/DoS reproduction is not established by JavaScript integration tests.
+
+- Align Wrangler to 4.162.0, Miniflare to 5.20261113.0-beta, the Workers test plugin to 1.8.2, and native workerd to 1.20261113.1. The runtime now rejects cross-request awaits whose owning request has ended, and requires Send for lock-guarded Rust JSG state. Add bounded default/legacy Promise regressions while retaining public APIs and compatibility dates.
+
+- Update Wrangler to 4.161.0 and the Workers test plugin to 1.8.1 for shared Pages/Workers relative-redirect normalization and remote binding session credential selection. Add bounded local redirect regressions without following external locations. Tracked configurations have no custom _redirects or remote:true bindings.
+
+- Update generated Hono to ^4.13.18 and CI Node to 22.23.5. Add bounded validator/body-limit and Node permission regressions. Align native workerd to the published 1.20261112.1, including isolate teardown unbinding, lock-guarded Rust JSG references and deferred cross-context action memory accounting. Outgoing WebSocket queue accounting remains controlled by its upstream autogate; CPU-limit reporting and native races are assessed from upstream tests, not stress-tested locally.
+
+- Require Hono ^4.13.18 in public peers and development dependencies for the November 11 JSON/form media-type validation, body-limit buffering, opt-in static-path decoding, and custom mounted-path fixes. Preserve Zod 4 and public APIs.
+
+- Update Wrangler to 4.160.0 and the Workers test plugin to 1.7.0 for diagnostic-header redaction and local Artifacts credential forwarding fixes. Align native workerd to 1.20261110.1, including request-owned volatile-cache fallback spans, copied stdio input before JavaScript logging callbacks, and corrected BlockList address comparisons. Add bounded address-classification regressions. Tracked configurations do not use volatile caches or Containers; memory-corruption and managed-platform patch status are not established by local tests.
+
+- Update Wrangler to 4.159.0, Workers Vitest plugin to 1.6.1, and Miniflare to 5.20261109.0-beta for bundled Hono, XML, proxy, and browser-installer fixes. Use workerd 1.20261109.1, including reduced tracing-message allocation overhead. Repository tooling already requires Node 22.18+; these upstream tools require Node 22.12+. Declare Node 22.12+ for generated project tooling while preserving published core/scaffolder engines and APIs.
+
+- Bound streaming-tail event memory in local tooling with workerd 1.20261108.1. Upstream now counts queued and unacknowledged events against a per-session limit and supports an optional embedder budget across sessions. Tracked Nanoka configurations do not enable streaming tails; managed Workers limits and deployment state are not established by this update.
+
+- Update the local native runtime to workerd 1.20261107.1 for request-cancellation ownership fixes involving accepted WebSockets and pending response bodies. Add bounded real-HTTP WebSocket echo, close-handshake, and client-disconnect checks; the precise CPU-limit race is covered by upstream native tests rather than this local compatibility check. This does not establish managed Workers patch status.
+
+- Hide D1 binding service/session handles in the local native runtime (fixed since workerd 1.20261106.1). Add a native D1 reflection/query regression to CI. The upstream custom-binding issue does not establish exploitation of a managed Nanoka deployment.
+
+- Update Wrangler to 4.158.0 and Miniflare to 5.20261104.0-beta for bundled dependency security fixes. Update installed undici to 7.30.2 and add an ASCII-whitespace SRI regression. Replace the renamed Workers test integration with @cloudflare/vitest-plugin 1.6.0, keeping Vitest 4 and the same configuration API, to remove the old Miniflare alpha. Align workerd to 1.20261110.1 and retain public APIs, Hono/Zod peers, and unrelated overrides.
+
 ## [3.0.10] — 2026-11-02
 
 ### Security

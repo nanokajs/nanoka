@@ -72,3 +72,64 @@ test('RPC error stacks stay within the callee across serialization modes', {
     }
   }
 })
+
+// Two callback invocations share one Durable Object critical section. The outer
+// request has a short abort, so an old runtime's gate deadlock stays bounded.
+test('repeated RPC callbacks reenter the same Durable Object critical section', {
+  timeout: 20_000,
+}, async (t) => {
+  const script = `import { DurableObject, WorkerEntrypoint } from 'cloudflare:workers';
+export class Peer extends WorkerEntrypoint {
+  async invoke(callback, count) {
+    const values = [];
+    for (let i = 0; i < count; i++) values.push(await callback());
+    return values;
+  }
+}
+export class Actor extends DurableObject {
+  async call(count) {
+    return this.ctx.blockConcurrencyWhile(async () => {
+      let calls = 0;
+      const values = await this.env.PEER.invoke(() => ++calls, count);
+      return { values, calls };
+    });
+  }
+}
+export default {
+  async fetch(request, env) {
+    const actor = env.ACTORS.get(env.ACTORS.idFromName(new URL(request.url).pathname));
+    return Response.json(await actor.call(Number(new URL(request.url).searchParams.get('count'))));
+  }
+};`
+  const mf = new Miniflare(
+    convertV4MiniflareOptions({
+      workers: [
+        {
+          name: 'caller',
+          modules: true,
+          script,
+          host: '127.0.0.1',
+          compatibilityDate: '2025-04-01',
+          serviceBindings: { PEER: { name: 'caller', entrypoint: 'Peer' } },
+          durableObjects: { ACTORS: 'Actor' },
+        },
+      ],
+    }),
+  )
+  try {
+    for (const count of [1, 2]) {
+      await t.test(`${count} callback invocation(s)`, async () => {
+        const response = await mf.dispatchFetch(`http://localhost/case-${count}?count=${count}`, {
+          signal: AbortSignal.timeout(3_000),
+        })
+        assert.equal(response.status, 200)
+        assert.deepEqual(await response.json(), {
+          values: Array.from({ length: count }, (_, i) => i + 1),
+          calls: count,
+        })
+      })
+    }
+  } finally {
+    await mf.dispose()
+  }
+})
