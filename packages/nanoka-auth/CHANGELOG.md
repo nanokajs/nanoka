@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+- Align the Workers development/test runtime to Wrangler 4.168.0, Vitest plugin 1.9.2 and workerd 1.20261124.2, including upstream bundled Undici security fixes.
+
 - Align the Workers development/test native runtime to workerd 1.20261119.1 for RPC reentry and Node descriptor isolation fixes.
 
 - Align the Workers development/test runtime to Wrangler 4.165.0, Vitest plugin 1.8.5 and workerd 1.20261118.1 for GC lifetime and memory-accounting fixes.

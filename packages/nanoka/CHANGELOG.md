@@ -5,9 +5,11 @@ All notable changes to `@nanokajs/core` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.0.11] — 2026-11-19
+## [3.0.11] — 2026-11-24
 
 ### Security
+
+- Align Wrangler 4.168.0, Miniflare 5.20261123.1-beta, Workers Vitest plugin 1.9.2 and workerd 1.20261124.2. Update bundled Undici to the upstream security release and apply Rust traced-handle lifetime, native length conversion fail-open exception, detached-input and bridge lifetime fixes. Keep compatibility dates and autogates unchanged.
 
 - Align all workerd resolutions and generated overrides to 1.20261119.1 for repeated RPC callback reentry, per-call Node descriptor isolation, Rust callback trampolines and integer conversion boundaries. Native-object memory reporting remains behind its upstream autogate. Add a bounded local Durable Object/RPC regression.
 
