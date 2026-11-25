@@ -16,7 +16,7 @@
     "@nanokajs/auth": "workspace:*",
     "@nanokajs/core": "workspace:*",
     "drizzle-orm": "^0.45.4",
-    "hono": "^4.13.18",
+    "hono": "^4.13.22",
     "zod": "^4.6.6"
   },
   "devDependencies": {

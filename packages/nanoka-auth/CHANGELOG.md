@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+- Require Hono ^4.13.22 for the malformed mount-path guard in published output. Align native workerd and generated overrides to 1.20261125.1 for JIT Promise context tagging, DOMException RPC stack privacy and SIMD Base64 output bounds. Preserve public APIs, compatibility dates and autogates.
+
 - Align the Workers development/test runtime to Wrangler 4.168.0, Vitest plugin 1.9.2 and workerd 1.20261124.2, including upstream bundled Undici security fixes.
 
 - Align the Workers development/test native runtime to workerd 1.20261119.1 for RPC reentry and Node descriptor isolation fixes.

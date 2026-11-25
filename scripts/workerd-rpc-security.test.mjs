@@ -15,20 +15,22 @@ const marker = 'callee-private-fixture.js'
 const message = 'synthetic RPC failure'
 const callerScript = [
   'export default { async fetch(request, env) {',
-  '  try { await env.PEER.fail(); return Response.json({ missingFailure: true }); }',
-  '  catch (error) { return Response.json({',
+  '  const describe = error => Response.json({',
   '    message: error.message, stack: String(error.stack ?? ""),',
   '    causeStack: String(error.cause?.stack ?? "")',
-  '  }); }',
+  '  });',
+  '  try { return describe(await env.PEER.fail(new URL(request.url).pathname)); }',
+  '  catch (error) { return describe(error); }',
   '} };',
 ].join('\n')
 const calleeScript = [
   "import { WorkerEntrypoint } from 'cloudflare:workers';",
-  'export default class extends WorkerEntrypoint { fail() {',
+  'export default class extends WorkerEntrypoint { fail(path) {',
   '  const cause = new Error("synthetic cause");',
   `  cause.stack = ${JSON.stringify(`Error: synthetic cause\n at ${marker}`)};`,
-  `  const error = new Error(${JSON.stringify(message)}, { cause });`,
+  `  const error = path.startsWith('/dom') ? new DOMException(${JSON.stringify(message)}, 'AbortError') : new Error(${JSON.stringify(message)}, { cause });`,
   `  error.stack = ${JSON.stringify(`Error: synthetic RPC failure\n at ${marker}`)};`,
+  "  if (path === '/dom-value') return error;",
   '  throw error;',
   '} }',
 ].join('\n')
@@ -55,16 +57,22 @@ test('RPC error stacks stay within the callee across serialization modes', {
           }),
         )
         try {
-          const response = await mf.dispatchFetch('http://localhost/')
-          assert.equal(response.status, 200)
-          const result = await response.json()
-          assert.equal(result.message, message)
-          assert.equal(result.stack.includes(marker), false, 'callee stack must not reach caller')
-          assert.equal(
-            result.causeStack.includes(marker),
-            false,
-            'nested error stack must not reach caller',
-          )
+          for (const path of ['/', '/dom', '/dom-value']) {
+            const response = await mf.dispatchFetch(`http://localhost${path}`)
+            assert.equal(response.status, 200)
+            const result = await response.json()
+            assert.equal(result.message, message)
+            assert.equal(
+              result.stack.includes(marker),
+              false,
+              `${path}: callee stack must not reach caller`,
+            )
+            assert.equal(
+              result.causeStack.includes(marker),
+              false,
+              'nested error stack must not reach caller',
+            )
+          }
         } finally {
           await mf.dispose()
         }

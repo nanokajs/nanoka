@@ -29,9 +29,10 @@ pnpm exec drizzle-kit generate
 pnpm dev
 ```
 
-Generated projects require Hono `^4.13.18`, including the November 11 JSON/form media-type, body-limit,
+Generated projects require Hono `^4.13.22`, including the November 11 JSON/form media-type, body-limit,
 opt-in static-path, and custom mount-path fixes. Existing applications must update their own Hono
 dependency and lockfile; the scaffolder does not rewrite them.
+Hono 4.13.22 keeps the malformed mounted-path guard in published output ([upstream fix](https://github.com/honojs/hono/pull/5675)); update existing consumers as well as newly generated apps.
 
 ## Local Workers runtime security
 

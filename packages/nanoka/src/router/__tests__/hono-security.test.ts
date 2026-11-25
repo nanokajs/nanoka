@@ -118,6 +118,23 @@ describe('Hono security boundaries through Nanoka', () => {
     expect(await (await app.request(`/service${path}`)).text()).toBe(path)
   })
 
+  it('rejects malformed mount paths whose serialization changes the route', async () => {
+    const app = createApp()
+    let forwarded = 0
+    app.mount('/service', () => {
+      forwarded++
+      return new Response('forwarded')
+    })
+    // A custom request path models adapters that preserve raw non-ASCII input.
+    const request = new Request('http://localhost/service/fixture')
+    Object.defineProperty(request, 'url', { value: 'http://localhost/service/%FFé' })
+
+    expect((await app.fetch(request)).status).toBe(400)
+    expect(forwarded).toBe(0)
+    expect((await app.request('/service/%FF%5Cx')).status).toBe(200)
+    expect(forwarded).toBe(1)
+  })
+
   it.each([
     ['short', 200],
     ['long fixture value', 400],
