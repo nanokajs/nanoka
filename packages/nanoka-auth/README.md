@@ -10,13 +10,17 @@ Provides credential validation, JWT issuance, and Hono middleware — built on `
 pnpm add @nanokajs/auth
 ```
 
-Peer dependencies: `@nanokajs/core ^1.0.0 || ^2.0.0 || ^3.0.0`, `hono ^4.13.16`.
+Peer dependencies: `@nanokajs/core ^1.0.0 || ^2.0.0 || ^3.0.0`, `hono ^4.13.23`.
 
-Existing applications must update Hono to 4.13.16 or later in the 4.x line. This
+Existing applications must update Hono to 4.13.23 or later in the 4.x line. This
 minimum excludes older releases affected by published Hono advisories; updating
 Nanoka's development lockfile alone does not update a consumer's Hono installation.
+Hono 4.13.22 keeps the malformed mounted-path guard in published output ([upstream fix](https://github.com/honojs/hono/pull/5675)); update existing consumers as well as newly generated apps.
+Hono 4.13.23 also fixes [constrained middleware exclusions](https://github.com/honojs/hono/security/advisories/GHSA-586x-c76g-h528), [inherited HTTP method lookup](https://github.com/honojs/hono/security/advisories/GHSA-656w-x92q-369m), and [path-only request URLs on Bun](https://github.com/honojs/hono/security/advisories/GHSA-mhwf-w6q6-q58w).
 In particular, Hono 4.13.16 fixes [wildcard middleware coverage](https://github.com/honojs/hono/security/advisories/GHSA-h7mg-cq63-vhpq);
 a valid authentication middleware cannot protect a route if the router skips it.
+Hono 4.13.18 also fixes [custom mount-path forwarding](https://github.com/honojs/hono/security/advisories/GHSA-h25j-2p75-qj33)
+and [JSON/form media-type validation](https://github.com/honojs/hono/security/advisories/GHSA-92p4-j3wq-jmqx).
 Register authentication inside a mounted application as well when it has its own
 protected routes.
 

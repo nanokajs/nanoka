@@ -40,9 +40,24 @@ export function classifyAudit(result) {
         !levels.includes(advisory.severity) ||
         typeof advisory.url !== 'string' ||
         !Array.isArray(advisory.findings) ||
-        advisory.findings.length === 0,
+        advisory.findings.length === 0 ||
+        advisory.findings.some(
+          (finding) =>
+            !finding ||
+            typeof finding.version !== 'string' ||
+            finding.version.length === 0 ||
+            !Array.isArray(finding.paths) ||
+            finding.paths.some((path) => typeof path !== 'string' || path.length === 0),
+        ),
     ) ||
-    levels.some((level) => findings.filter((a) => a.severity === level).length !== counts[level])
+    // The audit endpoint counts affected versions, not distinct advisory IDs or paths.
+    levels.some(
+      (level) =>
+        findings.reduce(
+          (count, advisory) => count + (advisory.severity === level ? advisory.findings.length : 0),
+          0,
+        ) !== counts[level],
+    )
   ) {
     return incomplete('Advisory details are missing or inconsistent with severity counts.')
   }

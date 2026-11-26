@@ -1,4 +1,6 @@
 import { env } from 'cloudflare:test'
+import { bodyLimit } from 'hono/body-limit'
+import { except } from 'hono/combine'
 import { csrf } from 'hono/csrf'
 import { describe, expect, it } from 'vitest'
 import { d1Adapter } from '../../adapter'
@@ -8,6 +10,88 @@ import { nanoka } from '../nanoka'
 const createApp = () => nanoka(d1Adapter(env.DB))
 
 describe('Hono security boundaries through Nanoka', () => {
+  it.each([
+    ['public', 200],
+    ['health', 200],
+    ['public-private', 401],
+    ['private-health', 401],
+  ] as const)('limits middleware exclusions to the whole parameter: %s', async (path, status) => {
+    const app = createApp()
+    app.use(
+      '/entries/*',
+      except('/entries/:kind{public|health}', async (c) => c.text('sign in', 401)),
+    )
+    app.get('/entries/:kind', (c) => c.text('allowed'))
+
+    expect((await app.request(`/entries/${path}`)).status).toBe(status)
+  })
+
+  it.each([
+    'application/json ; charset=utf-8',
+    'application/json;',
+    'application/json; x_y=1',
+    'application/vnd.fixture2+json',
+  ])('validates JSON fields for media type %s', async (contentType) => {
+    const app = createApp()
+    const Item = app.model('json_header_fixture', { name: t.string().max(8) })
+    let handled = false
+    app.patch('/items', Item.validator('json', 'update'), (c) => {
+      handled = true
+      return c.json(c.req.valid('json'))
+    })
+    for (const [name, status] of [
+      ['long fixture value', 400],
+      ['short', 200],
+    ] as const) {
+      handled = false
+      const response = await app.request('/items', {
+        method: 'PATCH',
+        headers: { 'Content-Type': contentType },
+        body: JSON.stringify({ name }),
+      })
+      expect(response.status).toBe(status)
+      expect(handled).toBe(status === 200)
+      if (status === 200) expect(await response.json()).toEqual({ name })
+    }
+  })
+
+  it.each([
+    'application/x-www-form-urlencoded ; charset=utf-8',
+    'application/x-www-form-urlencoded;',
+    'application/x-www-form-urlencoded; x_y=1',
+  ])('validates URL-encoded fields for media type %s', async (contentType) => {
+    const app = createApp()
+    const Item = app.model('form_header_fixture', { name: t.string().max(8) })
+    app.patch('/items', Item.validator('form', 'update'), (c) => c.json(c.req.valid('form')))
+    for (const [name, status] of [
+      ['long fixture value', 400],
+      ['short', 200],
+    ] as const) {
+      const response = await app.request('/items', {
+        method: 'PATCH',
+        headers: { 'Content-Type': contentType },
+        body: new URLSearchParams({ name }).toString(),
+      })
+      expect(response.status).toBe(status)
+      if (status === 200) expect(await response.json()).toEqual({ name })
+    }
+  })
+
+  it.each([8, 9])('enforces a body limit on %i tiny chunks', async (size) => {
+    const app = createApp()
+    app.use('/upload', bodyLimit({ maxSize: 8 }))
+    app.post('/upload', async (c) => c.text(await c.req.text()))
+    const body = new ReadableStream<Uint8Array>({
+      start(controller) {
+        for (let i = 0; i < size; i++) controller.enqueue(new Uint8Array([97]))
+        controller.close()
+      },
+    })
+    const response = await app.request('/upload', { method: 'POST', body })
+    expect(response.status).toBe(size <= 8 ? 200 : 413)
+    if (size <= 8) expect(await response.text()).toBe('a'.repeat(size))
+  })
+
   it('keeps wildcard middleware on a route ending in a segment wildcard', async () => {
     const app = createApp()
     app.use('/private/*', async (c) => c.text('blocked', 401))
@@ -49,6 +133,23 @@ describe('Hono security boundaries through Nanoka', () => {
 
     const path = '/public%5C..%5Cprivate/item'
     expect(await (await app.request(`/service${path}`)).text()).toBe(path)
+  })
+
+  it('rejects malformed mount paths whose serialization changes the route', async () => {
+    const app = createApp()
+    let forwarded = 0
+    app.mount('/service', () => {
+      forwarded++
+      return new Response('forwarded')
+    })
+    // A custom request path models adapters that preserve raw non-ASCII input.
+    const request = new Request('http://localhost/service/fixture')
+    Object.defineProperty(request, 'url', { value: 'http://localhost/service/%FFé' })
+
+    expect((await app.fetch(request)).status).toBe(400)
+    expect(forwarded).toBe(0)
+    expect((await app.request('/service/%FF%5Cx')).status).toBe(200)
+    expect(forwarded).toBe(1)
   })
 
   it.each([
