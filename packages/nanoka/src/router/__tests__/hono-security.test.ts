@@ -1,5 +1,6 @@
 import { env } from 'cloudflare:test'
 import { bodyLimit } from 'hono/body-limit'
+import { except } from 'hono/combine'
 import { csrf } from 'hono/csrf'
 import { describe, expect, it } from 'vitest'
 import { d1Adapter } from '../../adapter'
@@ -9,6 +10,22 @@ import { nanoka } from '../nanoka'
 const createApp = () => nanoka(d1Adapter(env.DB))
 
 describe('Hono security boundaries through Nanoka', () => {
+  it.each([
+    ['public', 200],
+    ['health', 200],
+    ['public-private', 401],
+    ['private-health', 401],
+  ] as const)('limits middleware exclusions to the whole parameter: %s', async (path, status) => {
+    const app = createApp()
+    app.use(
+      '/entries/*',
+      except('/entries/:kind{public|health}', async (c) => c.text('sign in', 401)),
+    )
+    app.get('/entries/:kind', (c) => c.text('allowed'))
+
+    expect((await app.request(`/entries/${path}`)).status).toBe(status)
+  })
+
   it.each([
     'application/json ; charset=utf-8',
     'application/json;',
